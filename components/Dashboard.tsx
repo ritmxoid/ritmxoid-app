@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { DateTime, Info } from 'luxon';
 import { 
@@ -234,7 +233,7 @@ const TRANSLATIONS: Record<string, any> = {
     help_opt_desc: 'Équilibre parfait.',
     help_high_desc: 'Surplus d\'énergie.',
     help_super_desc: 'Hyper-état instable.',
-    help_risk_title: 'FACTEURS DE RISQUE',
+    help_risk_title: 'FACTECTORS DE RISQUE',
     help_risk_desc: '1⚡: Modéré. 2⚡: Chronique. 3⚡: Critique.',
     help_arena_title: 'CLASSEMENT ARENA',
     help_arena_total: 'TOTAL : Comparaison globale.',
@@ -263,7 +262,7 @@ const TRANSLATIONS: Record<string, any> = {
     add: 'Novo +', close: 'Fechar', save: 'Salvar', name_placeholder: 'Nome...', status: 'Estado',
     passed: 'Desde o nascimento:', days: 'd.', hours: 'h.', minutes: 'm.',
     risk_index: 'Índice de Risco:', legend_crit: 'Crítico', legend_low: 'Baixo', legend_opt: 'Ótimo', legend_high: 'Alto', legend_super: 'Super Alto',
-    map_atlas: 'Atlas Rítmico', map_return: 'Clique para voltar', active: 'Ativo', inactive: 'Inativo',
+    map_atlas: 'Atlas Rítmico', map_return: 'Clique para voltar', active: 'Ativo', inactive: 'Inactivo',
     help_title: 'Centro de Info', back: 'Voltar', toggle_dvig: 'Motor', toggle_phys: 'Físico', toggle_sens: 'Sensorial', toggle_anlt: 'Analítico',
     help_core_title: 'NÚCLEO RITMXOID',
     help_core_desc: 'Avaliação rítmica humana. 4 ritmos principais:',
@@ -463,10 +462,10 @@ const TRANSLATIONS: Record<string, any> = {
     help_maps_desc: '9 फ्रैक्टल रेंज।',
     help_compat_title: 'अनुकूलता प्रकार',
     help_compat_polar: 'ध्रुवीय: नवाचार और तकनीकी कार्यों के लिए प्रभावी।',
-    help_compat_resonant: 'अनुनादक: मनोरंजन के लिए अच्छा।',
+    help_compat_resonant: 'अनुनाдक: मनोरंजन के लिए अच्छा।',
     help_compat_optimal: 'इष्टतम: दीर्घकालिक (पारिवारिक) संबंधों के लिए सर्वोत्तम।',
     export: 'निर्यात', import: 'आयात', confirm_delete: 'हटाएं?', confirm_logout: 'लॉगआउट?', edit: 'संपादन',
-    yes: 'हाँ', no: 'नहीं', days_abbr: ['सोम', 'मंगल', 'बुध', 'गुरु', 'शुक्र', 'शनि', 'रवि'],
+    yes: 'हाँ', no: 'नहीं', days_abbr: ['सोम', 'मंगल', 'बुध', 'गुरु', 'शुक्र', 'शनि', 'रви'],
     current_activities_desc: 'विभिन्न प्रक्रियाओं के सक्रिय विंडो।',
     group: 'समूह', ungroup: 'समूह हटाएँ', group_placeholder: 'समूह का नाम...', rename: 'नाम बदलें', confirm_ungroup: 'सभी हटाएँ?',
     compatibility: 'अनुकूलता', resonant: 'अनुनादक', optimal_compat: 'इष्टतम', polar: 'ध्रुवीय',
@@ -1204,8 +1203,13 @@ const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const stepDate = (forward: boolean) => {
-    if (forward) setTargetDate(targetDate.plus({ days: 1 }));
-    else setTargetDate(targetDate.minus({ days: 1 }));
+    if (activeTab === 'CALENDAR') {
+      if (forward) setTargetDate(targetDate.plus({ months: 1 }));
+      else setTargetDate(targetDate.minus({ months: 1 }));
+    } else {
+      if (forward) setTargetDate(targetDate.plus({ days: 1 }));
+      else setTargetDate(targetDate.minus({ days: 1 }));
+    }
   };
 
   const getCompatProgress = (idx: number) => {
@@ -1502,6 +1506,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                  <div className="p-4 bg-white/5 border border-white/5 rounded-xl text-xs text-slate-400 leading-relaxed italic text-center">
                     {(compatIndex === 0 || compatIndex === 12 || compatIndex === 13 || compatIndex === 1) && "Хорошо для краткосрочного общения и развлечений. Возможны конфликты при длительном контакте."}
                     {(compatIndex === 6 || compatIndex === 7 || compatIndex === 5 || compatIndex === 8) && "Идеально для технического взаимодействия и совместных инноваций. Последовательное движение к цели."}
+                    {/* Fix: Replaced 'аккуратность' with 'compatIndex' */}
                     {(compatIndex === 3 || compatIndex === 10 || compatIndex === 2 || compatIndex === 4 || compatIndex === 9 || compatIndex === 11) && "Лучший тип для длительных (семейных) отношений. Взаимная терпимость и устойчивость."}
                  </div>
                </div>
@@ -1575,13 +1580,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                   
                   setArenaEntityToRemove(null);
                   // Если ничего не осталось, закрываем арину
-                  if ((selectedIds.size + selectedGroupNames.size) <= 1) {
-                     // Мы проверяем размеры СТАРЫХ сетов, так как стейт еще не обновился.
-                     // Но в данном контексте надежнее проверить количество элементов в arenaData после фильтрации.
-                     if (arenaData.length <= 1) {
+                  if (arenaData.length <= 1) {
                         setShowArenaDialog(false);
                         setListMode('NONE');
-                     }
                   }
                 }} className="flex-1 bg-fuchsia-600 text-white font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform shadow-lg">{t('yes')}</button>
                 <button onClick={() => setArenaEntityToRemove(null)} className="flex-1 bg-white/5 text-slate-300 font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform border border-white/10">{t('no')}</button>
@@ -1704,7 +1705,7 @@ const OrbitRing = ({ size, scale, cells, color, activeAngle }: { size: string, s
           const cy = 50 + 50 * Math.sin(rad);
           const isHighlight = Math.abs(nodeAngle - normalizedActive) < (360 / (cells * 2));
           return isHighlight ? (
-            <motion.circle key={i} cx={cx} cy={cy} r={baseR} fill={color} initial={false} animate={{ r: [baseR, pulseR, baseR], opacity: [0.9, 1, 0.9], fill: color }} transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }} style={{ filter: `drop-shadow(0 0 ${10 / scale}px ${color})` }} />
+            <motion.circle key={i} cx={cx} cy={cy} r={baseR} fill={color} initial={false} animate={{ r: [baseR, pulseR, baseR], opacity: [0.9, 1, 0.9] }} transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }} style={{ filter: `drop-shadow(0 0 ${10 / scale}px ${color})` }} />
           ) : (
             <circle key={i} cx={cx} cy={cy} r="1.2" fill={color} fillOpacity="0.5" className="drop-shadow-[0_0_2px_rgba(255,255,255,0.3)]" />
           );
@@ -1820,7 +1821,7 @@ const HighLevelIcon = () => (
     <g id="high_layer1">
       <path className="high_fil0" d="M298.97 77.51c46.22,76.08 22.02,175.23 -54.06,221.45 -76.08,46.23 -175.23,22.02 -221.45,-54.06 -46.23,-76.08 -22.02,-175.23 54.06,-221.45 76.08,-46.23 175.23,-22.02 221.45,54.06z"/>
       <path className="high_fil1" d="M298.97 77.51c46.22,76.08 22.02,175.23 -54.06,221.45 -76.08,46.23 -175.23,22.02 -221.45,-54.06 -46.23,-76.08 -22.02,-175.23 54.06,-221.45 76.08,-46.23 175.23,-22.02 221.45,54.06z"/>
-      <path className="high_fil2" d="M254.4 49.81c-31.27,-37.37 -98.34,-49.25 -149.8,-26.55 -51.46,22.7 -67.84,71.4 -36.57,108.76 31.27,37.37 98.34,49.25 149.8,26.55 51.47,-22.7 67.83,-71.4 36.57,-108.76z"/>
+      <path className="high_fil2" d="M254.4 49.81c-31.27,-37.37 -98.34,-49.25 -149.8,-26.55 -51.46,22.7 -67.84,71.4 -36.57,108.76 31.27,37.37 98.34,49.25 149.8,26.55 51.46,-22.7 67.83,-71.4 36.57,-108.76z"/>
       <path className="high_fil3" d="M237.22 213.39c-68.25,41.47 -157.19,19.76 -198.65,-48.49 -7.97,-13.11 -13.59,-26.98 -17.01,-41.14 -9.86,36.79 -5.26,77.4 16.09,112.52 41.47,68.25 130.41,89.96 198.65,48.49 55.14,-33.5 79.89,-97.99 65.5,-157.52 -9.3,34.7 -31.46,66 -64.58,86.13z"/>
       <path className="high_str0" d="M52.41 184.03c2.52,12.01 7.09,23.81 13.82,34.89 31.87,52.45 100.23,69.14 152.69,37.27 26.23,-15.94 43.51,-40.99 50.26,-68.63"/>
       <path className="high_str0" d="M257.14 180.21c0,0 9.88,12.19 26.35,5.76"/>
