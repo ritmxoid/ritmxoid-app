@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { DateTime, Info } from 'luxon';
 import { 
@@ -5,6 +6,7 @@ import {
   COLORS, ACTIVITY_CONFIG, getActivitiesPack, MAP_NAMES, calculateMapAngles, calculateSecondsGone,
   getBalanceColor, calculateMoonAngle, calculateSunAngle, calculateEarthAngle
 } from '../core/engine';
+import { TRANSLATIONS as GLOBAL_TRANSLATIONS, LANGUAGES as GLOBAL_LANGUAGES, getT } from '../core/i18n';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { Profile } from '../types';
 
@@ -27,452 +29,6 @@ interface DashboardProps {
 type Tab = 'PROFILES' | 'BALANCE' | 'ACTIVITIES' | 'CALENDAR' | 'MAPS';
 type ListMode = 'NONE' | 'EDIT' | 'DELETE' | 'SELECT';
 type ArenaMode = 'TOTAL' | 'BASIC' | 'REACTIVE';
-
-const LANGUAGES = [
-  { code: 'en', name: 'English', flag: '🇺🇸' },
-  { code: 'ru', name: 'Русский', flag: '🇷🇺' },
-  { code: 'es', name: 'Español', flag: '🇪🇸' },
-  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-  { code: 'fr', name: 'Français', flag: '🇫🇷' },
-  { code: 'pt', name: 'Português', flag: '🇵🇹' },
-  { code: 'zh', name: '中文', flag: '🇨🇳' },
-  { code: 'ja', name: '日本語', flag: '🇯🇵' },
-  { code: 'ar', name: 'العربية', flag: '🇸🇦' },
-  { code: 'hi', name: 'हिन्दी', flag: '🇮🇳' },
-];
-
-const TRANSLATIONS: Record<string, any> = {
-  en: {
-    profiles: 'Contacts', balance: 'Balance', activities: 'Activities', calendar: 'Calendar', maps: 'Maps',
-    add: 'Add +', close: 'Close', save: 'Save to Base', name_placeholder: 'Name...', status: 'Status',
-    passed: 'Passed since birth:', days: 'd.', hours: 'h.', minutes: 'm.',
-    risk_index: 'Cumulative Risk Index:', legend_crit: 'Critical', legend_low: 'Low', legend_opt: 'Optimal', legend_high: 'High', legend_super: 'Super High',
-    map_atlas: 'Rhythm Atlas', map_return: 'Click to return', active: 'Active', inactive: 'Inactive',
-    help_title: 'Information Center', back: 'Back', toggle_dvig: 'Motor', toggle_phys: 'Physical', toggle_sens: 'Sensory', toggle_anlt: 'Analytic',
-    help_core_title: 'RITMXOID CORE',
-    help_core_desc: 'Assessment of current and predicted states of basic human rhythmic fields based on the Rhythmic Series (RS) concept. 4 core rhythms:',
-    help_motor_title: 'MOTOR (Emotional)', help_motor_desc: 'Muscular, nervous and circulatory systems. High phase stims muscular activity.',
-    help_phys_title: 'PHYSICAL (Physiological)', help_phys_desc: 'Bio-structure and metabolism. High phase activates thyroid hormones.',
-    help_sens_title: 'SENSORY (Informational)', help_sens_desc: 'Adaptation and info processing via endocrine and immune systems.',
-    help_anlt_title: 'ANALYTICAL', help_anlt_desc: 'Conscious and subconscious control. Only high phase is initialized.',
-    help_levels_title: 'ENERGY LEVELS',
-    help_crit_desc: 'Peak vulnerability. Avoid extreme stress and conflicts.',
-    help_low_desc: 'Fatigue, irritability. Reduced reaction and self-esteem.',
-    help_opt_desc: 'Perfect balance. Best time for important decisions.',
-    help_high_desc: 'Energy surplus. High work capacity. Spend energy evenly.',
-    help_super_desc: 'Unstable hyper-state. High risk of overstrain.',
-    help_risk_title: 'RISK FACTORS (⚡)',
-    help_risk_desc: '1⚡: Moderate. 2⚡: Chronic flare-up risk. 3⚡: Critical risk, avoid travel.',
-    help_arena_title: 'ARENA RANKING',
-    help_arena_total: 'TOTAL RANK: Global comparison of all fields. Domination forecast.',
-    help_arena_basic: 'BASIC RANK: Motor + Physical rhythms. Best for sports and labor.',
-    help_arena_reactive: 'REACTIVE RANK: Sensory + Analytical. For tactics and reaction.',
-    help_balance_title: 'BALANCE PLANNING',
-    help_balance_desc: 'Increase load during "peaks" and reduce it during "pits" of corresponding rhythms.',
-    help_activities_title: 'ACTIVITIES MECHANISM',
-    help_activities_desc: 'Biological processes falling into the corresponding activity intervals increase the actual rhythm-balance indicators, based on the resonance principle.',
-    help_maps_title: 'RHYTHM ATLAS',
-    help_maps_desc: '9 fractal ranges from Pulse (Micro 3.5) to Life Cycle (Macro 3.5).',
-    help_compat_title: 'COMPATIBILITY TYPES',
-    help_compat_polar: 'POLAR: Effective for technical tasks and innovation.',
-    help_compat_resonant: 'RESONANT: Good for short interaction and fun.',
-    help_compat_optimal: 'OPTIMAL: Best for long-term (family) relations.',
-    export: 'Export', import: 'Import', confirm_delete: 'Delete?', confirm_logout: 'Logout?', edit: 'Edit',
-    yes: 'Yes', no: 'No', days_abbr: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'],
-    current_activities_desc: 'Displaying active windows for various processes.',
-    group: 'Group', ungroup: 'Ungroup', group_placeholder: 'Group name...', rename: 'Rename', confirm_ungroup: 'Ungroup all?',
-    compatibility: 'Compatibility', resonant: 'Resonant', optimal_compat: 'Optimal', polar: 'Polar',
-    arena: 'Arena', arena_total: 'Total Ranking', arena_basic: 'Basic Ranking', arena_reactive: 'Reactive Ranking',
-    remove_arena: 'Remove?', members_count: 'members'
-  },
-  ru: {
-    profiles: 'Контакты', balance: 'Баланс', activities: 'Актив', calendar: 'Календарь', maps: 'Карты',
-    add: 'Добавить +', close: 'Закрыть', save: 'Сохранить в базу', name_placeholder: 'Имя...', status: 'Статус',
-    passed: 'Прошло с рождения:', days: 'д.', hours: 'ч.', minutes: 'м.',
-    risk_index: 'Совокупный индекс риска:', legend_crit: 'Критический', legend_low: 'Низкий', legend_opt: 'Оптимальный', legend_high: 'Высокий', legend_super: 'Сверхвысокий',
-    map_atlas: 'Атлас ритмов', map_return: 'Кликните для возврата', active: 'Активно', inactive: 'Не активно',
-    help_title: 'Инфоцентр', back: 'Назад', toggle_dvig: 'Двигательный', toggle_phys: 'Физический', toggle_sens: 'Сенсорный', toggle_anlt: 'Аналитический',
-    help_core_title: 'ЯДРО RITMXOID',
-    help_core_desc: 'Основано на алгоритмах Ритмического Ряда (РР). 4 базовых ритма:',
-    help_motor_title: 'ДВИГАТЕЛЬНЫЙ (Эмоц.)', help_motor_desc: 'Костно-мышечная, нервная и кровеносная системы. Верхняя фаза — стимулятор активности.',
-    help_phys_title: 'ФИЗИЧЕСКИЙ (Физиол.)', help_phys_desc: 'Био-структура, метаболизм и синтез белка.',
-    help_sens_title: 'СЕНСОРНЫЙ (Информ.)', help_sens_desc: 'Адаптация и обработка информации.',
-    help_anlt_title: 'АНАЛИТИЧЕСКИЙ', help_anlt_desc: 'Контроль и анализ процессов, доступных сознанию.',
-    help_levels_title: 'УРОВНИ ЭНЕРГИИ',
-    help_crit_desc: 'Пик уязвимости. Низкий фокус. Избегайте перегрузок и конфликтов.',
-    help_low_desc: 'Усталость, раздражительность. Снижение самооценки и реакции.',
-    help_opt_desc: 'Идеальный баланс. Лучшее время для принятия важных решений.',
-    help_high_desc: 'Избыток энергии. Высокая работоспособность. Расходуйте силы равномерно.',
-    help_super_desc: 'Нестабильное гипер-состояние. Риск перенапряжения.',
-    help_risk_title: 'ФАКТОРЫ РИСКА (⚡)',
-    help_risk_desc: '1⚡: Умеренный риск. 2⚡: Обострение хроники. 3⚡: Критический риск.',
-    help_arena_title: 'РАНЖИРОВАНИЕ АРЕНЫ',
-    help_arena_total: 'ПОЛНОЕ: Глобальное сравнение всех полей. Прогноз доминирования.',
-    help_arena_basic: 'БАЗОВОЕ: Сравнение Двигательного + Физического. Лучший прогноз для спорта.',
-    help_arena_reactive: 'РЕАКТИВНОЕ: Сенсорный + Аналитический. Для тактики и реакции.',
-    help_balance_title: 'ПЛАНИРОВАНИЕ БАЛАНСА',
-    help_balance_desc: 'Максимизируйте нагрузку на "пиках" и снижайте в "ямах" соответствующих ритмов.',
-    help_activities_title: 'МЕХАНИКА АКТИВНОСТЕЙ',
-    help_activities_desc: 'Попадание процессов жизнедеятельности в соответствующие интервалы активности, повышают фактические показатели ритмобаланса, по принципу резонанса.',
-    help_maps_title: 'АТЛАС РИТМОВ',
-    help_maps_desc: '9 диапазонов от Пульса (Микро 3.5) до Цикла жизни (Макро 3.5).',
-    help_compat_title: 'ТИПЫ СОВМЕСТИМОСТИ',
-    help_compat_polar: 'ПОЛЯРНАЯ: Эффективна для технических задач и инноваций.',
-    help_compat_resonant: 'РЕЗОНАНСНАЯ: Подходит для развлечений и краткого общения.',
-    help_compat_optimal: 'ОПТИМАЛЬНАЯ: Идеальна для долгих отношений.',
-    export: 'Экспорт', import: 'Импорт', confirm_delete: 'Удалить?', confirm_logout: 'Выйти?', edit: 'Редакт.',
-    yes: 'Да', no: 'Нет', days_abbr: ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'],
-    current_activities_desc: 'Отображение активных окон для различных процессов.',
-    group: 'Группа', ungroup: 'Разгруппировать', group_placeholder: 'Имя группы...', rename: 'Переименовать', confirm_ungroup: 'Разгруппировать все?',
-    compatibility: 'Совместимость', resonant: 'Резонансная', optimal_compat: 'Оптимальная', polar: 'Полярная',
-    arena: 'Арена', arena_total: 'Полное сравнение', arena_basic: 'Базовое сравнение', arena_reactive: 'Реактивное сравнение',
-    remove_arena: 'Убрать?', members_count: 'чел.'
-  },
-  es: {
-    profiles: 'Contactos', balance: 'Equilibrio', activities: 'Actividad', calendar: 'Calendario', maps: 'Mapas',
-    add: 'Añadir +', close: 'Cerrar', save: 'Guardar', name_placeholder: 'Nombre...', status: 'Estado',
-    passed: 'Desde el nacimiento:', days: 'd.', hours: 'h.', minutes: 'm.',
-    risk_index: 'Índice de Riesgo:', legend_crit: 'Crítico', legend_low: 'Bajo', legend_opt: 'Óptimo', legend_high: 'Alto', legend_super: 'Muy Alto',
-    map_atlas: 'Atlas rítmico', map_return: 'Clic para volver', active: 'Activo', inactive: 'Inactivo',
-    help_title: 'Centro de Info', back: 'Atrás', toggle_dvig: 'Motor', toggle_phys: 'Físico', toggle_sens: 'Sensorial', toggle_anlt: 'Analítico',
-    help_core_title: 'NÚCLEO RITMXOID',
-    help_core_desc: 'Evaluación de estados rítmicos basada en la Serie Rítmica. 4 ritmos:',
-    help_motor_title: 'MOTOR (Emocional)', help_motor_desc: 'Sistemas muscular y circulatorio. Fase alta estimula actividad física.',
-    help_phys_title: 'FÍSICO (Fisiológico)', help_phys_desc: 'Bioestructura y metabolismo.',
-    help_sens_title: 'SENSORIAL', help_sens_desc: 'Adaptación y procesamiento de información.',
-    help_anlt_title: 'ANALÍTICO', help_anlt_desc: 'Control consciente. Solo fase alta inicializada.',
-    help_levels_title: 'NIVELES DE ENERGÍA',
-    help_crit_desc: 'Vulnerabilidad máxima. Evite el estrés extremo.',
-    help_low_desc: 'Fatiga e irritabilidad.',
-    help_opt_desc: 'Equilibrio perfecto. Ideal para decisiones.',
-    help_high_desc: 'Exceso de energía.',
-    help_super_desc: 'Hiperestado inestable.',
-    help_risk_title: 'FACTORES DE RIESGO',
-    help_risk_desc: '1⚡: Moderado. 2⚡: Riesgo crónico. 3⚡: Crítico.',
-    help_arena_title: 'RANGO DE ARENA',
-    help_arena_total: 'TOTAL: Comparación global de campos.',
-    help_arena_basic: 'BÁSICO: Ritmos Motor y Físico.',
-    help_arena_reactive: 'REACTIVO: Sensorial y Analítico.',
-    help_balance_title: 'PLANIFICACIÓN',
-    help_balance_desc: 'Aumente carga en picos y reduzca en valles.',
-    help_activities_title: 'ACTIVIDADES',
-    help_activities_desc: 'Procesos biológicos en intervalos específicos aumentan el equilibrio por resonancia.',
-    help_maps_title: 'ATLAS RÍTMICO',
-    help_maps_desc: '9 rangos fractales desde Pulso hasta Ciclo de Vida.',
-    help_compat_title: 'COMPATIBILIDAD',
-    help_compat_polar: 'POLAR: Eficaz para innovación.',
-    help_compat_resonant: 'RESONANTE: Para interacción corta.',
-    help_compat_optimal: 'ÓPTIMA: Para relaciones largas.',
-    export: 'Exportar', import: 'Importar', confirm_delete: '¿Borrar?', confirm_logout: '¿Salir?', edit: 'Edit.',
-    yes: 'Sí', no: 'No', days_abbr: ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'],
-    current_activities_desc: 'Ventanas activas para varios procesos.',
-    group: 'Grupo', ungroup: 'Desagrupar', group_placeholder: 'Nombre del grupo...', rename: 'Renombrar', confirm_ungroup: '¿Desagrupar todo?',
-    compatibility: 'Compatibilidad', resonant: 'Resonante', optimal_compat: 'Óptima', polar: 'Polar',
-    arena: 'Arena', arena_total: 'Total', arena_basic: 'Básico', arena_reactive: 'Reactivo',
-    remove_arena: '¿Quitar?', members_count: 'miembros'
-  },
-  de: {
-    profiles: 'Kontakte', balance: 'Bilanz', activities: 'Aktivität', calendar: 'Kalender', maps: 'Karten',
-    add: 'Neu +', close: 'Schließen', save: 'Speichern', name_placeholder: 'Name...', status: 'Status',
-    passed: 'Seit Geburt:', days: 'T.', hours: 'Std.', minutes: 'Min.',
-    risk_index: 'Risiko-Index:', legend_crit: 'Kritisch', legend_low: 'Niedrig', legend_opt: 'Optimal', legend_high: 'Hoch', legend_super: 'Sehr Hoch',
-    map_atlas: 'Rhythmus-Atlas', map_return: 'Klicken zum Zurückkehren', active: 'Aktiv', inactive: 'Inaktiv',
-    help_title: 'Info-Zentrum', back: 'Zurück', toggle_dvig: 'Motorisch', toggle_phys: 'Physisch', toggle_sens: 'Sensorisch', toggle_anlt: 'Analytisch',
-    help_core_title: 'RITMXOID KERN',
-    help_core_desc: 'Bewertung rst-basierter rhythmischer Felder. 4 Kernrhythmen:',
-    help_motor_title: 'MOTORISCH', help_motor_desc: 'Muskel- und Kreislaufsystem.',
-    help_phys_title: 'PHYSISCH', help_phys_desc: 'Stoffwechsel und Biostruktur.',
-    help_sens_title: 'SENSORISCH', help_sens_desc: 'Info-Verarbeitung.',
-    help_anlt_title: 'ANALYTISCH', help_anlt_desc: 'Bewusste Kontrolle.',
-    help_levels_title: 'ENERGIENIVEAUS',
-    help_crit_desc: 'Höchste Verletzlichkeit.',
-    help_low_desc: 'Müdigkeit und Reizbarkeit.',
-    help_opt_desc: 'Perfekte Balance.',
-    help_high_desc: 'Energieüberschuss.',
-    help_super_desc: 'Instabiler Hyperzustand.',
-    help_risk_title: 'RISIKOFAKTOREN',
-    help_risk_desc: '1⚡: Moderat. 2⚡: Chronisch. 3⚡: Kritisch.',
-    help_arena_title: 'ARENA RANKING',
-    help_arena_total: 'TOTAL: Globaler Vergleich.',
-    help_arena_basic: 'BASIS: Motorisch + Physisch.',
-    help_arena_reactive: 'REAKTIV: Sensorisch + Analytisch.',
-    help_balance_title: 'PLANUNG',
-    help_balance_desc: 'Last in Peaks erhöhen, in Tiefs senken.',
-    help_activities_title: 'AKTIVITÄTEN',
-    help_activities_desc: 'Biologische Prozesse im Resonanzprinzip.',
-    help_maps_title: 'RHYTHMUS-ATLAS',
-    help_maps_desc: '9 fraktale Bereiche.',
-    help_compat_title: 'KOMPATIBILITÄT',
-    help_compat_polar: 'POLAR: Für Innovation.',
-    help_compat_resonant: 'RESONANT: Für kurze Treffen.',
-    help_compat_optimal: 'OPTIMAL: Für lange Beziehungen.',
-    export: 'Export', import: 'Import', confirm_delete: 'Löschen?', confirm_logout: 'Logout?', edit: 'Edit.',
-    yes: 'Ja', no: 'Nein', days_abbr: ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'],
-    current_activities_desc: 'Aktive Fenster für Prozesse.',
-    group: 'Gruppe', ungroup: 'Auflösen', group_placeholder: 'Gruppenname...', rename: 'Umbenennen', confirm_ungroup: 'Alle auflösen?',
-    compatibility: 'Kompatibilität', resonant: 'Resonant', optimal_compat: 'Optimal', polar: 'Polar',
-    arena: 'Arena', arena_total: 'Gesamt', arena_basic: 'Basis', arena_reactive: 'Reaktiv',
-    remove_arena: 'Entfernen?', members_count: 'mitglieder'
-  },
-  fr: {
-    profiles: 'Contacts', balance: 'Équilibre', activities: 'Activités', calendar: 'Calendrier', maps: 'Cartes',
-    add: 'Ajouter +', close: 'Fermer', save: 'Enregistrer', name_placeholder: 'Nom...', status: 'Statut',
-    passed: 'Depuis la naissance :', days: 'j.', hours: 'h.', minutes: 'm.',
-    risk_index: 'Indice de risque :', legend_crit: 'Critique', legend_low: 'Bas', legend_opt: 'Optimal', legend_high: 'Haut', legend_super: 'Très Haut',
-    map_atlas: 'Atlas rythmique', map_return: 'Cliquer pour retour', active: 'Actif', inactive: 'Inactif',
-    help_title: 'Centre d\'Info', back: 'Retour', toggle_dvig: 'Moteur', toggle_phys: 'Physique', toggle_sens: 'Sensoriel', toggle_anlt: 'Analytique',
-    help_core_title: 'CŒUR RITMXOID',
-    help_core_desc: 'Évaluation des états rythmiques humains. 4 rythmes :',
-    help_motor_title: 'MOTEUR', help_motor_desc: 'Systèmes musculaire et nerveux.',
-    help_phys_title: 'PHYSIQUE', help_phys_desc: 'Métabolisme et biostructure.',
-    help_sens_title: 'SENSORIEL', help_sens_desc: 'Traitement de l\'info.',
-    help_anlt_title: 'ANALYTIQUE', help_anlt_desc: 'Contrôle conscient.',
-    help_levels_title: 'NIVEAUX D\'ÉNERGIE',
-    help_crit_desc: 'Vulnérabilité maximale.',
-    help_low_desc: 'Fatigue, irritabilité.',
-    help_opt_desc: 'Équilibre parfait.',
-    help_high_desc: 'Surplus d\'énergie.',
-    help_super_desc: 'Hyper-état instable.',
-    help_risk_title: 'FACTECTORS DE RISQUE',
-    help_risk_desc: '1⚡: Modéré. 2⚡: Chronique. 3⚡: Critique.',
-    help_arena_title: 'CLASSEMENT ARENA',
-    help_arena_total: 'TOTAL : Comparaison globale.',
-    help_arena_basic: 'BASIQUE : Moteur + Physique.',
-    help_arena_reactive: 'RÉACTIF : Sensoriel + Analytique.',
-    help_balance_title: 'PLANIFICATION',
-    help_balance_desc: 'Augmenter la charge aux pics.',
-    help_activities_title: 'MÉCANISME',
-    help_activities_desc: 'Principe de résonance biologique.',
-    help_maps_title: 'ATLAS RYTHMIQUE',
-    help_maps_desc: '9 plages fractales.',
-    help_compat_title: 'COMPATIBILITÉ',
-    help_compat_polar: 'POLAIRE : Pour l\'innovation.',
-    help_compat_resonant: 'RÉSONANTE : Interaction courte.',
-    help_compat_optimal: 'OPTIMALE : Long terme.',
-    export: 'Exporter', import: 'Importer', confirm_delete: 'Supprimer ?', confirm_logout: 'Quitter ?', edit: 'Edit.',
-    yes: 'Oui', no: 'Non', days_abbr: ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'],
-    current_activities_desc: 'Fenêtres actives pour les processus.',
-    group: 'Groupe', ungroup: 'Dégrouper', group_placeholder: 'Nom du groupe...', rename: 'Renommer', confirm_ungroup: 'Tout dégrouper ?',
-    compatibility: 'Compatibilité', resonant: 'Résonante', optimal_compat: 'Optimale', polar: 'Polaire',
-    arena: 'Arena', arena_total: 'Total', arena_basic: 'Basique', arena_reactive: 'Réactif',
-    remove_arena: 'Enlever ?', members_count: 'membres'
-  },
-  pt: {
-    profiles: 'Contactos', balance: 'Equilíbrio', activities: 'Atividades', calendar: 'Calendário', maps: 'Mapas',
-    add: 'Novo +', close: 'Fechar', save: 'Salvar', name_placeholder: 'Nome...', status: 'Estado',
-    passed: 'Desde o nascimento:', days: 'd.', hours: 'h.', minutes: 'm.',
-    risk_index: 'Índice de Risco:', legend_crit: 'Crítico', legend_low: 'Baixo', legend_opt: 'Ótimo', legend_high: 'Alto', legend_super: 'Super Alto',
-    map_atlas: 'Atlas Rítmico', map_return: 'Clique para voltar', active: 'Ativo', inactive: 'Inactivo',
-    help_title: 'Centro de Info', back: 'Voltar', toggle_dvig: 'Motor', toggle_phys: 'Físico', toggle_sens: 'Sensorial', toggle_anlt: 'Analítico',
-    help_core_title: 'NÚCLEO RITMXOID',
-    help_core_desc: 'Avaliação rítmica humana. 4 ritmos principais:',
-    help_motor_title: 'MOTOR', help_motor_desc: 'Sistemas muscular e nervoso.',
-    help_phys_title: 'FÍSICO', help_phys_desc: 'Metabolismo e estrutura.',
-    help_sens_title: 'SENSORIAL', help_sens_desc: 'Processamento de info.',
-    help_anlt_title: 'ANALÍTICO', help_anlt_desc: 'Controle consciente.',
-    help_levels_title: 'NÍVEIS DE ENERGIA',
-    help_crit_desc: 'Vulnerabilidade máxima.',
-    help_low_desc: 'Fadiga e irritação.',
-    help_opt_desc: 'Equilíbrio perfeito.',
-    help_high_desc: 'Excesso de energia.',
-    help_super_desc: 'Estado inestável.',
-    help_risk_title: 'RISCOS',
-    help_risk_desc: '1⚡: Moderado. 2⚡: Crônico. 3⚡: Crítico.',
-    help_arena_title: 'ARENA',
-    help_arena_total: 'TOTAL: Comparação global.',
-    help_arena_basic: 'BÁSICO: Motor + Físico.',
-    help_arena_reactive: 'REATIVO: Sensorial + Analítico.',
-    help_balance_title: 'PLANEAMENTO',
-    help_balance_desc: 'Carga nos picos, repouso nos vales.',
-    help_activities_title: 'MECANISMO',
-    help_activities_desc: 'Ressonância biológica.',
-    help_maps_title: 'ATLAS RÍTMICO',
-    help_maps_desc: '9 faixas fractais.',
-    help_compat_title: 'COMPATIBILIDADE',
-    help_compat_polar: 'POLAR: Para inovação.',
-    help_compat_resonant: 'RESSONANTE: Lazer.',
-    help_compat_optimal: 'OPTIMAL: Longo prazo.',
-    export: 'Exportar', import: 'Importar', confirm_delete: 'Excluir?', confirm_logout: 'Sair?', edit: 'Edit.',
-    yes: 'Sim', no: 'Não', days_abbr: ['Se', 'Te', 'Qu', 'Qu', 'Se', 'Sá', 'Do'],
-    current_activities_desc: 'Janelas ativas de processos.',
-    group: 'Grupo', ungroup: 'Desagrupar', group_placeholder: 'Nome do grupo...', rename: 'Renombrar', confirm_ungroup: 'Desagrupar tudo?',
-    compatibility: 'Compatibilidade', resonant: 'Ressonante', optimal_compat: 'Ótima', polar: 'Polar',
-    arena: 'Arena', arena_total: 'Total', arena_basic: 'Básico', arena_reactive: 'Reativo',
-    remove_arena: 'Remover?', members_count: 'membros'
-  },
-  zh: {
-    profiles: '联系人', balance: '平衡', activities: '活动', calendar: '日历', maps: '图表',
-    add: '添加 +', close: '关闭', save: '保存到库', name_placeholder: '姓名...', status: '状态',
-    passed: '出生以来已过:', days: '天', hours: '时', minutes: '分',
-    risk_index: '累积风险指数:', legend_crit: '临界', legend_low: '低', legend_opt: '理想', legend_high: '高', legend_super: '极高',
-    map_atlas: '节奏地图', map_return: '点击返回', active: '活动', inactive: '不活动',
-    help_title: '信息中心', back: '返回', toggle_dvig: '动力', toggle_phys: '身体', toggle_sens: '感官', toggle_anlt: '分析',
-    help_core_title: 'RITMXOID 核心',
-    help_core_desc: '基于节奏系列（RS）概念的人体节奏场评估。4大核心节奏：',
-    help_motor_title: '动力 (情绪)', help_motor_desc: '肌肉、神经和循环系统。高相位刺激肌肉活动。',
-    help_phys_title: '身体 (生理)', help_phys_desc: '生物结构和新陈代谢。',
-    help_sens_title: '感官 (信息)', help_sens_desc: '通过内分泌和免疫系统进行信息处理。',
-    help_anlt_title: '分析', help_anlt_desc: '意识和潜意识控制。仅初始化高相位。',
-    help_levels_title: '能量水平',
-    help_crit_desc: '巅峰脆弱期。避免极端压力和冲突。',
-    help_low_desc: '疲劳，易怒。反应力下降。',
-    help_opt_desc: '完美平衡。重大决策的最佳时机。',
-    help_high_desc: '能量充沛。高工作效率。',
-    help_super_desc: '不稳定的过度状态。高应激风险。',
-    help_risk_title: '风险因素 (⚡)',
-    help_risk_desc: '1⚡: 中度。2⚡: 慢性病发作风险。3⚡: 临界风险，避免旅行。',
-    help_arena_title: '竞技场排名',
-    help_arena_total: '总排名：所有领域的全球对比。',
-    help_arena_basic: '基础排名：动力 + 身体节奏。适用于运动和体力劳动。',
-    help_arena_reactive: '反应排名：感官 + 分析。适用于战术和反应。',
-    help_balance_title: '平衡规划',
-    help_balance_desc: '在“高峰”期间增加负荷，在“低谷”期间减少负荷。',
-    help_activities_title: '活动机制',
-    help_activities_desc: '符合节奏间隔的生物过程会通过共振原理提高平衡指标。',
-    help_maps_title: '节奏地图',
-    help_maps_desc: '从脉搏（微观3.5）到生命周期（宏观3.5）的9个分形范围。',
-    help_compat_title: '兼容性类型',
-    help_compat_polar: '极性：对于技术任务和创新非常有效。',
-    help_compat_resonant: '共振：适合短期互动和娱乐。',
-    help_compat_optimal: '理想：最适合长期（家庭）关系。',
-    export: '导出', import: '导入', confirm_delete: '删除？', confirm_logout: '注销？', edit: '编辑',
-    yes: '是', no: '否', days_abbr: ['一', '二', '三', '四', '五', '六', '日'],
-    current_activities_desc: '显示各种过程的活动窗口。',
-    group: '分组', ungroup: '解散', group_placeholder: '组名...', rename: '重命名', confirm_ungroup: '解散所有组？',
-    compatibility: '兼容性', resonant: '共振型', optimal_compat: '理想型', polar: '极性型',
-    arena: '竞技场', arena_total: '总排名', arena_basic: '基础排名', arena_reactive: '反应排名',
-    remove_arena: '移除？', members_count: '成员'
-  },
-  ja: {
-    profiles: '連絡先', balance: 'バランス', activities: '活動', calendar: 'カレンダー', maps: 'マップ',
-    add: '追加 +', close: '閉じる', save: '保存', name_placeholder: '名前...', status: 'ステータス',
-    passed: '生後経過:', days: '日', hours: '時間', minutes: '分',
-    risk_index: '累計リスク指数:', legend_crit: '臨界', legend_low: '低', legend_opt: '最適', legend_high: '高', legend_super: '極高',
-    map_atlas: 'リズム図譜', map_return: '戻る', active: 'アクティブ', inactive: '非アクティブ',
-    help_title: '情報センター', back: '戻る', toggle_dvig: '運動', toggle_phys: '身体', toggle_sens: '感覚', toggle_anlt: '分析',
-    help_core_title: 'RITMXOID コア',
-    help_core_desc: 'リズムシリーズ（RS）概念に基づくリズム場評価。4つの核心リズム：',
-    help_motor_title: '運動 (情緒)', help_motor_desc: '筋肉、循環器系。高相は身体活動を刺激。',
-    help_phys_title: '身体 (生理)', help_phys_desc: '生体構造と代謝。',
-    help_sens_title: '感覚 (情報)', help_sens_desc: '情報の適応と処理。',
-    help_anlt_title: '分析', help_anlt_desc: '意識的制御。高相のみ。',
-    help_levels_title: 'エネルギーレベル',
-    help_crit_desc: '脆弱性のピーク。極度のストレスを避けてください。',
-    help_low_desc: '疲労、苛立ち。',
-    help_opt_desc: '完璧なバランス。意思決定に最適。',
-    help_high_desc: 'エネルギー過剰。高い作業能力。',
-    help_super_desc: '不安定な過緊張状態。',
-    help_risk_title: 'リスク要因 (⚡)',
-    help_risk_desc: '1⚡: 中程度。2⚡: 慢性リスク。3⚡: 臨界リスク。',
-    help_arena_title: 'アリーナ・ランキング',
-    help_arena_total: '総合ランク: 全分野の比較。',
-    help_arena_basic: '基本ランク: 運動 + 身体。',
-    help_arena_reactive: '反応ランク: 感覚 + 分析。',
-    help_balance_title: 'バランス計画',
-    help_balance_desc: 'ピーク時に負荷を上げ、ピット時に下げます。',
-    help_activities_title: '活動メカニズム',
-    help_activities_desc: '共鳴의 原理に基づき、特定の間隔で活動を行うとバランスが向上します。',
-    help_maps_title: 'リズム図譜',
-    help_maps_desc: 'パルスからライフサイクルまで。',
-    help_compat_title: '相性タイプ',
-    help_compat_polar: '極性: 技術的課題や革新に効果的。',
-    help_compat_resonant: '共鳴: 短期の交流や娯楽に。',
-    help_compat_optimal: '最適: 長期（家族）関係に最良。',
-    export: 'エクスポート', import: 'インポート', confirm_delete: '削除しますか？', confirm_logout: 'ログアウトしますか？', edit: '編集',
-    yes: 'はい', no: 'いいえ', days_abbr: ['月', '火', '水', '木', '金', '土', '日'],
-    current_activities_desc: '各プロセスの活動中ウィンドウ。',
-    group: 'グループ', ungroup: '解除', group_placeholder: 'グループ名...', rename: '名前変更', confirm_ungroup: 'すべて解除しますか？',
-    compatibility: '相性', resonant: '共鳴型', optimal_compat: '最適型', polar: '極性型',
-    arena: 'アリーナ', arena_total: '総合', arena_basic: '基本', arena_reactive: '反応',
-    remove_arena: '削除？', members_count: '名'
-  },
-  ar: {
-    profiles: 'جهات الاتصال', balance: 'التوازن', activities: 'الأنشطة', calendar: 'التقويم', maps: 'الخرائط',
-    add: 'إضافة +', close: 'إغلاق', save: 'حفظ', name_placeholder: 'الاسم...', status: 'الحالة',
-    passed: 'منذ الولادة:', days: 'يوم', hours: 'ساعة', minutes: 'دقيقة',
-    risk_index: 'مؤشر المخاطر:', legend_crit: 'حرِج', legend_low: 'منخفض', legend_opt: 'مثالي', legend_high: 'مرتفع', legend_super: 'مرتفع جداً',
-    map_atlas: 'أطلس الإيقاع', map_return: 'اضغط للعودة', active: 'نشط', inactive: 'خامل',
-    help_title: 'مركز المعلومات', back: 'عودة', toggle_dvig: 'حركي', toggle_phys: 'جسدي', toggle_sens: 'حسي', toggle_anlt: 'تحليلي',
-    help_core_title: 'جوهر RITMXOID',
-    help_core_desc: 'تقييم الحقول الإيقاعية بناءً على السلسلة الإيقاعية (RS). 4 إيقاعات:',
-    help_motor_title: 'حركي (عاطفي)', help_motor_desc: 'العضلات والدورة الدموية.',
-    help_phys_title: 'جسدي (فسيولوجي)', help_phys_desc: 'التمثيل الغذائي وهيكل الجسم.',
-    help_sens_title: 'حسي (معلوماتي)', help_sens_desc: 'معالجة المعلومات والتكيف.',
-    help_anlt_title: 'تحليلي', help_anlt_desc: 'السيطرة الواعية.',
-    help_levels_title: 'مستويات الطاقة',
-    help_crit_desc: 'ذروة الضعف. تجنب الإجهاد والنزاعات.',
-    help_low_desc: 'تعب وسرعة غضب.',
-    help_opt_desc: 'توازن مثالي. الأفضل للقرارات.',
-    help_high_desc: 'فائض في الطاقة.',
-    help_super_desc: 'حالة غير مستقرة.',
-    help_risk_title: 'عوامل الخطر (⚡)',
-    help_risk_desc: '1⚡: معتدل. 2⚡: خطر مزمن. 3⚡: خطر حرِج.',
-    help_arena_title: 'تصنيف الحلبة',
-    help_arena_total: 'تصنيف عام لجميع الحقول.',
-    help_arena_basic: 'تصنيف أساسي: حركي + جسدي.',
-    help_arena_reactive: 'تصنيف تفاعلي: حسي + تحليلي.',
-    help_balance_title: 'تخطيط التوازن',
-    help_balance_desc: 'زيادة الأحمال عند "القمم".',
-    help_activities_title: 'آلية الأنشطة',
-    help_activities_desc: 'العمليات البيولوجية في فترات محددة تزيد التوازن بمبدأ الرنين.',
-    help_maps_title: 'أطلس الإيقاع',
-    help_maps_desc: '9 نطاقات من النبض إلى دورة الحياة.',
-    help_compat_title: 'أنواع التوافق',
-    help_compat_polar: 'قطبي: فعال للمهام التقنية والابتكار.',
-    help_compat_resonant: 'رنيني: للتفاعل القصير والمرح.',
-    help_compat_optimal: 'مثالي: للعلاقات طويلة الأمد (العائلة).',
-    export: 'تصدير', import: 'استيراد', confirm_delete: 'حذف؟', confirm_logout: 'خروج؟', edit: 'تعديل',
-    yes: 'نعم', no: 'لا', days_abbr: ['اث', 'ثلاث', 'اربع', 'خمس', 'جمعة', 'سبت', 'احد'],
-    current_activities_desc: 'عرض النوافذ النشطة لمختلف العمليات.',
-    group: 'مجموعة', ungroup: 'فك المجموعة', group_placeholder: 'اسم المجموعة...', rename: 'تغيير الاسم', confirm_ungroup: 'فك الجميع؟',
-    compatibility: 'التوافق', resonant: 'رنيني', optimal_compat: 'مثالي', polar: 'قطبي',
-    arena: 'الحلبة', arena_total: 'إجمالي', arena_basic: 'أساسي', arena_reactive: 'تفاعلي',
-    remove_arena: 'إزالة؟', members_count: 'أعضاء'
-  },
-  hi: {
-    profiles: 'संपर्क', balance: 'संतुलन', activities: 'गतिविधियां', calendar: 'कैलेंडर', maps: 'मानचित्र',
-    add: 'जोड़ें +', close: 'बंद करें', save: 'सुरक्षित करें', name_placeholder: 'नाम...', status: 'स्थिति',
-    passed: 'जन्म के बाद से:', days: 'दिन', hours: 'घंटे', minutes: 'मिनट',
-    risk_index: 'कुल जोखिम सूचकांक:', legend_crit: 'नाजुक', legend_low: 'कम', legend_opt: 'इष्टतम', legend_high: 'उच्च', legend_super: 'अत्यधिक उच्च',
-    map_atlas: 'लय एटलस', map_return: 'वापसी के लिए क्लिक करें', active: 'सक्रिय', inactive: 'निष्क्रिय',
-    help_title: 'सूचना केंद्र', back: 'पीछे', toggle_dvig: 'मोटर', toggle_phys: 'शारीरिक', toggle_sens: 'संवेदी', toggle_anlt: 'विश्लेषणात्मक',
-    help_core_title: 'RITMXOID कोर',
-    help_core_desc: 'रिदमिक सीरीज (RS) अवधारणा पर आधारित मानवीय लय क्षेत्रों का मूल्यांकन। 4 मुख्य लय:',
-    help_motor_title: 'मोटर (भावनात्मक)', help_motor_desc: 'मांसपेशियों और संचार प्रणाली। उच्च चरण सक्रियता को बढ़ाता है।',
-    help_phys_title: 'शारीरिक (फिजियोलॉजिकल)', help_phys_desc: 'शरीर संरचना और चयापचय।',
-    help_sens_title: 'संवेदी (सूचनात्मक)', help_sens_desc: 'अनुकूलन और सूचना प्रसंस्करण।',
-    help_anlt_title: 'विश्लेषणात्मक', help_anlt_desc: 'सचेत नियंत्रण। केवल उच्च चरण प्रारंभ।',
-    help_levels_title: 'ऊर्जा स्तर',
-    help_crit_desc: 'चरम संवेदनशीलता। तनाव और संघर्ष से बचें।',
-    help_low_desc: 'थकान, चिड़चिड़ापन। प्रतिक्रिया में कमी।',
-    help_opt_desc: 'पूर्ण संतुलन। महत्वपूर्ण निर्णयों का समय।',
-    help_high_desc: 'अतिरिक्त ऊर्जा। उच्च कार्य क्षमता।',
-    help_super_desc: 'अस्थिर स्थिति। अत्यधिक तनाव का जोखिम।',
-    help_risk_title: 'जोखिम कारक (⚡)',
-    help_risk_desc: '1⚡: मध्यम। 2⚡: पुरानी बीमारी जोखिम। 3⚡: गंभीर जोखिम, यात्रा से बचें।',
-    help_arena_title: 'अखाड़ा रैंकिंग',
-    help_arena_total: 'कुल रैंक: सभी क्षेत्रों की तुलना।',
-    help_arena_basic: 'मूल रैंक: मोटर + शारीरिक। खेल के लिए सर्वोत्तम।',
-    help_arena_reactive: 'प्रतिक्रियाशील रैंक: संवेदी + विश्लेषणात्मक। रणनीति के लिए।',
-    help_balance_title: 'संतुलन योजना',
-    help_balance_desc: 'पिक के दौरान भार बढ़ाएं और पिट के दौरान कम करें।',
-    help_activities_title: 'गतिविधि तंत्र',
-    help_activities_desc: 'विशिष्ट अंतरालों में होने वाली जैविक प्रक्रियाएं अनुनाद द्वारा संतुलन बढ़ाती हैं।',
-    help_maps_title: 'लय एटलс',
-    help_maps_desc: '9 फ्रैक्टल रेंज।',
-    help_compat_title: 'अनुकूलता प्रकार',
-    help_compat_polar: 'ध्रुवीय: नवाचार और तकनीकी कार्यों के लिए प्रभावी।',
-    help_compat_resonant: 'अनुनाдक: मनोरंजन के लिए अच्छा।',
-    help_compat_optimal: 'इष्टतम: दीर्घकालिक (पारिवारिक) संबंधों के लिए सर्वोत्तम।',
-    export: 'निर्यात', import: 'आयात', confirm_delete: 'हटाएं?', confirm_logout: 'लॉगआउट?', edit: 'संपादन',
-    yes: 'हाँ', no: 'नहीं', days_abbr: ['सोम', 'मंगल', 'बुध', 'गुरु', 'शुक्र', 'शनि', 'रви'],
-    current_activities_desc: 'विभिन्न प्रक्रियाओं के सक्रिय विंडो।',
-    group: 'समूह', ungroup: 'समूह हटाएँ', group_placeholder: 'समूह का नाम...', rename: 'नाम बदलें', confirm_ungroup: 'सभी हटाएँ?',
-    compatibility: 'अनुकूलता', resonant: 'अनुनादक', optimal_compat: 'इष्टतम', polar: 'ध्रुवीय',
-    arena: 'अखाड़ा', arena_total: 'कुल', arena_basic: 'मूल', arena_reactive: 'प्रतिक्रियाशील',
-    remove_arena: 'निकालें?', members_count: 'सदस्य'
-  }
-};
 
 const Dashboard: React.FC<DashboardProps> = ({ 
   profile, allProfiles, onAddProfile, onUpdateProfile, onDeleteProfile, onGroupProfiles, onRenameGroup, onUngroup, onMoveToGroup, onSelectProfile, onReset, onImportProfiles, onLogout 
@@ -529,7 +85,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     return () => clearInterval(timer);
   }, []);
 
-  const t = (key: string) => TRANSLATIONS[lang]?.[key] || TRANSLATIONS['en'][key] || key;
+  const t = getT(lang);
 
   const bdate = useMemo(() => {
     return DateTime.fromISO(profile.birthDate).setZone(APP_ZONE, { keepLocalTime: true });
@@ -622,10 +178,206 @@ const Dashboard: React.FC<DashboardProps> = ({
         if (Array.isArray(imported)) {
           onImportProfiles(imported);
         }
-      } catch (err) {}
+      } catch (err) {
+        // Ошибка импорта
+      }
     };
     reader.readAsText(file);
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleExportYearlyCalendar = () => {
+    const year = targetDate.year;
+    const monthNames = Info.months('long', { locale: lang });
+    const weekDaysShort = t('days_abbr');
+    const accentColor = '#8a2be2'; // Яркий фиолетовый
+    
+    // Данные для легенды из engine.ts
+    const legendData = [
+      { color: COLORS.CRITICAL, label: t('legend_crit') },
+      { color: COLORS.LOW, label: t('legend_low') },
+      { color: COLORS.OPTIMAL, label: t('legend_opt') },
+      { color: COLORS.HIGH, label: t('legend_high') },
+      { color: COLORS.SUPERHIGH, label: t('legend_super') }
+    ];
+
+    let htmlContent = `
+    <!DOCTYPE html>
+    <html lang="${lang}">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>RITMXOID CALENDAR ${year} - ${profile.name}</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap');
+        * { box-sizing: border-box; }
+        body { 
+          font-family: 'Roboto', sans-serif; 
+          background: #fff; 
+          color: #000; 
+          margin: 0; 
+          padding: 8px; 
+          height: 100vh; 
+          display: flex;
+          flex-direction: column;
+        }
+        
+        .header { 
+          text-align: center; 
+          margin-bottom: 8px; 
+          border-bottom: 3px solid ${accentColor}; 
+          padding-bottom: 4px;
+          flex-shrink: 0;
+        }
+        .header h1 { margin: 0; text-transform: uppercase; font-size: 20px; font-weight: 900; letter-spacing: -1px; color: ${accentColor}; line-height: 1.1; }
+        .header h2 { margin: 0; font-size: 14px; font-weight: 700; color: #444; text-transform: uppercase; }
+        .header svg { height: 30px; width: 30px; margin-bottom: 2px; }
+        
+        /* Сетка 3 колонки на 4 ряда */
+        .year-grid { 
+          display: grid; 
+          grid-template-columns: repeat(3, 1fr); 
+          grid-template-rows: repeat(4, 1fr); 
+          gap: 5px; 
+          flex: 1;
+          min-height: 0; /* Важно для Grid в Flex контейнере */
+        }
+        
+        .month-box { border: 1px solid ${accentColor}; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
+        .month-name { text-align: center; font-weight: 900; text-transform: uppercase; font-size: 10px; padding: 2px; background: ${accentColor}; color: #fff; }
+        
+        .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); flex: 1; background: #eee; gap: 1px; }
+        .day-header { text-align: center; font-size: 9px; font-weight: 900; color: ${accentColor}; padding: 1px 0; background: #f8f8f8; text-transform: uppercase; border-bottom: 1px solid #ddd; }
+        
+        .day-cell { position: relative; background: #fff; display: flex; align-items: stretch; justify-content: stretch; overflow: hidden; }
+        .day-num { position: absolute; top: 1px; left: 1px; font-size: 12px; font-weight: 900; color: #333; line-height: 1; z-index: 5; }
+        
+        .risk-container { position: absolute; top: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 0; z-index: 4; width: 10px; }
+        .risk-mark { font-size: 8px; color: #ff0000; font-weight: 900; text-shadow: 1px 1px 0px #fff; line-height: 0.7; }
+        
+        .footer {
+          margin-top: 8px;
+          padding-top: 6px;
+          border-top: 1px solid #ddd;
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          flex-shrink: 0;
+          font-size: 10px;
+        }
+        
+        .legend-section {
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+        }
+        .legend-title { font-weight: 900; text-transform: uppercase; color: #555; margin-bottom: 2px; font-size: 9px; }
+        .legend-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 3px; }
+        .swatch { width: 10px; height: 10px; border-radius: 2px; border: 1px solid rgba(0,0,0,0.1); }
+        .risk-icon-demo { color: #ff0000; font-weight: 900; }
+
+        @media print {
+          @page { size: A4 portrait; margin: 5mm; }
+          body { padding: 0; height: 287mm; } /* Чуть меньше 297 чтобы точно влезло */
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <svg viewBox="2500 600 2100 2200" xmlns="http://www.w3.org/2000/svg">
+          <polygon fill="#FDFDFD" points="2587.46,2701.55 4560.18,2701.55 4560.18,694.95 2587.46,694.95 "/>
+          <path fill="#2893E3" d="M3071.24 1227.95c77.21,36.66 394.14,6.44 500.67,413.85 27.98,106.99 246.44,-45.6 286.14,-82.73 30.35,-28.37 69.21,-85.54 94.32,-134.48 184.52,-359.58 -201.17,-799.39 -607.75,-616.03 -146.05,65.87 -292.78,240.77 -273.38,419.39z"/>
+          <path fill="#FF8F19" d="M4050.99 2202.38c-54.99,-24.24 -316.95,-15.04 -452.91,-265.9 -37.76,-69.68 -36.83,-119.55 -64.11,-181.11 -88.32,-17.74 -196,55.58 -243.26,91.71 -131.25,100.38 -201.88,308.81 -147.79,484.98 25.28,82.35 83.15,172.49 129.24,209.5 224.37,180.21 532.87,158.28 698.49,-82.49 40.24,-58.51 92.8,-162.9 80.34,-256.69z"/>
+          <path fill="#A41213" d="M3071.01 2203.53c37.86,-207.93 84.4,-350.26 273.9,-446.34 73.38,-37.21 108.56,-38.88 184.13,-60.35 17.16,-131.38 -120.38,-317.05 -284.86,-380.11 -510.52,-195.72 -877.19,497.76 -426.68,807.9 54.12,37.26 171.94,96.91 253.51,78.9z"/>
+          <path fill="#7A3DD9" d="M3589.2 1739c-26.58,128.77 131.79,313.59 286.95,376.47 361.88,146.64 756.06,-235.22 578.82,-629.58 -75.53,-168.05 -289.81,-292.02 -398.74,-262 -30.85,72.31 -21.81,321.3 -284.48,452.37 -65.77,32.82 -119.66,37.82 -182.55,62.74z"/>
+        </svg>
+        <h1>RITMXOID ${year}</h1>
+        <h2>${profile.name.toUpperCase()}</h2>
+      </div>
+      <div class="year-grid">
+    `;
+
+    for (let m = 1; m <= 12; m++) {
+      const startOfMonth = DateTime.fromObject({ year, month: m, day: 1 }).setZone(APP_ZONE);
+      const daysInMonth = startOfMonth.daysInMonth!;
+      const firstDayOffset = startOfMonth.weekday - 1; 
+
+      htmlContent += `
+        <div class="month-box">
+          <div class="month-name">${monthNames[m - 1]}</div>
+          <div class="days-grid">
+      `;
+
+      weekDaysShort.forEach((d: string) => {
+        htmlContent += `<div class="day-header">${d}</div>`;
+      });
+
+      for (let i = 0; i < firstDayOffset; i++) {
+        htmlContent += `<div class="day-cell" style="background: #fafafa;"></div>`;
+      }
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const currentDate = startOfMonth.set({ day: d });
+        const dg = calculateDaysGone(bdate, currentDate);
+        const bal = calculateFullBalance(dg);
+        const risk = getRiskLevel(dg, currentDate);
+        const color = getBalanceColor(bal);
+        
+        let riskHtml = '';
+        if (risk >= 25) {
+          const count = risk >= 75 ? 3 : risk >= 50 ? 2 : 1;
+          riskHtml = `<div class="risk-container">`;
+          for(let i = 0; i < count; i++) riskHtml += `<span class="risk-mark">⚡</span>`;
+          riskHtml += `</div>`;
+        }
+
+        htmlContent += `
+          <div class="day-cell" style="background-color: ${color}66;">
+            <span class="day-num">${d}</span>
+            ${riskHtml}
+          </div>
+        `;
+      }
+
+      htmlContent += `</div></div>`;
+    }
+
+    htmlContent += `
+      </div>
+      <div class="footer">
+         <div class="legend-section">
+            <div class="legend-title">${t('help_levels_title')}</div>
+            <div class="legend-row">
+               ${legendData.map(l => `
+                 <div class="legend-item">
+                    <div class="swatch" style="background-color: ${l.color}"></div>
+                    <span>${l.label}</span>
+                 </div>
+               `).join('')}
+            </div>
+         </div>
+         <div class="legend-section" style="align-items: flex-end;">
+            <div class="legend-title">${t('help_risk_title')}</div>
+            <div class="legend-row">
+               <div class="legend-item"><span class="risk-icon-demo">⚡</span> 1</div>
+               <div class="legend-item"><span class="risk-icon-demo">⚡⚡</span> 2</div>
+               <div class="legend-item"><span class="risk-icon-demo">⚡⚡⚡</span> 3</div>
+            </div>
+         </div>
+      </div>
+    </body>
+    </html>
+    `;
+
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `ritmxoid_calendar_${year}_${profile.name.replace(/\s+/g, '_')}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const onDragStart = (e: React.DragEvent, id: string) => {
@@ -685,7 +437,6 @@ const Dashboard: React.FC<DashboardProps> = ({
     if (!showArenaDialog) return [];
     const data: any[] = [];
 
-    // Обработка выбранных ГРУПП (как команд)
     selectedGroupNames.forEach(gn => {
       const members = allProfiles.filter(p => p.teamName === gn);
       if (members.length === 0) return;
@@ -708,7 +459,6 @@ const Dashboard: React.FC<DashboardProps> = ({
       });
     });
 
-    // Обработка индивидуально выбранных профилей (которые НЕ входят в выбранные группы)
     selectedIds.forEach(id => {
       const p = allProfiles.find(x => x.id === id);
       if (!p || (p.teamName && selectedGroupNames.has(p.teamName))) return;
@@ -856,7 +606,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   </>
                 )}
                 <button onClick={() => setShowGroupDialog(true)} title={t('group')} className="w-8 h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[#33b5e5] transition-all active:scale-95"><i className="fa-solid fa-folder-plus text-[12px]" /></button>
-                <button onClick={() => { setListMode('NONE'); setSelectedIds(new Set()); setSelectedGroupNames(new Set()); }} title={t('close')} className="w-8 h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-slate-400 transition-all active:scale-95"><i className="fa-solid fa-xmark text-[12px]" /></button>
+                <button onClick={() => { setListMode('NONE'); setSelectedIds(new Set()); setSelectedGroupNames(new Set()); setListMode('NONE'); }} title={t('close')} className="w-8 h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-slate-400 transition-all active:scale-95"><i className="fa-solid fa-xmark text-[12px]" /></button>
               </>
             ) : (
               <>
@@ -903,7 +653,8 @@ const Dashboard: React.FC<DashboardProps> = ({
         onDrop={onDropOnGeneral}
       >
         <div className="space-y-2">
-          {Object.entries(groupedData.groups).map(([groupName, groupProfiles]) => {
+          {/* Fix: Explicitly type groupProfiles to avoid 'unknown' type error */}
+          {Object.entries(groupedData.groups).map(([groupName, groupProfiles]: [string, any[]]) => {
             const isExpanded = expandedGroups.has(groupName);
             const isContextActive = groupActionActive === groupName;
             const isGroupChecked = selectedGroupNames.has(groupName);
@@ -1123,10 +874,19 @@ const Dashboard: React.FC<DashboardProps> = ({
 
     return (
       <div className="p-4 flex flex-col h-full bg-black overflow-y-auto custom-scrollbar">
-        <div className="mb-4 p-3 bg-[#1b2531]/60 border border-white/10 rounded shadow-lg">
+        <div className="mb-4 p-3 bg-[#1b2531]/60 border border-white/10 rounded shadow-lg flex justify-between items-center">
            <div className="text-[11px] font-bold text-[#33b5e5] uppercase tracking-widest">
              {t('risk_index')} <span className="text-white ml-2 text-base drop-shadow-[0_0_5px_#fff]">{monthlyRiskIndex}</span>
            </div>
+           {targetDate.month === 1 && (
+             <button 
+                onClick={handleExportYearlyCalendar}
+                className="bg-[#33b5e5] text-black px-3 py-1 rounded text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-white transition-colors active:scale-95 shadow-[0_0_10px_rgba(51,181,229,0.4)]"
+             >
+                <i className="fa-solid fa-calendar-check" />
+                {t('export_year')}
+             </button>
+           )}
         </div>
         <div className="grid grid-cols-7 gap-[3px] bg-white/5 p-[2px] border border-white/10 flex-shrink-0 rounded-sm">
           {t('days_abbr').map((h: string, idx: number) => (
@@ -1203,13 +963,13 @@ const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const stepDate = (forward: boolean) => {
-    if (activeTab === 'CALENDAR') {
-      if (forward) setTargetDate(targetDate.plus({ months: 1 }));
-      else setTargetDate(targetDate.minus({ months: 1 }));
-    } else {
-      if (forward) setTargetDate(targetDate.plus({ days: 1 }));
-      else setTargetDate(targetDate.minus({ days: 1 }));
-    }
+    setTargetDate(prev => {
+      if (activeTab === 'CALENDAR') {
+        return forward ? prev.plus({ months: 1 }) : prev.minus({ months: 1 });
+      } else {
+        return forward ? prev.plus({ days: 1 }) : prev.minus({ days: 1 });
+      }
+    });
   };
 
   const getCompatProgress = (idx: number) => {
@@ -1254,7 +1014,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <AnimatePresence>
             {isLangMenuOpen && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute top-12 right-0 bg-[#1b2531] border border-white/20 rounded-xl shadow-2xl z-[10000] overflow-hidden w-40 backdrop-blur-md">
-                {LANGUAGES.map(l => (
+                {GLOBAL_LANGUAGES.map(l => (
                   <button key={l.code} onClick={() => { setLang(l.code); setIsLangMenuOpen(false); }} className={`w-full px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-colors text-xs font-bold uppercase ${lang === l.code ? 'text-[#33b5e5]' : 'text-slate-300'}`}><span className="text-lg">{l.flag}</span>{l.name}</button>
                 ))}
               </motion.div>
@@ -1352,17 +1112,17 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <h3 className="text-[#ffd600] font-black uppercase text-sm border-b border-white/10 pb-1">{t('help_levels_title')}</h3>
                 <div className="space-y-2">
                    {[
-                     { icon: <CriticalLevelIcon />, color: '#44aa00', label: 'legend_crit', desc: 'help_crit_desc' },
-                     { icon: <LowLevelIcon />, color: '#2196f3', label: 'legend_low', desc: 'help_low_desc' },
-                     { icon: <OptimalLevelIcon />, color: '#ffd600', label: 'legend_opt', desc: 'help_opt_desc' },
-                     { icon: <HighLevelIcon />, color: '#ff9800', label: 'legend_high', desc: 'help_high_desc' },
-                     { icon: <SuperHighLevelIcon />, color: '#ff1744', label: 'legend_super', desc: 'help_super_desc' }
+                     { icon: <CriticalLevelIcon />, color: '#44aa00', label: 'legend_crit', descKey: 'help_crit_full' },
+                     { icon: <LowLevelIcon />, color: '#2196f3', label: 'legend_low', descKey: 'help_low_full' },
+                     { icon: <OptimalLevelIcon />, color: '#ffd600', label: 'legend_opt', descKey: 'help_opt_full' },
+                     { icon: <HighLevelIcon />, color: '#ff9800', label: 'legend_high', descKey: 'help_high_full' },
+                     { icon: <SuperHighLevelIcon />, color: '#ff1744', label: 'legend_super', descKey: 'help_super_full' }
                    ].map(lvl => (
                     <div key={lvl.label} className="bg-white/5 p-4 rounded-xl border-l-4 flex gap-4" style={{ borderColor: lvl.color }}>
                       <div className="w-12 h-12 shrink-0">{lvl.icon}</div>
                       <div>
                         <div className="text-[10px] font-black mb-1 uppercase" style={{ color: lvl.color }}>{t(lvl.label)}</div>
-                        <p className="text-xs text-slate-300 leading-snug">{t(lvl.desc)}</p>
+                        <p className="text-xs text-slate-300 leading-snug">{t(lvl.descKey)}</p>
                       </div>
                     </div>
                    ))}
@@ -1380,9 +1140,9 @@ const Dashboard: React.FC<DashboardProps> = ({
               <section className="space-y-4">
                 <h3 className="text-[#ffd600] font-black uppercase text-sm border-b border-white/10 pb-1">{t('help_arena_title')}</h3>
                 <div className="space-y-3">
-                   <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-xs text-slate-300 italic">{t('help_arena_total')}</div>
-                   <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-xs text-slate-300 italic">{t('help_arena_basic')}</div>
-                   <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-xs text-slate-300 italic">{t('help_arena_reactive')}</div>
+                   <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-xs text-slate-300 italic">{t('help_arena_total_desc')}</div>
+                   <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-xs text-slate-300 italic">{t('help_arena_basic_desc')}</div>
+                   <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-xs text-slate-300 italic">{t('help_arena_reactive_desc')}</div>
                 </div>
               </section>
 
@@ -1415,9 +1175,9 @@ const Dashboard: React.FC<DashboardProps> = ({
               <section className="space-y-4">
                 <h3 className="text-[#ffd600] font-black uppercase text-sm border-b border-white/10 pb-1">{t('help_compat_title')}</h3>
                 <div className="bg-white/5 p-4 rounded-xl border border-white/10 space-y-3">
-                   <p className="text-xs text-slate-300"><span className="text-cyan-400 font-bold uppercase">{t('resonant')}:</span> {t('help_compat_resonant')}</p>
-                   <p className="text-xs text-slate-300"><span className="text-yellow-400 font-bold uppercase">{t('optimal_compat')}:</span> {t('help_compat_optimal')}</p>
-                   <p className="text-xs text-slate-300"><span className="text-red-500 font-bold uppercase">{t('polar')}:</span> {t('help_compat_polar')}</p>
+                   <p className="text-xs text-slate-300"><span className="text-cyan-400 font-bold uppercase">{t('resonant')}:</span> {t('help_compat_resonant_desc')}</p>
+                   <p className="text-xs text-slate-300"><span className="text-yellow-400 font-bold uppercase">{t('optimal_compat')}:</span> {t('help_compat_optimal_desc')}</p>
+                   <p className="text-xs text-slate-300"><span className="text-red-500 font-bold uppercase">{t('polar')}:</span> {t('help_compat_polar_desc')}</p>
                 </div>
               </section>
             </div>
@@ -1429,7 +1189,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       <AnimatePresence>
         {profileToDelete && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[1100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#1b2531] border border-white/20 p-8 rounded-[2rem] w-full max-w-sm text-center space-y-6 shadow-2xl">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#1b2531] border border-white/20 p-8 rounded-[2rem] w-full max-sm text-center space-y-6 shadow-2xl">
               <div className="text-4xl text-red-600 mb-2"><i className="fa-solid fa-triangle-exclamation" /></div>
               <h2 className="text-2xl font-black uppercase tracking-tighter">{t('confirm_delete')}</h2>
               <p className="text-slate-400 text-sm font-bold uppercase">{profileToDelete.name}</p>
@@ -1445,7 +1205,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       <AnimatePresence>
         {groupToDelete && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[1100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#1b2531] border border-white/20 p-8 rounded-[2rem] w-full max-w-sm text-center space-y-6 shadow-2xl">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#1b2531] border border-white/20 p-8 rounded-[2rem] w-full max-sm text-center space-y-6 shadow-2xl">
               <div className="text-4xl text-red-600 mb-2"><i className="fa-solid fa-folder-minus" /></div>
               <h2 className="text-2xl font-black uppercase tracking-tighter">{t('ungroup')}</h2>
               <p className="text-slate-300 text-xs font-bold uppercase">{groupToDelete}</p>
@@ -1462,7 +1222,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       <AnimatePresence>
         {showLogoutConfirm && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[1100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#1b2531] border border-white/20 p-8 rounded-[2rem] w-full max-w-sm text-center space-y-6 shadow-2xl">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#1b2531] border border-white/20 p-8 rounded-[2rem] w-full max-sm text-center space-y-6 shadow-2xl">
               <div className="text-4xl text-red-600 mb-2"><i className="fa-solid fa-power-off" /></div>
               <h2 className="text-2xl font-black uppercase tracking-tighter">{t('confirm_logout')}</h2>
               <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">{profile.name}</p>
@@ -1504,10 +1264,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                  </div>
                  
                  <div className="p-4 bg-white/5 border border-white/5 rounded-xl text-xs text-slate-400 leading-relaxed italic text-center">
-                    {(compatIndex === 0 || compatIndex === 12 || compatIndex === 13 || compatIndex === 1) && "Хорошо для краткосрочного общения и развлечений. Возможны конфликты при длительном контакте."}
-                    {(compatIndex === 6 || compatIndex === 7 || compatIndex === 5 || compatIndex === 8) && "Идеально для технического взаимодействия и совместных инноваций. Последовательное движение к цели."}
-                    {/* Fix: Replaced 'аккуратность' with 'compatIndex' */}
-                    {(compatIndex === 3 || compatIndex === 10 || compatIndex === 2 || compatIndex === 4 || compatIndex === 9 || compatIndex === 11) && "Лучший тип для длительных (семейных) отношений. Взаимная терпимость и устойчивость."}
+                    {(compatIndex === 0 || compatIndex === 1 || compatIndex === 12 || compatIndex === 13) && t('help_compat_resonant_desc')}
+                    {((compatIndex >= 2 && compatIndex <= 4) || (compatIndex >= 9 && compatIndex <= 11)) && t('help_compat_optimal_desc')}
+                    {(compatIndex >= 5 && compatIndex <= 8) && t('help_compat_polar_desc')}
                  </div>
                </div>
 
@@ -1562,7 +1321,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       <AnimatePresence>
         {arenaEntityToRemove && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[1300] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#1b2531] border border-white/20 p-8 rounded-[2rem] w-full max-w-sm text-center space-y-6 shadow-2xl">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#1b2531] border border-white/20 p-8 rounded-[2rem] w-full max-sm text-center space-y-6 shadow-2xl">
               <div className="text-4xl text-fuchsia-500 mb-2"><i className={arenaEntityToRemove.isGroup ? "fa-solid fa-folder-minus" : "fa-solid fa-user-minus"} /></div>
               <h2 className="text-2xl font-black uppercase tracking-tighter">{t('remove_arena')}</h2>
               <p className="text-slate-400 text-sm font-bold uppercase">{arenaEntityToRemove.name}</p>
@@ -1579,7 +1338,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                   }
                   
                   setArenaEntityToRemove(null);
-                  // Если ничего не осталось, закрываем арину
                   if (arenaData.length <= 1) {
                         setShowArenaDialog(false);
                         setListMode('NONE');
@@ -1609,7 +1367,15 @@ const Dashboard: React.FC<DashboardProps> = ({
   );
 };
 
-const ArenaItem = ({ p, idx, t, onRemove }: { p: any, idx: number, t: any, onRemove: (p: any) => void }) => {
+// Fix: Use React.FC to properly handle 'key' prop and other implicit props
+interface ArenaItemProps {
+  p: any;
+  idx: number;
+  t: any;
+  onRemove: (p: any) => void;
+}
+
+const ArenaItem: React.FC<ArenaItemProps> = ({ p, idx, t, onRemove }) => {
   const x = useMotionValue(0);
   const opacity = useTransform(x, [-150, 0, 150], [0, 1, 0]);
   const bgOpacity = useTransform(x, [-100, 0, 100], [1, 0, 1]); 
@@ -1733,6 +1499,14 @@ const LegendItem = ({ color, label }: { color: string, label: string }) => (
     <span className="text-[9px] font-black text-slate-300 uppercase tracking-tighter">{label}</span>
   </div>
 );
+
+const getBalanceEmoji = (val: number) => {
+  if (val >= 75) return <SuperHighLevelIcon />;
+  if (val >= 60) return <HighLevelIcon />;
+  if (val >= 45) return <OptimalLevelIcon />;
+  if (val >= 30) return <LowLevelIcon />;
+  return <CriticalLevelIcon />;
+};
 
 const CriticalLevelIcon = () => (
   <svg className="w-full h-full" viewBox="0 0 496.79 496.78" version="1.1" xmlns="http://www.w3.org/2000/svg">
