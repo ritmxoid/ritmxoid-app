@@ -1180,6 +1180,13 @@ const Dashboard: React.FC<DashboardProps> = ({
                    <p className="text-xs text-slate-300"><span className="text-red-500 font-bold uppercase">{t('polar')}:</span> {t('help_compat_polar_desc')}</p>
                 </div>
               </section>
+
+              <section className="space-y-4">
+                <h3 className="text-[#ffd600] font-black uppercase text-sm border-b border-white/10 pb-1">{t('help_calendar_year_title')}</h3>
+                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-xs text-slate-300 leading-relaxed italic">
+                   {t('help_calendar_year_desc')}
+                </div>
+              </section>
             </div>
             <button onClick={() => setIsHelpOpen(false)} className="mt-4 w-full bg-[#33b5e5] text-black font-black py-4 rounded-xl uppercase tracking-widest shadow-lg active:scale-95 transition-transform">{t('back')}</button>
           </motion.div>

@@ -54,7 +54,9 @@ export const TRANSLATIONS: Record<string, any> = {
     help_compat_title: 'COMPATIBILITY TYPES',
     help_compat_resonant_desc: 'Good for short-term communication and entertainment. Possible conflicts with prolonged contact.',
     help_compat_optimal_desc: 'Best type for long-term (family) relations. Mutual tolerance and stability.',
-    help_compat_polar_desc: 'Ideal for technical interaction and collaborative innovation. Consistent movement toward the goal.'
+    help_compat_polar_desc: 'Ideal for technical interaction and collaborative innovation. Consistent movement toward the goal.',
+    help_calendar_year_title: 'YEARLY CALENDAR',
+    help_calendar_year_desc: 'Generates a printable rhythm calendar for the year. Navigate to the "Calendar" tab and scroll to January of the desired year to see the export button.'
   },
   ru: {
     sync: 'СИНХРОНИЗАЦИЯ', user_name: 'Имя пользователя', birth_label: 'Дата и время рождения', name_placeholder: 'Ваше имя...',
@@ -99,7 +101,9 @@ export const TRANSLATIONS: Record<string, any> = {
     help_compat_title: 'ТИПЫ СОВМЕСТИМОСТИ',
     help_compat_resonant_desc: 'Хорошо для краткосрочного общения и развлечений. Возможны конфликты при длительном контакте.',
     help_compat_optimal_desc: 'Лучший тип для длительных (семейных) отношений. Взаимная терпимость и устойчивость.',
-    help_compat_polar_desc: 'Идеально для технического взаимодействия и совместных инноваций. Последовательное движение к цели.'
+    help_compat_polar_desc: 'Идеально для технического взаимодействия и совместных инноваций. Последовательное движение к цели.',
+    help_calendar_year_title: 'ГОДОВОЙ КАЛЕНДАРЬ',
+    help_calendar_year_desc: 'Генерирует ритмокалендарь профиля на год. Для этого перейдите во вкладку «Календарь» и пролистайте до января нужного года.'
   },
   es: {
     sync: 'SINCRONIZACIÓN', user_name: 'Usuario', birth_label: 'Fecha de nacimiento', name_placeholder: 'Nombre...',
@@ -129,7 +133,9 @@ export const TRANSLATIONS: Record<string, any> = {
     help_maps_desc: '9 escalas del Pulso al Ciclo Vital.', help_compat_title: 'COMPATIBILIDAD',
     help_compat_resonant_desc: 'Ideal para comunicación a corto plazo y diversión. Posibles conflictos con el contacto prolongado.',
     help_compat_optimal_desc: 'El mejor tipo para relaciones (familiares) a largo plazo. Tolerancia mutua y estabilidad.',
-    help_compat_polar_desc: 'Ideal para la interacción técnica y la innovación colaborativa. Movimiento consistente hacia la meta.'
+    help_compat_polar_desc: 'Ideal para la interacción técnica y la innovación colaborativa. Movimiento consistente hacia la meta.',
+    help_calendar_year_title: 'CALENDARIO ANUAL',
+    help_calendar_year_desc: 'Genera un calendario rítmico anual. Vaya a la pestaña "Calendario" y desplácese hasta enero del año deseado.'
   },
   de: {
     sync: 'SYNCHRONISATION', user_name: 'Nutzername', birth_label: 'Geburtsdatum', name_placeholder: 'Name...',
@@ -159,7 +165,9 @@ export const TRANSLATIONS: Record<string, any> = {
     help_maps_desc: '9 Bereiche vom Puls bis zum Lebenszyklus.', help_compat_title: 'KOMPATIBILITÄT',
     help_compat_resonant_desc: 'Gut für kurzfristige Kommunikation und Unterhaltung. Mögliche Konflikte bei längerem Kontakt.',
     help_compat_optimal_desc: 'Beste Art für langfristige (familiäre) Beziehungen. Gegenseitige Toleranz und Stabilität.',
-    help_compat_polar_desc: 'Ideal für technische Interaktion und gemeinsame Innovationen. Konsequente Bewegung zum Ziel.'
+    help_compat_polar_desc: 'Ideal für technische Interaktion und gemeinsame Innovationen. Konsequente Bewegung zum Ziel.',
+    help_calendar_year_title: 'JAHRESKALENDER',
+    help_calendar_year_desc: 'Erstellt einen Jahres-Rhythmuskalender. Gehen Sie zum Reiter "Kalender" und scrollen Sie zum Januar des gewünschten Jahres.'
   },
   fr: {
     sync: 'SYNCHRONISATION', user_name: 'Nom', birth_label: 'Date de naissance', name_placeholder: 'Nom...',
@@ -189,7 +197,9 @@ export const TRANSLATIONS: Record<string, any> = {
     help_maps_desc: '9 échelles du Pouls au Cycle de Vie.', help_compat_title: 'COMPATIBILITÉ',
     help_compat_resonant_desc: 'Bon pour la communication à court terme et le divertissement. Conflits possibles lors de contacts prolongés.',
     help_compat_optimal_desc: 'Le meilleur type pour les relations à long terme (familiales). Tolérance mutuelle et stabilité.',
-    help_compat_polar_desc: 'Idéal pour l\'interaction technique et l\'innovation collaborative. Mouvement constant vers l\'objectif.'
+    help_compat_polar_desc: 'Idéal pour l\'interaction technique et l\'innovation collaborative. Mouvement constant vers l\'objectif.',
+    help_calendar_year_title: 'CALENDRIER ANNUEL',
+    help_calendar_year_desc: 'Génère un calendrier rythmique annuel. Allez dans l\'onglet "Calendrier" et faites défiler jusqu\'à janvier de l\'année souhaitée.'
   },
   pt: {
     sync: 'SINCRONIZAÇÃO', user_name: 'Usuário', birth_label: 'Data de nascimento', name_placeholder: 'Nome...',
@@ -219,7 +229,9 @@ export const TRANSLATIONS: Record<string, any> = {
     help_maps_desc: '9 escalas do Pulso ao Ciclo de Vida.', help_compat_title: 'COMPATIBILIDADE',
     help_compat_resonant_desc: 'Bom para comunicação a curto prazo e entretenimento. Conflitos possíveis com contato prolongado.',
     help_compat_optimal_desc: 'Melhor tipo para relações de longo prazo (familiares). Tolerância mutua e estabilidade.',
-    help_compat_polar_desc: 'Ideal para interação técnica e inovação colaborativa. Movimento consistente em direção ao objetivo.'
+    help_compat_polar_desc: 'Ideal para interação técnica e inovação colaborativa. Movimento consistente em direção ao objetivo.',
+    help_calendar_year_title: 'CALENDÁRIO ANUAL',
+    help_calendar_year_desc: 'Gera um calendário rítmico anual. Vá para a guia "Calendário" e role até janeiro do ano desejado.'
   },
   zh: {
     sync: '同步', user_name: '用户名', birth_label: '出生日期', name_placeholder: '姓名...',
@@ -249,7 +261,9 @@ export const TRANSLATIONS: Record<string, any> = {
     help_maps_desc: '从脉搏到生命周期的 9 个区间。', help_compat_title: '兼容性',
     help_compat_resonant_desc: '适合短期交流和娱乐。长期接触可能会产生冲突。',
     help_compat_optimal_desc: '长期（家庭）关系的理想类型。互谅互让，稳定持久。',
-    help_compat_polar_desc: '技术互动和协同创新的理想选择。始终如一地朝着目标迈进。'
+    help_compat_polar_desc: '技术互动和协同创新的理想选择。始终如一地朝着目标迈进。',
+    help_calendar_year_title: '年度日历',
+    help_calendar_year_desc: '生成年度节奏日历。请转到“日历”选项卡并滚动到所需年份的 1 月。'
   },
   ja: {
     sync: '同期', user_name: 'ユーザー名', birth_label: '生年月日', name_placeholder: '名前...',
@@ -279,7 +293,9 @@ export const TRANSLATIONS: Record<string, any> = {
     help_maps_desc: 'パルスからライフサイクルまでの9段階。', help_compat_title: '相性',
     help_compat_resonant_desc: '短期的なコミュニケーションやエンターテインメントに適しています。長期的な接触では衝突の可能性があります。',
     help_compat_optimal_desc: '長期的な（家庭）関係に最適なタイプ。相互の寛容さと安定性。',
-    help_compat_polar_desc: '技術的な相互作用や共同イノベーションに理想的。目標に向かって一貫した動き。'
+    help_compat_polar_desc: '技術的な相互作用や共同イノベーションに理想的。目標に向かって一貫した動き。',
+    help_calendar_year_title: '年間カレンダー',
+    help_calendar_year_desc: '年間リズムカレンダーを生成します。「カレンダー」タブに移動し、目的の年の1月までスクロールしてください。'
   },
   ar: {
     sync: 'مزامنة', user_name: 'الاسم', birth_label: 'تاريخ الميلاد', name_placeholder: 'الاسم...',
@@ -309,7 +325,9 @@ export const TRANSLATIONS: Record<string, any> = {
     help_maps_desc: '9 نطاقات من النبض إلى دورة الحياة.', help_compat_title: 'التوافق',
     help_compat_resonant_desc: 'جيد للتواصل قصير المدى والترفيه. صراعات محتملة مع الاتصال المطول.',
     help_compat_optimal_desc: 'أفضل نوع للعلاقات طويلة الأمد (العائلية). التسامح المتبادل والاستقرار.',
-    help_compat_polar_desc: 'مثالي للتفاعل التقني والابتكار التعاوني. حركة متسقة نحو الهدف.'
+    help_compat_polar_desc: 'مثالي للتفاعل التقني والابتكار التعاوني. حركة متسقة نحو الهدف.',
+    help_calendar_year_title: 'التقويم السنوي',
+    help_calendar_year_desc: 'ينشئ تقويم الإيقاع السنوي. انتقل إلى علامة التبويب "التقويم" وقم بالتمرير إلى يناير من العام المطلوب.'
   },
   hi: {
     sync: 'सिंक्रनाइज़ेशन', user_name: 'उपयोगकर्ता', birth_label: 'जन्म तिथि', name_placeholder: 'नाम...',
@@ -339,7 +357,9 @@ export const TRANSLATIONS: Record<string, any> = {
     help_maps_desc: 'नाड़ी से life cycle तक 9 रेंज।', help_compat_title: 'संगतता प्रकार',
     help_compat_resonant_desc: 'अल्पकालिक संचार और मनोरंजन के लिए अच्छा है। लंबे समय तक संपर्क के साथ संभावित संघर्ष।',
     help_compat_optimal_desc: 'दीर्घकालिक (पारिवारिक) संबंधों के लिए सबसे अच्छा प्रकार। पारस्परिक सहिष्णुता और स्थिरता।',
-    help_compat_polar_desc: 'तकनीकी बातचीत और सहयोगी नवाचार के लिए आदर्श। लक्ष्य की ओर निरंतर आंदोलन।'
+    help_compat_polar_desc: 'तकनीकी बातचीत और सहयोगी नवाचार के लिए आदर्श। लक्ष्य की ओर निरंतर आंदोलन।',
+    help_calendar_year_title: 'वार्षिक कैलेंडर',
+    help_calendar_year_desc: 'वार्षिक ताल कैलेंडर बनाता है। "कैलेंडर" टैब पर जाएं और वांछित वर्ष की जनवरी तक स्क्रॉल करें।'
   }
 };
 
