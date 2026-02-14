@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { DateTime, Info } from 'luxon';
 import { 
@@ -9,6 +8,7 @@ import {
 import { TRANSLATIONS as GLOBAL_TRANSLATIONS, LANGUAGES as GLOBAL_LANGUAGES, getT } from '../core/i18n';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { Profile } from '../types';
+import { logEvent, logPageView } from '../core/analytics';
 
 interface DashboardProps {
   profile: Profile;
@@ -73,6 +73,12 @@ const Dashboard: React.FC<DashboardProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const longPressTimer = useRef<any>(null);
   const groupLongPressTimer = useRef<any>(null);
+
+  // Analytics: Track tab changes
+  useEffect(() => {
+    logEvent('Tab Switch', 'Navigation', activeTab);
+    logPageView(`Virtual/${activeTab}`);
+  }, [activeTab]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -151,9 +157,11 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   const resetToToday = () => {
     setTargetDate(DateTime.now().setZone(APP_ZONE));
+    logEvent('Reset Date', 'Controls', 'Today');
   };
 
   const handleExport = () => {
+    logEvent('Export', 'Data', 'Contacts');
     const master = allProfiles.find(p => p.isMaster);
     const masterName = master ? master.name : 'base';
     const dataStr = JSON.stringify(allProfiles, null, 2);
@@ -170,6 +178,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    logEvent('Import', 'Data', 'Contacts');
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
@@ -187,6 +196,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const handleExportYearlyCalendar = () => {
+    logEvent('Export', 'Data', 'Yearly Calendar');
     const year = targetDate.year;
     const monthNames = Info.months('long', { locale: lang });
     const weekDaysShort = t('days_abbr');
@@ -398,6 +408,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     const id = e.dataTransfer.getData('profileId');
     if (id) {
       onMoveToGroup(id, groupName);
+      logEvent('Group Drop', 'Organization', groupName);
     }
     onDragEndGeneral();
   };
@@ -407,6 +418,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     const id = e.dataTransfer.getData('profileId');
     if (id) {
       onMoveToGroup(id, null);
+      logEvent('Ungroup Drop', 'Organization');
     }
     onDragEndGeneral();
   };
@@ -488,6 +500,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       longPressTimer.current = setTimeout(() => {
         setListMode('SELECT');
         setSelectedIds(new Set([p.id]));
+        logEvent('Long Press Select', 'Organization', 'Single');
       }, 600);
     };
 
@@ -517,6 +530,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       }
       onSelectProfile(p.id);
       setActiveTab('BALANCE');
+      logEvent('Select Profile', 'Navigation', 'From List');
     };
 
     return (
@@ -588,7 +602,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 {(selectedIds.size + selectedGroupNames.size) >= 2 && (
                   <>
                     <button 
-                      onClick={() => setShowArenaDialog(true)} 
+                      onClick={() => { setShowArenaDialog(true); logEvent('Open Arena', 'Features'); }} 
                       title={t('arena')} 
                       className="w-8 h-8 flex items-center justify-center bg-fuchsia-600 text-white border border-fuchsia-400 rounded-lg transition-all active:scale-95 shadow-[0_0_8px_fuchsia]"
                     >
@@ -596,7 +610,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                     </button>
                     {(selectedIds.size + selectedGroupNames.size) === 2 && (
                       <button 
-                        onClick={() => setShowCompatDialog(true)} 
+                        onClick={() => { setShowCompatDialog(true); logEvent('Open Compatibility', 'Features'); }} 
                         title={t('compatibility')} 
                         className="w-8 h-8 flex items-center justify-center bg-[#33b5e5] text-black border border-[#33b5e5] rounded-lg transition-all active:scale-95 shadow-[0_0_8px_#33b5e5]"
                       >
@@ -633,8 +647,8 @@ const Dashboard: React.FC<DashboardProps> = ({
               <input type="text" placeholder={t('name_placeholder')} value={newPName} onChange={e => setNewPName(e.target.value)} className="w-full bg-black border border-white/10 p-2 rounded text-sm outline-none focus:border-[#33b5e5] text-white" />
               <input type="datetime-local" value={newPDate} onChange={e => setNewPDate(e.target.value)} className="w-full bg-black border border-white/10 p-2 rounded text-sm outline-none focus:border-[#33b5e5] color-scheme-dark text-white" />
               <button onClick={() => {
-                if (editingProfileId) { onUpdateProfile(editingProfileId, newPName, newPDate); setEditingProfileId(null); setListMode('NONE'); }
-                else if(newPName) { onAddProfile(newPName, newPDate); setNewPName(''); setShowAddForm(false); }
+                if (editingProfileId) { onUpdateProfile(editingProfileId, newPName, newPDate); setEditingProfileId(null); setListMode('NONE'); logEvent('Update Profile', 'Data'); }
+                else if(newPName) { onAddProfile(newPName, newPDate); setNewPName(''); setShowAddForm(false); logEvent('Add Profile', 'Data'); }
               }} className="w-full bg-[#33b5e5] text-black font-black py-2 rounded text-xs uppercase shadow-lg active:scale-[0.98] transition-transform">{t('save')}</button>
             </motion.div>
           )}
@@ -662,6 +676,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             const handleGroupLongPress = () => {
               groupLongPressTimer.current = setTimeout(() => {
                 setGroupActionActive(groupName);
+                logEvent('Long Press Group', 'Organization');
               }, 600);
             };
 
@@ -1015,12 +1030,12 @@ const Dashboard: React.FC<DashboardProps> = ({
             {isLangMenuOpen && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute top-12 right-0 bg-[#1b2531] border border-white/20 rounded-xl shadow-2xl z-[10000] overflow-hidden w-40 backdrop-blur-md">
                 {GLOBAL_LANGUAGES.map(l => (
-                  <button key={l.code} onClick={() => { setLang(l.code); setIsLangMenuOpen(false); }} className={`w-full px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-colors text-xs font-bold uppercase ${lang === l.code ? 'text-[#33b5e5]' : 'text-slate-300'}`}><span className="text-lg">{l.flag}</span>{l.name}</button>
+                  <button key={l.code} onClick={() => { setLang(l.code); setIsLangMenuOpen(false); logEvent('Change Language', 'Settings', l.code); }} className={`w-full px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-colors text-xs font-bold uppercase ${lang === l.code ? 'text-[#33b5e5]' : 'text-slate-300'}`}><span className="text-lg">{l.flag}</span>{l.name}</button>
                 ))}
               </motion.div>
             )}
           </AnimatePresence>
-          <button onClick={() => setIsHelpOpen(true)} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"><i className="fa-solid fa-circle-question text-lg text-[#33b5e5]" /></button>
+          <button onClick={() => { setIsHelpOpen(true); logEvent('Open Help', 'Navigation'); }} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"><i className="fa-solid fa-circle-question text-lg text-[#33b5e5]" /></button>
           <button onClick={() => setShowLogoutConfirm(true)} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors" title="Выход"><i className="fa-solid fa-power-off text-lg text-red-500" /></button>
         </div>
       </header>
@@ -1063,7 +1078,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
               <input autoFocus type="text" placeholder={t('group_placeholder')} value={tempGroupName} onChange={e => setTempGroupName(e.target.value)} className="w-full bg-black border border-white/10 p-4 rounded-2xl text-sm outline-none focus:border-[#33b5e5] text-white" />
               <div className="flex gap-3">
-                <button onClick={() => { onGroupProfiles(Array.from(selectedIds), tempGroupName); setSelectedIds(new Set()); setSelectedGroupNames(new Set()); setListMode('NONE'); setShowGroupDialog(false); setTempGroupName(''); }} className="flex-1 bg-[#33b5e5] text-black font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform">{t('save')}</button>
+                <button onClick={() => { onGroupProfiles(Array.from(selectedIds), tempGroupName); setSelectedIds(new Set()); setSelectedGroupNames(new Set()); setListMode('NONE'); setShowGroupDialog(false); setTempGroupName(''); logEvent('Create Group', 'Organization'); }} className="flex-1 bg-[#33b5e5] text-black font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform">{t('save')}</button>
                 <button onClick={() => { setShowGroupDialog(false); setTempGroupName(''); }} className="flex-1 bg-white/5 text-slate-300 font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform border border-white/10">{t('no')}</button>
               </div>
             </div>
@@ -1081,7 +1096,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
               <input autoFocus type="text" placeholder={t('group_placeholder')} value={tempGroupName} onChange={e => setTempGroupName(e.target.value)} className="w-full bg-black border border-white/10 p-4 rounded-2xl text-sm outline-none focus:border-[#33b5e5] text-white" />
               <div className="flex gap-3">
-                <button onClick={() => { onRenameGroup(showRenameDialog, tempGroupName); setShowRenameDialog(null); setTempGroupName(''); }} className="flex-1 bg-[#33b5e5] text-black font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform">{t('save')}</button>
+                <button onClick={() => { onRenameGroup(showRenameDialog, tempGroupName); setShowRenameDialog(null); setTempGroupName(''); logEvent('Rename Group', 'Organization'); }} className="flex-1 bg-[#33b5e5] text-black font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform">{t('save')}</button>
                 <button onClick={() => { setShowRenameDialog(null); setTempGroupName(''); }} className="flex-1 bg-white/5 text-slate-300 font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform border border-white/10">{t('no')}</button>
               </div>
             </div>
@@ -1201,7 +1216,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <h2 className="text-2xl font-black uppercase tracking-tighter">{t('confirm_delete')}</h2>
               <p className="text-slate-400 text-sm font-bold uppercase">{profileToDelete.name}</p>
               <div className="flex gap-3 pt-4">
-                <button onClick={() => { onDeleteProfile(profileToDelete.id); setProfileToDelete(null); setListMode('NONE'); }} className="flex-1 bg-red-600 text-white font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform shadow-lg shadow-red-900/20">{t('yes')}</button>
+                <button onClick={() => { onDeleteProfile(profileToDelete.id); setProfileToDelete(null); setListMode('NONE'); logEvent('Delete Profile', 'Data'); }} className="flex-1 bg-red-600 text-white font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform shadow-lg shadow-red-900/20">{t('yes')}</button>
                 <button onClick={() => setProfileToDelete(null)} className="flex-1 bg-white/5 text-slate-300 font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform border border-white/10">{t('no')}</button>
               </div>
             </motion.div>
@@ -1218,7 +1233,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <p className="text-slate-300 text-xs font-bold uppercase">{groupToDelete}</p>
               <p className="text-slate-500 text-[10px] italic">{t('confirm_ungroup')}</p>
               <div className="flex gap-3 pt-4">
-                <button onClick={() => { onUngroup(groupToDelete); setGroupToDelete(null); setGroupActionActive(null); }} className="flex-1 bg-red-600 text-white font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform shadow-lg shadow-red-900/20">{t('yes')}</button>
+                <button onClick={() => { onUngroup(groupToDelete); setGroupToDelete(null); setGroupActionActive(null); logEvent('Ungroup', 'Organization'); }} className="flex-1 bg-red-600 text-white font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform shadow-lg shadow-red-900/20">{t('yes')}</button>
                 <button onClick={() => setGroupToDelete(null)} className="flex-1 bg-white/5 text-slate-300 font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform border border-white/10">{t('no')}</button>
               </div>
             </motion.div>
@@ -1234,7 +1249,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <h2 className="text-2xl font-black uppercase tracking-tighter">{t('confirm_logout')}</h2>
               <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">{profile.name}</p>
               <div className="flex gap-3 pt-4">
-                <button onClick={() => { onLogout(); setShowLogoutConfirm(false); }} className="flex-1 bg-red-600 text-white font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform shadow-lg shadow-red-900/20">{t('yes')}</button>
+                <button onClick={() => { onLogout(); setShowLogoutConfirm(false); logEvent('Logout', 'Session'); }} className="flex-1 bg-red-600 text-white font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform shadow-lg shadow-red-900/20">{t('yes')}</button>
                 <button onClick={() => setShowLogoutConfirm(false)} className="flex-1 bg-white/5 text-slate-300 font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform border border-white/10">{t('no')}</button>
               </div>
             </motion.div>
@@ -1298,7 +1313,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 {(['TOTAL', 'BASIC', 'REACTIVE'] as ArenaMode[]).map(mode => (
                   <button 
                     key={mode} 
-                    onClick={() => setArenaMode(mode)}
+                    onClick={() => { setArenaMode(mode); logEvent('Switch Arena Mode', 'Features', mode); }}
                     className={`flex-1 py-3 text-[10px] font-black uppercase tracking-tighter rounded-lg transition-all ${
                       arenaMode === mode ? 'bg-fuchsia-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'
                     }`}

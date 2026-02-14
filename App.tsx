@@ -7,6 +7,7 @@ import { jsPDF } from 'jspdf';
 import { DateTime, Info } from 'luxon';
 import { calculateDaysGone, getRiskLevel, calculateFullBalance, getBalanceColor, COLORS } from './core/engine';
 import { getT } from './core/i18n';
+import { logEvent } from './core/analytics';
 
 const App: React.FC = () => {
   const [profiles, setProfiles] = useState<Profile[]>(() => {
@@ -43,6 +44,7 @@ const App: React.FC = () => {
   const handleAuthorize = () => {
     if (profiles.length > 0) {
       setIsAuthorized(true);
+      logEvent('Auto Login', 'Session', 'Existing User');
       return;
     }
 
@@ -59,6 +61,7 @@ const App: React.FC = () => {
     setProfiles([master]);
     setActiveProfileId(master.id);
     setIsAuthorized(true);
+    logEvent('New Login', 'Session', 'New User');
   };
 
   const handleQuickPdfExport = async () => {
@@ -70,6 +73,8 @@ const App: React.FC = () => {
       alert("Enter Birth Date first.");
       return;
     }
+    
+    logEvent('Quick PDF Export', 'Conversion', 'Pre-Login');
 
     const APP_ZONE = 'utc+5';
     const bdate = DateTime.fromISO(tempDate).setZone(APP_ZONE, { keepLocalTime: true });
@@ -293,6 +298,7 @@ const App: React.FC = () => {
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    logEvent('Import', 'Data', 'Pre-Login');
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
