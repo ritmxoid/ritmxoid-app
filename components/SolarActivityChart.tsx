@@ -128,18 +128,30 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
 
     const fetchData = async () => {
       const targetUrl = 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json';
-      // Use proxies to bypass CORS since we are on client-side
+      
+      // Expanded list of CORS proxies to try sequentially
+      // NOTE: corsproxy.io generally wants the url appended directly.
+      // api.allorigins.win and codetabs want it encoded in a query param.
       const endpoints = [
-        `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`
+        `https://corsproxy.io/?${targetUrl}`, 
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`
       ];
 
       for (const url of endpoints) {
         if (!isActive) return;
         try {
-          const response = await fetch(url);
+          // Add cache busting to prevent stale error responses
+          const fetchOptions: RequestInit = {
+            method: 'GET',
+            cache: 'no-store'
+          };
+          
+          const response = await fetch(url, fetchOptions);
           if (response.ok) {
             const json = await response.json();
+            
+            // Validate structure roughly
             if (Array.isArray(json) && json.length > 1) {
               // Parse Data (NOAA returns [ [time, kp, ...], ... ])
               // Take last 56 entries (7 days * 8 intervals)
@@ -155,11 +167,12 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
                  initChart(labels, values);
                  setLoading(false);
               }
-              return; // Success
+              return; // Success, exit loop
             }
           }
         } catch (e) {
-           console.warn(`Fetch failed for ${url}`);
+           console.warn(`Fetch failed for proxy: ${url}`, e);
+           // Continue to next proxy
         }
       }
 
@@ -198,6 +211,7 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
              <div className="text-center">
                 <i className="fa-solid fa-triangle-exclamation text-amber-500 text-2xl mb-2" />
                 <p className="text-[10px] text-slate-400 font-bold uppercase">Data Unavailable</p>
+                <p className="text-[8px] text-slate-600 mt-1">Check Connection</p>
              </div>
         </div>
       )}
