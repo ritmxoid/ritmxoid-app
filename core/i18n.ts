@@ -57,7 +57,9 @@ export const TRANSLATIONS: Record<string, any> = {
     help_compat_optimal_desc: 'Best type for long-term (family) relations. Mutual tolerance and stability.',
     help_compat_polar_desc: 'Ideal for technical interaction and collaborative innovation. Consistent movement toward the goal.',
     help_calendar_year_title: 'YEARLY CALENDAR',
-    help_calendar_year_desc: 'Generates a printable rhythm calendar for the year. Navigate to the "Calendar" tab and scroll to January of the desired year to see the export button.'
+    help_calendar_year_desc: 'Generates a printable rhythm calendar for the year. Navigate to the "Calendar" tab and scroll to January of the desired year to see the export button.',
+    help_solar_title: 'SOLAR ACTIVITY MONITOR',
+    help_solar_desc: 'High levels of solar activity require correcting the rhythm balance upwards at low values, and downwards at high values.'
   },
   ru: {
     sync: 'СИНХРОНИЗАЦИЯ', user_name: 'Имя пользователя', birth_label: 'Дата и время рождения', name_placeholder: 'Ваше имя...',
@@ -105,7 +107,9 @@ export const TRANSLATIONS: Record<string, any> = {
     help_compat_optimal_desc: 'Лучший тип для длительных (семейных) отношений. Взаимная терпимость и устойчивость.',
     help_compat_polar_desc: 'Идеально для технического взаимодействия и совместных инноваций. Последовательное движение к цели.',
     help_calendar_year_title: 'ГОДОВОЙ КАЛЕНДАРЬ',
-    help_calendar_year_desc: 'Генерирует ритмокалендарь профиля на год. Для этого перейдите во вкладку «Календарь» и пролистайте до января нужного года.'
+    help_calendar_year_desc: 'Генерирует ритмокалендарь профиля на год. Для этого перейдите во вкладку «Календарь» и пролистайте до января нужного года.',
+    help_solar_title: 'МОНИТОР СОЛНЕЧНОЙ АКТИВНОСТИ',
+    help_solar_desc: 'Высокий уровень солнечной активности требует коррекции ритмобаланса в сторону повышения на низких значениях, и в сторону понижения на высоких.'
   },
   es: {
     sync: 'SINCRONIZACIÓN', user_name: 'Usuario', birth_label: 'Fecha de nacimiento', name_placeholder: 'Nombre...',
@@ -138,7 +142,9 @@ export const TRANSLATIONS: Record<string, any> = {
     help_compat_optimal_desc: 'El mejor tipo para relaciones (familiares) a largo plazo. Tolerancia mutua y estabilidad.',
     help_compat_polar_desc: 'Ideal para la interacción técnica y la innovación colaborativa. Movimiento consistente hacia la meta.',
     help_calendar_year_title: 'CALENDARIO ANUAL',
-    help_calendar_year_desc: 'Genera un calendario rítmico anual. Vaya a la pestaña "Calendario" y desplácese hasta enero del año deseado.'
+    help_calendar_year_desc: 'Genera un calendario rítmico anual. Vaya a la pestaña "Calendario" y desplácese hasta enero del año deseado.',
+    help_solar_title: 'MONITOR DE ACTIVIDAD SOLAR',
+    help_solar_desc: 'Los altos niveles de actividad solar requieren corregir el equilibrio rítmico hacia arriba en valores bajos y hacia abajo en valores altos.'
   },
   de: {
     sync: 'SYNCHRONISATION', user_name: 'Nutzername', birth_label: 'Geburtsdatum', name_placeholder: 'Name...',
@@ -171,7 +177,9 @@ export const TRANSLATIONS: Record<string, any> = {
     help_compat_optimal_desc: 'Beste Art für langfristige (familiäre) Beziehungen. Gegenseitige Toleranz und Stabilität.',
     help_compat_polar_desc: 'Ideal für technische Interaktion und gemeinsame Innovationen. Konsequente Bewegung zum Ziel.',
     help_calendar_year_title: 'JAHRESKALENDER',
-    help_calendar_year_desc: 'Erstellt einen Jahres-Rhythmuskalender. Gehen Sie zum Reiter "Kalender" und scrollen Sie zum Januar des gewünschten Jahres.'
+    help_calendar_year_desc: 'Erstellt einen Jahres-Rhythmuskalender. Gehen Sie zum Reiter "Kalender" und scrollen Sie zum Januar des gewünschten Jahres.',
+    help_solar_title: 'SONNENAKTIVITÄTSMONITOR',
+    help_solar_desc: 'Hohe Sonnenaktivität erfordert eine Korrektur der Rhythmusbalance nach oben bei niedrigen Werten und nach unten bei hohen Werten.'
   },
   fr: {
     sync: 'SYNCHRONISATION', user_name: 'Nom', birth_label: 'Date de naissance', name_placeholder: 'Nom...',
@@ -204,7 +212,9 @@ export const TRANSLATIONS: Record<string, any> = {
     help_compat_optimal_desc: 'Le meilleur type pour les relations à long terme (familiales). Tolérance mutuelle et stabilité.',
     help_compat_polar_desc: 'Idéal pour l\'interaction technique et l\'innovation collaborative. Mouvement constant vers l\'objectif.',
     help_calendar_year_title: 'CALENDRIER ANNUEL',
-    help_calendar_year_desc: 'Génère un calendrier rythmique annuel. Allez dans l\'onglet "Calendrier" et faites défiler jusqu\'à janvier de l\'année souhaitée.'
+    help_calendar_year_desc: 'Génère un calendrier rythmique annuel. Allez dans l\'onglet "Calendrier" et faites défiler jusqu\'à janvier de l\'année souhaitée.',
+    help_solar_title: 'MONITEUR D\'ACTIVITÉ SOLAIRE',
+    help_solar_desc: 'Des niveaux élevés d\'activité solaire nécessitent de corriger l\'équilibre rythmique vers le haut pour les valeurs basses et vers le bas pour les valeurs hautes.'
   },
   pt: {
     sync: 'SINCRONIZAÇÃO', user_name: 'Usuário', birth_label: 'Data de nascimento', name_placeholder: 'Nome...',
@@ -237,7 +247,9 @@ export const TRANSLATIONS: Record<string, any> = {
     help_compat_optimal_desc: 'Melhor tipo para relações de longo prazo (familiares). Tolerância mutua e estabilidade.',
     help_compat_polar_desc: 'Ideal para interação técnica e inovação colaborativa. Movimento consistente em direção ao objetivo.',
     help_calendar_year_title: 'CALENDÁRIO ANUAL',
-    help_calendar_year_desc: 'Gera um calendário rítmico anual. Vá para a guia "Calendário" e role até janeiro do ano desejado.'
+    help_calendar_year_desc: 'Gera um calendário rítmico anual. Vá para a guia "Calendário" e role até janeiro do ano desejado.',
+    help_solar_title: 'MONITOR DE ATIVIDADE SOLAR',
+    help_solar_desc: 'Altos níveis de atividade solar exigem a correção do equilíbrio rítmico para cima em valores baixos e para baixo em valores altos.'
   },
   zh: {
     sync: '同步', user_name: '用户名', birth_label: '出生日期', name_placeholder: '姓名...',
@@ -270,7 +282,9 @@ export const TRANSLATIONS: Record<string, any> = {
     help_compat_optimal_desc: '长期（家庭）关系的理想类型。互谅互让，稳定持久。',
     help_compat_polar_desc: '技术互动和协同创新的理想选择。始终如一地朝着目标迈进。',
     help_calendar_year_title: '年度日历',
-    help_calendar_year_desc: '生成年度节奏日历。请转到“日历”选项卡并滚动到所需年份的 1 月。'
+    help_calendar_year_desc: '生成年度节奏日历。请转到“日历”选项卡并滚动到所需年份的 1 月。',
+    help_solar_title: '太阳活动监测',
+    help_solar_desc: '高水平的太阳活动需要在低值时向上修正节律平衡，在高值时向下修正。'
   },
   ja: {
     sync: '同期', user_name: 'ユーザー名', birth_label: '生年月日', name_placeholder: '名前...',
@@ -303,7 +317,9 @@ export const TRANSLATIONS: Record<string, any> = {
     help_compat_optimal_desc: '長期的な（家庭）関係に最適なタイプ。相互の寛容さと安定性。',
     help_compat_polar_desc: '技術的な相互作用や共同イノベーションに理想的。目標に向かって一貫した動き。',
     help_calendar_year_title: '年間カレンダー',
-    help_calendar_year_desc: '年間リズムカレンダーを生成します。「カレンダー」タブに移動し、目的の年の1月までスクロールしてください。'
+    help_calendar_year_desc: '年間リズムカレンダーを生成します。「カレンダー」タブに移動し、目的の年の1月までスクロールしてください。',
+    help_solar_title: '太陽活動モニター',
+    help_solar_desc: '太陽活動のレベルが高い場合、低い値ではリズムバランスを上方に、高い値では下方に修正する必要があります。'
   },
   ar: {
     sync: 'مزامنة', user_name: 'الاسم', birth_label: 'تاريخ الميلاد', name_placeholder: 'الاسم...',
@@ -336,7 +352,9 @@ export const TRANSLATIONS: Record<string, any> = {
     help_compat_optimal_desc: 'أفضل نوع للعلاقات طويلة الأمد (العائلية). التسامح المتبادل والاستقرار.',
     help_compat_polar_desc: 'مثالي للتفاعل التقني والابتكار التعاوني. حركة متسقة نحو الهدف.',
     help_calendar_year_title: 'التقويم السنوي',
-    help_calendar_year_desc: 'ينشئ تقويم الإيقاع السنوي. انتقل إلى علامة التبويب "التقويم" وقم بالتمرير إلى يناير من العام المطلوب.'
+    help_calendar_year_desc: 'ينشئ تقويم الإيقاع السنوي. انتقل إلى علامة التبويب "التقويم" وقم بالتمرير إلى يناير من العام المطلوب.',
+    help_solar_title: 'مراقب النشاط الشمسي',
+    help_solar_desc: 'تتطلب مستويات النشاط الشمسي العالية تصحيح توازن الإيقاع صعودًا عند القيم المنخفضة، وهبوطًا عند القيم العالية.'
   },
   hi: {
     sync: 'सिंक्रनाइज़ेशन', user_name: 'उपयोगकर्ता', birth_label: 'जन्म तिथि', name_placeholder: 'नाम...',
@@ -369,7 +387,9 @@ export const TRANSLATIONS: Record<string, any> = {
     help_compat_optimal_desc: 'दीर्घकालिक (पारिवारिक) संबंधों के लिए सबसे अच्छा प्रकार। पारस्परिक सहिष्णुता और स्थिरता।',
     help_compat_polar_desc: 'तकनीकी बातचीत और सहयोगी नवाचार के लिए आदर्श। लक्ष्य की ओर निरंतर आंदोलन।',
     help_calendar_year_title: 'वार्षिक कैलेंडर',
-    help_calendar_year_desc: 'वार्षिक ताल कैलेंडर बनाता है। "कैलेंडर" टैब पर जाएं और वांछित वर्ष की जनवरी तक स्क्रॉल करें।'
+    help_calendar_year_desc: 'वार्षिक ताल कैलेंडर बनाता है। "कैलेंडर" टैब पर जाएं और वांछित वर्ष की जनवरी तक स्क्रॉल करें।',
+    help_solar_title: 'सौर गतिविधि मॉनिटर',
+    help_solar_desc: 'सौर गतिविधि के उच्च स्तरों के लिए लय संतुलन को कम मूल्यों पर ऊपर की ओर और उच्च मूल्यों पर नीचे की ओर सही करने की आवश्यकता होती है।'
   }
 };
 
