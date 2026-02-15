@@ -12,62 +12,71 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const [loading, setLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       const targetUrl = 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json';
       
-      // Strategy: Try direct fetch first, then fall back to different CORS proxies
-      // 1. Direct (fastest if CORS headers are present or dev environment)
-      // 2. AllOrigins (reliable free proxy)
-      // 3. CorsProxy.io (backup)
+      // Список прокси-серверов. Браузер будет пробовать их по очереди.
       const endpoints = [
-        targetUrl,
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}&cb=${Date.now()}`,
-        `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
+        `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
+        `https://thingproxy.freeboard.io/fetch/${targetUrl}`
       ];
 
       let rawData = null;
+      let success = false;
 
+      // 1. Пытаемся получить реальные данные
       for (const url of endpoints) {
         try {
           const response = await fetch(url);
           if (response.ok) {
             rawData = await response.json();
-            break; // Success, exit loop
+            // Проверка, что данные не пустые и это массив
+            if (Array.isArray(rawData) && rawData.length > 1) {
+              success = true;
+              break; 
+            }
           }
         } catch (e) {
-          console.warn(`Fetch attempt failed for ${url}:`, e);
+          console.warn(`Proxy failed: ${url}`);
         }
       }
 
-      if (!rawData) {
-        console.error("K-Index fetch error: All endpoints failed");
-        setLoading(false);
-        setHasError(true);
-        return;
+      // 2. Если все прокси отказали, генерируем "Фейковые" данные, чтобы не было дыры в дизайне
+      if (!success || !rawData) {
+        console.warn("All proxies failed. Using mock data.");
+        setIsOffline(true);
+        // Генерируем данные за последние 7 дней (8 измерений в день = 56 точек)
+        const now = new Date();
+        rawData = [['time_tag', 'k_index']]; // Header
+        for (let i = 55; i >= 0; i--) {
+            const date = new Date(now.getTime() - i * 3 * 60 * 60 * 1000);
+            // Случайный индекс от 1 до 3 (спокойное солнце)
+            rawData.push([date.toISOString(), Math.floor(Math.random() * 3) + 1]); 
+        }
       }
 
       try {
-        // NOAA data structure: array of arrays. First is header.
-        // We take slice(1) to remove header, then slice(-56) for last ~7 days (8 values per day * 7)
+        // Обработка данных (NOAA возвращает массив массивов, убираем заголовок)
         const data = rawData.slice(1).slice(-56);
 
         const labels = data.map((d: any) => d[0]);
         const values = data.map((d: any) => parseFloat(d[1]));
 
-        // Notify parent about current index (last value)
+        // Сообщаем родителю текущий индекс (последнее значение)
         if (values.length > 0 && onCurrentIndexChange) {
             onCurrentIndexChange(values[values.length - 1]);
         }
 
         const barColors = values.map((v: number) => {
           if (v > 9) return '#000000';
-          if (v >= 7) return '#9933cc'; // Purple (Matches ANALYTICAL)
-          if (v >= 5) return '#cc0000'; // Red (Matches PHYSICAL)
-          if (v >= 4) return '#ffd600'; // Yellow (Matches MOTOR)
-          return '#33b5e5';             // Holo Blue (Matches SENSORY)
+          if (v >= 7) return '#9933cc'; // Фиолетовый (Сильная буря)
+          if (v >= 5) return '#cc0000'; // Красный (Буря)
+          if (v >= 4) return '#ffd600'; // Желтый (Возмущение)
+          return '#33b5e5';             // Голубой (Спокойно)
         });
 
         if (chartRef.current) {
@@ -92,6 +101,7 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
             options: {
               responsive: true,
               maintainAspectRatio: false,
+              animation: false, // Отключаем анимацию при инициализации для скорости
               layout: {
                 padding: { top: 25, bottom: 5 }
               },
@@ -103,16 +113,16 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
                   bodyColor: '#fff',
                   borderColor: '#33b5e5',
                   borderWidth: 1,
-                  callbacks: { title: (items) => `Time (UTC): ${items[0].label}` }
+                  callbacks: { title: (items) => `UTC: ${items[0].label}` }
                 }
               },
               scales: {
                 y: {
-                  position: 'right', // Moved scale to the right
+                  position: 'right',
                   min: 0,
-                  max: 10, // Ensure full range up to 10
+                  max: 9, 
                   ticks: { 
-                    stepSize: 1, // Show every integer step
+                    stepSize: 1,
                     color: '#666', 
                     font: { size: 9, weight: 'bold' } 
                   },
@@ -127,7 +137,10 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
                     color: '#666',
                     font: { size: 8, weight: 'bold' },
                     callback: function(val, index) {
-                      const dateObj = new Date(labels[index] + ' UTC');
+                      const dateString = labels[index];
+                      // Проверяем формат даты (ISO или простой)
+                      const dateObj = new Date(dateString.includes('T') ? dateString : dateString + ' UTC');
+                      
                       if (dateObj.getUTCHours() === 0) {
                         return dateObj.toLocaleDateString('ru-RU', { month: 'short', day: 'numeric' }).toUpperCase();
                       }
@@ -146,8 +159,8 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
                   ctx.setLineDash([4, 4]);
                   ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
                   labels.forEach((l: string, i: number) => {
-                    const date = new Date(l + ' UTC');
-                    if (date.getUTCHours() === 0 && i > 0) {
+                    const dateObj = new Date(l.includes('T') ? l : l + ' UTC');
+                    if (dateObj.getUTCHours() === 0 && i > 0) {
                       const xPos = x.getPixelForValue(i) - (x.getPixelForValue(1) - x.getPixelForValue(0)) / 2;
                       ctx.beginPath(); ctx.moveTo(xPos, top); ctx.lineTo(xPos, bottom); ctx.stroke();
                     }
@@ -165,10 +178,10 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
                   const yPos = y.getPixelForValue(yVal) - 5;
 
                   ctx.save();
-                  ctx.fillStyle = '#33b5e5';
+                  ctx.fillStyle = isOffline ? '#666' : '#33b5e5';
                   ctx.font = 'bold 9px Roboto';
                   ctx.textAlign = 'center';
-                  ctx.fillText('NOW', xPos, yPos - 12);
+                  ctx.fillText(isOffline ? 'SIM' : 'NOW', xPos, yPos - 12);
                   ctx.beginPath();
                   ctx.moveTo(xPos, yPos);
                   ctx.lineTo(xPos - 4, yPos - 8);
@@ -183,9 +196,8 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
         }
         setLoading(false);
       } catch (error) {
-        console.error("Error processing K-Index data:", error);
+        console.error("Chart Render Error:", error);
         setLoading(false);
-        setHasError(true);
       }
     };
 
@@ -198,19 +210,6 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
     };
   }, []);
 
-  if (hasError) {
-    return (
-      <div className="w-full h-60 bg-black/40 rounded-xl border border-white/5 p-2 relative flex flex-col items-center justify-center gap-2">
-        <div className="absolute top-2 left-3 flex items-center gap-2">
-          <div className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_5px_red]" />
-          <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">{title}</span>
-        </div>
-        <i className="fa-solid fa-satellite-dish text-2xl text-slate-700" />
-        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">No Signal (CORS)</span>
-      </div>
-    );
-  }
-
   return (
     <div className="w-full h-60 bg-black/40 rounded-xl border border-white/5 p-2 relative overflow-hidden">
       {loading && (
@@ -219,8 +218,10 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
         </div>
       )}
       <div className="absolute top-2 left-3 flex items-center gap-2">
-        <div className="w-1.5 h-1.5 rounded-full bg-[#33b5e5] shadow-[0_0_5px_#33b5e5]" />
-        <span className="text-[9px] font-black uppercase tracking-widest text-[#33b5e5]">{title}</span>
+        <div className={`w-1.5 h-1.5 rounded-full ${isOffline ? 'bg-slate-500' : 'bg-[#33b5e5] shadow-[0_0_5px_#33b5e5]'}`} />
+        <span className={`text-[9px] font-black uppercase tracking-widest ${isOffline ? 'text-slate-500' : 'text-[#33b5e5]'}`}>
+            {title} {isOffline && '(OFFLINE)'}
+        </span>
       </div>
       <canvas ref={chartRef} />
     </div>
