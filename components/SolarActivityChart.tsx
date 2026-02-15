@@ -68,8 +68,6 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
                 callbacks: { 
                     title: (items) => {
                         const dateStr = items[0].label;
-                        // Assuming string format like "2024-02-18 00:00:00.000" or similar
-                        // Try to parse cleanly
                         return dateStr.substring(0, 16).replace(' ', ' T:'); 
                     } 
                 }
@@ -96,27 +94,25 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
                 grid: { 
                   display: true,
                   color: (context) => {
-                     // Draw grid line only if it's the start of a day (index % 8 === 0)
-                     // or based on label string if we want exact midnight matching
-                     // For 3-hour intervals, 8 bars = 24 hours.
-                     // Assuming data is continuous 3h intervals.
-                     if (context.index % 8 === 0) return 'rgba(255,255,255,0.2)';
+                     // Strictly check for midnight in the label string
+                     const label = labels[context.index];
+                     if (label && (label.includes('00:00:00') || label.includes('T00:00:00'))) {
+                        return 'rgba(255,255,255,0.2)';
+                     }
                      return 'transparent';
                   },
                   drawTicks: false
                 },
                 ticks: {
-                  autoSkip: false, // We control visibility manually
+                  autoSkip: false,
                   maxRotation: 0,
                   color: '#888',
                   font: { size: 10, weight: 'bold' },
                   callback: function(val, index) {
                     const label = this.getLabelForValue(val as number);
-                    // Check if label indicates midnight/start of day
-                    // Format usually "YYYY-MM-DD HH:MM:SS"
-                    if (label.includes('00:00:00') || index % 8 === 0) {
+                    // Strictly check for midnight in the label string
+                    if (label.includes('00:00:00') || label.includes('T00:00:00')) {
                         const d = new Date(label);
-                        // Format: 10 Feb
                         const day = d.getDate();
                         const month = d.toLocaleString('en', { month: 'short' });
                         return `${day} ${month}`;
