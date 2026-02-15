@@ -185,13 +185,13 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
       loadMockData();
     };
 
-    // Race Condition Handler: If fetch takes too long (> 3s), show mock data so UI isn't empty
+    // Race Condition Handler: If fetch takes too long (> 2s), show mock data so UI isn't empty
     const timeoutId = setTimeout(() => {
         if (loading && isActive) {
             console.warn("Fetch timed out, switching to mock data.");
             loadMockData();
         }
-    }, 3000);
+    }, 2000);
 
     fetchData();
 
