@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
@@ -13,11 +13,21 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
   const chartInstance = useRef<Chart | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [timer, setTimer] = useState(0);
 
+  // Timer logic
   useEffect(() => {
-    let isActive = true;
+    let interval: any;
+    if (loading) {
+      const startTime = Date.now();
+      interval = setInterval(() => {
+        setTimer((Date.now() - startTime) / 1000);
+      }, 100);
+    }
+    return () => clearInterval(interval);
+  }, [loading]);
 
-    const initChart = (labels: string[], values: number[]) => {
+  const initChart = useCallback((labels: string[], values: number[], isMock: boolean = false) => {
        if (!chartRef.current) return;
        
        if (chartInstance.current) {
@@ -52,6 +62,9 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
             {
               id: 'nowMarker',
               afterDatasetsDraw(chart) {
+                // Don't draw marker on mock data
+                if (isMock) return;
+
                 const { ctx } = chart;
                 const meta = chart.getDatasetMeta(0);
                 if (!meta.data.length) return;
@@ -90,14 +103,14 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            animation: { duration: 0 },
+            animation: { duration: isMock ? 0 : 500 },
             layout: {
               padding: { top: 20, bottom: 0, left: 0, right: 10 }
             },
             plugins: {
               legend: { display: false },
               tooltip: {
-                enabled: true,
+                enabled: !isMock, // Disable tooltip for mock data
                 backgroundColor: 'rgba(27, 37, 49, 0.9)',
                 titleColor: '#33b5e5',
                 bodyColor: '#fff',
@@ -163,14 +176,32 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
             }
           }
        });
-    };
+  }, []);
+
+  useEffect(() => {
+    let isActive = true;
+
+    // 1. Initialize Mock Chart immediately to show the "Scale"
+    const now = new Date();
+    const mockLabels: string[] = [];
+    const mockValues: number[] = [];
+    // Generate 56 points (7 days * 8 intervals) backwards
+    for (let i = 55; i >= 0; i--) {
+        const d = new Date(now.getTime() - i * 3 * 60 * 60 * 1000);
+        // Format roughly as expected ISO-ish string for the scale callback to work
+        // e.g. "2023-10-27 00:00:00"
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const hour = String(d.getHours()).padStart(2, '0');
+        mockLabels.push(`${year}-${month}-${day} ${hour}:00:00`);
+        mockValues.push(0); // Empty values
+    }
+    initChart(mockLabels, mockValues, true);
 
     const fetchData = async () => {
       const targetUrl = 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json';
       
-      // Expanded list of CORS proxies to try sequentially
-      // NOTE: corsproxy.io generally wants the url appended directly.
-      // api.allorigins.win and codetabs want it encoded in a query param.
       const endpoints = [
         `https://corsproxy.io/?${targetUrl}`, 
         `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
@@ -180,7 +211,6 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
       for (const url of endpoints) {
         if (!isActive) return;
         try {
-          // Add cache busting to prevent stale error responses
           const fetchOptions: RequestInit = {
             method: 'GET',
             cache: 'no-store'
@@ -190,10 +220,7 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
           if (response.ok) {
             const json = await response.json();
             
-            // Validate structure roughly
             if (Array.isArray(json) && json.length > 1) {
-              // Parse Data (NOAA returns [ [time, kp, ...], ... ])
-              // Take last 56 entries (7 days * 8 intervals)
               const data = json.slice(1).slice(-56); 
               const labels = data.map((d: any) => d[0]);
               const values = data.map((d: any) => parseFloat(d[1]));
@@ -203,19 +230,17 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
               }
               
               if (isActive) {
-                 initChart(labels, values);
+                 initChart(labels, values, false);
                  setLoading(false);
               }
-              return; // Success, exit loop
+              return; 
             }
           }
         } catch (e) {
            console.warn(`Fetch failed for proxy: ${url}`, e);
-           // Continue to next proxy
         }
       }
 
-      // If all failed
       if (isActive) {
           setLoading(false);
           setError(true);
@@ -231,15 +256,28 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
         chartInstance.current = null;
       }
     };
-  }, []);
+  }, [initChart, onCurrentIndexChange]);
 
   return (
     <div className="w-full h-60 bg-black/40 rounded-xl border border-white/5 p-2 relative flex flex-col">
-      {/* Loading Overlay */}
+      {/* Title - Lifted z-index to be above loading overlay */}
+      <div className="absolute top-2 left-3 flex items-center gap-2 z-30 pointer-events-none">
+        <div className={`w-1.5 h-1.5 rounded-full ${error ? 'bg-red-500' : 'bg-[#33b5e5] shadow-[0_0_5px_#33b5e5]'}`} />
+        <span className={`text-[9px] font-black uppercase tracking-widest ${error ? 'text-red-500' : 'text-[#33b5e5]'}`}>
+            {title}
+        </span>
+      </div>
+
+      {/* Loading Overlay - Semi-transparent to show grid underneath */}
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20 backdrop-blur-sm rounded-xl">
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-6 h-6 border-2 border-[#33b5e5] border-t-transparent rounded-full animate-spin" />
+        <div className="absolute inset-0 flex items-center justify-center z-20 rounded-xl bg-black/20 backdrop-blur-[1px]">
+          <div className="relative flex items-center justify-center">
+             {/* Spinner Ring */}
+             <div className="w-12 h-12 border-4 border-[#33b5e5]/30 border-t-[#33b5e5] rounded-full animate-spin" />
+             {/* Stopwatch inside */}
+             <div className="absolute inset-0 flex items-center justify-center text-[10px] font-black text-[#33b5e5] tabular-nums">
+                {timer.toFixed(1)}s
+             </div>
           </div>
         </div>
       )}
@@ -254,14 +292,6 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
              </div>
         </div>
       )}
-      
-      {/* Title */}
-      <div className="absolute top-2 left-3 flex items-center gap-2 z-10 pointer-events-none">
-        <div className={`w-1.5 h-1.5 rounded-full ${error ? 'bg-red-500' : 'bg-[#33b5e5] shadow-[0_0_5px_#33b5e5]'}`} />
-        <span className={`text-[9px] font-black uppercase tracking-widest ${error ? 'text-red-500' : 'text-[#33b5e5]'}`}>
-            {title}
-        </span>
-      </div>
 
       {/* Canvas */}
       <div className="relative flex-1 w-full min-h-0">
