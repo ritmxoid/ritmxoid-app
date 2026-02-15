@@ -16,6 +16,7 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
 
   useEffect(() => {
     let isActive = true; // Prevents state updates on unmounted component
+    let timeoutId: ReturnType<typeof setTimeout>;
 
     const initChart = (labels: string[], values: number[], isSimulated: boolean) => {
        if (!chartRef.current) return;
@@ -97,20 +98,31 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
                 border: { display: false }
               },
               x: {
-                grid: { display: false },
+                grid: { 
+                  display: true, // Enable grid for day separation
+                  color: 'rgba(255,255,255,0.05)',
+                  drawTicks: false
+                },
                 ticks: {
                   autoSkip: true,
-                  maxTicksLimit: 6,
+                  maxTicksLimit: 8, // Allow approx 1 tick per day for 7 days
                   maxRotation: 0,
-                  color: '#555',
+                  color: '#888',
                   font: { size: 9, weight: 'bold' },
                   callback: function(val, index) {
                     const dateStr = labels[index];
                     try {
                         const d = dateStr.includes('T') ? new Date(dateStr) : new Date(dateStr + ' UTC');
+                        // Show day/month for midnight (start of day)
+                        // Or just formatting if autoskip handles distribution
                         if (d.getUTCHours() === 0 || index === 0) {
-                            return d.getDate() + '/' + (d.getMonth() + 1);
+                             return d.getDate() + '.' + (d.getMonth() + 1);
                         }
+                        // For autoSkip to work well with filtered data, we might need to return string for everything but chart.js hides overlapping.
+                        // But if we return empty string, it takes space but is empty.
+                        // Let's rely on Chart.js autoSkip with formatted values for everything, but prefer showing midnight.
+                        // Actually, simplest is to just return formatted date for midnight, and empty for others.
+                        return '';
                     } catch(e) {}
                     return '';
                   }
@@ -170,6 +182,7 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
               }
               
               if (isActive) {
+                 clearTimeout(timeoutId); // CANCEL THE TIMEOUT ON SUCCESS
                  initChart(labels, values, false);
                  setLoading(false);
               }
@@ -182,16 +195,16 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
       }
 
       // If we get here, all fetches failed
-      loadMockData();
+      if (isActive) loadMockData();
     };
 
-    // Race Condition Handler: If fetch takes too long (> 2s), show mock data so UI isn't empty
-    const timeoutId = setTimeout(() => {
-        if (loading && isActive) {
+    // Race Condition Handler: If fetch takes too long (> 5s), show mock data so UI isn't empty
+    timeoutId = setTimeout(() => {
+        if (isActive) {
             console.warn("Fetch timed out, switching to mock data.");
             loadMockData();
         }
-    }, 2000);
+    }, 5000);
 
     fetchData();
 
