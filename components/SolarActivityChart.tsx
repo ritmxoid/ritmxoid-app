@@ -12,13 +12,46 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const [loading, setLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
-      const url = 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json';
+      const targetUrl = 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json';
+      
+      // Strategy: Try direct fetch first, then fall back to different CORS proxies
+      // 1. Direct (fastest if CORS headers are present or dev environment)
+      // 2. AllOrigins (reliable free proxy)
+      // 3. CorsProxy.io (backup)
+      const endpoints = [
+        targetUrl,
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}&cb=${Date.now()}`,
+        `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`
+      ];
+
+      let rawData = null;
+
+      for (const url of endpoints) {
+        try {
+          const response = await fetch(url);
+          if (response.ok) {
+            rawData = await response.json();
+            break; // Success, exit loop
+          }
+        } catch (e) {
+          console.warn(`Fetch attempt failed for ${url}:`, e);
+        }
+      }
+
+      if (!rawData) {
+        console.error("K-Index fetch error: All endpoints failed");
+        setLoading(false);
+        setHasError(true);
+        return;
+      }
+
       try {
-        const response = await fetch(url);
-        const rawData = await response.json();
+        // NOAA data structure: array of arrays. First is header.
+        // We take slice(1) to remove header, then slice(-56) for last ~7 days (8 values per day * 7)
         const data = rawData.slice(1).slice(-56);
 
         const labels = data.map((d: any) => d[0]);
@@ -150,8 +183,9 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
         }
         setLoading(false);
       } catch (error) {
-        console.error("K-Index fetch error:", error);
+        console.error("Error processing K-Index data:", error);
         setLoading(false);
+        setHasError(true);
       }
     };
 
@@ -163,6 +197,19 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
       }
     };
   }, []);
+
+  if (hasError) {
+    return (
+      <div className="w-full h-60 bg-black/40 rounded-xl border border-white/5 p-2 relative flex flex-col items-center justify-center gap-2">
+        <div className="absolute top-2 left-3 flex items-center gap-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_5px_red]" />
+          <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">{title}</span>
+        </div>
+        <i className="fa-solid fa-satellite-dish text-2xl text-slate-700" />
+        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">No Signal (CORS)</span>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full h-60 bg-black/40 rounded-xl border border-white/5 p-2 relative overflow-hidden">
