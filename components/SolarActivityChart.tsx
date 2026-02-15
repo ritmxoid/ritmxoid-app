@@ -12,16 +12,14 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isOffline, setIsOffline] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    let isActive = true; // Prevents state updates on unmounted component
-    let timeoutId: ReturnType<typeof setTimeout>;
+    let isActive = true;
 
-    const initChart = (labels: string[], values: number[], isSimulated: boolean) => {
+    const initChart = (labels: string[], values: number[]) => {
        if (!chartRef.current) return;
        
-       // Destroy existing instance to prevent "Canvas is already in use" error
        if (chartInstance.current) {
          chartInstance.current.destroy();
          chartInstance.current = null;
@@ -30,12 +28,12 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
        const ctx = chartRef.current.getContext('2d');
        if (!ctx) return;
 
-       // Define colors based on value
+       // Colors
        const barColors = values.map((v: number) => {
-          if (v >= 7) return '#9933cc'; // Purple (Strong storm)
-          if (v >= 5) return '#cc0000'; // Red (Minor storm)
-          if (v >= 4) return '#ffd600'; // Yellow (Disturbance)
-          return '#33b5e5';             // Blue (Quiet)
+          if (v >= 7) return '#9933cc'; 
+          if (v >= 5) return '#cc0000'; 
+          if (v >= 4) return '#ffd600'; 
+          return '#33b5e5';             
         });
 
        chartInstance.current = new Chart(ctx, {
@@ -45,15 +43,15 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
             datasets: [{
               data: values,
               backgroundColor: barColors,
-              barPercentage: 0.8,
-              categoryPercentage: 0.9,
+              barPercentage: 0.9,
+              categoryPercentage: 1.0,
               borderRadius: 2
             }]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
-            animation: { duration: 0 }, // Disable animation for stability
+            animation: { duration: 0 },
             layout: {
               padding: { top: 20, bottom: 0, left: 0, right: 10 }
             },
@@ -70,12 +68,9 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
                 callbacks: { 
                     title: (items) => {
                         const dateStr = items[0].label;
-                        try {
-                            const d = dateStr.includes('T') ? new Date(dateStr) : new Date(dateStr + ' UTC');
-                            return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                        } catch(e) {
-                            return dateStr;
-                        }
+                        // Assuming string format like "2024-02-18 00:00:00.000" or similar
+                        // Try to parse cleanly
+                        return dateStr.substring(0, 16).replace(' ', ' T:'); 
                     } 
                 }
               }
@@ -99,31 +94,33 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
               },
               x: {
                 grid: { 
-                  display: true, // Enable grid for day separation
-                  color: 'rgba(255,255,255,0.05)',
+                  display: true,
+                  color: (context) => {
+                     // Draw grid line only if it's the start of a day (index % 8 === 0)
+                     // or based on label string if we want exact midnight matching
+                     // For 3-hour intervals, 8 bars = 24 hours.
+                     // Assuming data is continuous 3h intervals.
+                     if (context.index % 8 === 0) return 'rgba(255,255,255,0.2)';
+                     return 'transparent';
+                  },
                   drawTicks: false
                 },
                 ticks: {
-                  autoSkip: true,
-                  maxTicksLimit: 8, // Allow approx 1 tick per day for 7 days
+                  autoSkip: false, // We control visibility manually
                   maxRotation: 0,
                   color: '#888',
-                  font: { size: 9, weight: 'bold' },
+                  font: { size: 10, weight: 'bold' },
                   callback: function(val, index) {
-                    const dateStr = labels[index];
-                    try {
-                        const d = dateStr.includes('T') ? new Date(dateStr) : new Date(dateStr + ' UTC');
-                        // Show day/month for midnight (start of day)
-                        // Or just formatting if autoskip handles distribution
-                        if (d.getUTCHours() === 0 || index === 0) {
-                             return d.getDate() + '.' + (d.getMonth() + 1);
-                        }
-                        // For autoSkip to work well with filtered data, we might need to return string for everything but chart.js hides overlapping.
-                        // But if we return empty string, it takes space but is empty.
-                        // Let's rely on Chart.js autoSkip with formatted values for everything, but prefer showing midnight.
-                        // Actually, simplest is to just return formatted date for midnight, and empty for others.
-                        return '';
-                    } catch(e) {}
+                    const label = this.getLabelForValue(val as number);
+                    // Check if label indicates midnight/start of day
+                    // Format usually "YYYY-MM-DD HH:MM:SS"
+                    if (label.includes('00:00:00') || index % 8 === 0) {
+                        const d = new Date(label);
+                        // Format: 10 Feb
+                        const day = d.getDate();
+                        const month = d.toLocaleString('en', { month: 'short' });
+                        return `${day} ${month}`;
+                    }
                     return '';
                   }
                 }
@@ -133,33 +130,9 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
        });
     };
 
-    const loadMockData = () => {
-        if (!isActive) return;
-        console.log("Loading mock data...");
-        setIsOffline(true);
-        const now = new Date();
-        const labels = [];
-        const values = [];
-        
-        // Generate last 7 days of 3-hour intervals (approx 56 points)
-        for (let i = 55; i >= 0; i--) {
-            const date = new Date(now.getTime() - i * 3 * 60 * 60 * 1000);
-            // Simulate a natural curve
-            const val = Math.max(1, Math.min(6, 2 + Math.sin(i / 8) * 2 + Math.random() * 1.5));
-            labels.push(date.toISOString());
-            values.push(val);
-        }
-
-        if (onCurrentIndexChange && values.length > 0) {
-            onCurrentIndexChange(values[values.length - 1]);
-        }
-        initChart(labels, values, true);
-        setLoading(false);
-    };
-
     const fetchData = async () => {
-      // PROXY STRATEGY
       const targetUrl = 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json';
+      // Use proxies to bypass CORS since we are on client-side
       const endpoints = [
         `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`,
         `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`
@@ -172,8 +145,9 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
           if (response.ok) {
             const json = await response.json();
             if (Array.isArray(json) && json.length > 1) {
-              // Parse Data
-              const data = json.slice(1).slice(-56); // Remove header, take last 56
+              // Parse Data (NOAA returns [ [time, kp, ...], ... ])
+              // Take last 56 entries (7 days * 8 intervals)
+              const data = json.slice(1).slice(-56); 
               const labels = data.map((d: any) => d[0]);
               const values = data.map((d: any) => parseFloat(d[1]));
               
@@ -182,11 +156,10 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
               }
               
               if (isActive) {
-                 clearTimeout(timeoutId); // CANCEL THE TIMEOUT ON SUCCESS
-                 initChart(labels, values, false);
+                 initChart(labels, values);
                  setLoading(false);
               }
-              return; // Success!
+              return; // Success
             }
           }
         } catch (e) {
@@ -194,23 +167,17 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
         }
       }
 
-      // If we get here, all fetches failed
-      if (isActive) loadMockData();
+      // If all failed
+      if (isActive) {
+          setLoading(false);
+          setError(true);
+      }
     };
-
-    // Race Condition Handler: If fetch takes too long (> 5s), show mock data so UI isn't empty
-    timeoutId = setTimeout(() => {
-        if (isActive) {
-            console.warn("Fetch timed out, switching to mock data.");
-            loadMockData();
-        }
-    }, 5000);
 
     fetchData();
 
     return () => {
       isActive = false;
-      clearTimeout(timeoutId);
       if (chartInstance.current) {
         chartInstance.current.destroy();
         chartInstance.current = null;
@@ -228,16 +195,26 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
           </div>
         </div>
       )}
+
+      {/* Error Overlay */}
+      {!loading && error && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20 backdrop-blur-sm rounded-xl">
+             <div className="text-center">
+                <i className="fa-solid fa-triangle-exclamation text-amber-500 text-2xl mb-2" />
+                <p className="text-[10px] text-slate-400 font-bold uppercase">Data Unavailable</p>
+             </div>
+        </div>
+      )}
       
-      {/* Title & Status */}
+      {/* Title */}
       <div className="absolute top-2 left-3 flex items-center gap-2 z-10 pointer-events-none">
-        <div className={`w-1.5 h-1.5 rounded-full ${isOffline ? 'bg-amber-500' : 'bg-[#33b5e5] shadow-[0_0_5px_#33b5e5]'}`} />
-        <span className={`text-[9px] font-black uppercase tracking-widest ${isOffline ? 'text-amber-500' : 'text-[#33b5e5]'}`}>
-            {title} {isOffline && '(SIM)'}
+        <div className={`w-1.5 h-1.5 rounded-full ${error ? 'bg-red-500' : 'bg-[#33b5e5] shadow-[0_0_5px_#33b5e5]'}`} />
+        <span className={`text-[9px] font-black uppercase tracking-widest ${error ? 'text-red-500' : 'text-[#33b5e5]'}`}>
+            {title}
         </span>
       </div>
 
-      {/* Canvas Container: Explicitly sized to fill parent flex area */}
+      {/* Canvas */}
       <div className="relative flex-1 w-full min-h-0">
           <canvas ref={chartRef} style={{ width: '100%', height: '100%' }} />
       </div>
