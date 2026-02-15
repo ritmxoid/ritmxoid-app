@@ -797,7 +797,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           const isToday = offset === 0;
           
           // Solar Impact Logic
-          const isSolarActive = solarKIndex > 5;
+          const isSolarActive = solarKIndex >= 5;
           const balanceVal = calculateFullBalance(d);
           const isHammer = isSolarActive && isToday && balanceVal > 45;
           const isMagnet = isSolarActive && isToday && balanceVal <= 45;

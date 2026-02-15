@@ -48,6 +48,45 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
               borderRadius: 2
             }]
           },
+          plugins: [
+            {
+              id: 'nowMarker',
+              afterDatasetsDraw(chart) {
+                const { ctx } = chart;
+                const meta = chart.getDatasetMeta(0);
+                if (!meta.data.length) return;
+                
+                const lastBar = meta.data[meta.data.length - 1];
+                
+                ctx.save();
+                // Position above the bar
+                ctx.translate(lastBar.x, lastBar.y - 8);
+                
+                // Glow
+                ctx.shadowColor = '#33b5e5';
+                ctx.shadowBlur = 10;
+                
+                // Triangle
+                ctx.fillStyle = '#33b5e5';
+                ctx.beginPath();
+                ctx.moveTo(0, 0); // Tip
+                ctx.lineTo(-4, -6);
+                ctx.lineTo(4, -6);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Text
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 8px Roboto';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                ctx.fillText('NOW', 0, -8);
+                
+                ctx.restore();
+              }
+            }
+          ],
           options: {
             responsive: true,
             maintainAspectRatio: false,

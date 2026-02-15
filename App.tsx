@@ -181,7 +181,7 @@ const App: React.FC = () => {
             <div className="space-y-1">
               <div className="relative inline-block">
                   <h1 className="text-4xl font-black text-[#33b5e5] tracking-tighter uppercase drop-shadow-[0_0_10px_rgba(51,181,229,0.3)]">RITMXOID</h1>
-                  <span className="absolute -top-2 -right-10 text-[9px] font-bold text-[#33b5e5] opacity-50 tracking-widest">v.3.5.7</span>
+                  <span className="absolute -top-2 -right-10 text-[9px] font-bold text-[#33b5e5] opacity-50 tracking-widest">v.3.5.9</span>
               </div>
               <p className="text-slate-400 uppercase tracking-[0.2em] text-[10px] font-black opacity-80">Rhythmic Analytics Core</p>
             </div>
