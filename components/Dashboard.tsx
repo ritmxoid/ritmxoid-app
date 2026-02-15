@@ -9,6 +9,7 @@ import { TRANSLATIONS as GLOBAL_TRANSLATIONS, LANGUAGES as GLOBAL_LANGUAGES, get
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { Profile } from '../types';
 import { logEvent, logPageView } from '../core/analytics';
+import SolarActivityChart from './SolarActivityChart';
 
 interface DashboardProps {
   profile: Profile;
@@ -69,6 +70,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [isDragOverGroup, setIsDragOverGroup] = useState<string | null>(null);
   const [isDragOverGeneral, setIsDragOverGeneral] = useState(false);
+  const [solarKIndex, setSolarKIndex] = useState(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const longPressTimer = useRef<any>(null);
@@ -793,13 +795,46 @@ const Dashboard: React.FC<DashboardProps> = ({
           const d = daysGone + offset;
           const r = calculateSpecificRhythms(d);
           const isToday = offset === 0;
+          
+          // Solar Impact Logic
+          const isSolarActive = solarKIndex > 5;
+          const balanceVal = calculateFullBalance(d);
+          const isHammer = isSolarActive && isToday && balanceVal > 45;
+          const isMagnet = isSolarActive && isToday && balanceVal <= 45;
+
           return (
-            <div key={i} className={`flex-1 flex flex-col justify-end h-full min-w-[3px] ${isToday ? 'bg-white/10 ring-1 ring-[#33b5e5] z-10 shadow-[0_0_10px_rgba(51,181,229,0.3)]' : 'opacity-60'}`}>
+            <motion.div 
+              key={i} 
+              className={`flex-1 flex flex-col justify-end h-full min-w-[3px] relative ${isToday ? 'bg-white/10 z-10 shadow-[0_0_10px_rgba(51,181,229,0.3)]' : 'opacity-60'}`}
+              style={{ originY: 1 }}
+              animate={isHammer ? { scaleY: [1, 0.8, 1] } : isMagnet ? { scaleY: [1, 1.2, 1] } : { scaleY: 1 }}
+              transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut" }}
+            >
+              {isToday && (
+                <div className={`absolute inset-0 border-x border-t border-[#33b5e5] ${isSolarActive ? 'opacity-80' : 'opacity-100'}`} />
+              )}
+              
+              {/* Crazy Solar Sun */}
+              {(isHammer || isMagnet) && (
+                <motion.div
+                  className="absolute left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-gradient-to-br from-red-500 to-orange-600 shadow-[0_0_15px_rgba(255,0,0,0.8)] z-50 border border-white/20"
+                  style={{ top: -30 }}
+                  animate={
+                    isHammer 
+                      ? { y: [0, 25, 0], scale: [1, 1.2, 1] } // Hammering down
+                      : { y: [0, -10, 0], scale: [1, 1.3, 1], boxShadow: ["0 0 15px rgba(255,0,0,0.8)", "0 0 30px rgba(255,0,0,1)", "0 0 15px rgba(255,0,0,0.8)"] } // Magnet pulse
+                  }
+                  transition={{ duration: 0.8, repeat: Infinity, ease: isHammer ? "circIn" : "easeInOut" }}
+                >
+                  <div className="absolute inset-0 bg-white/20 rounded-full animate-pulse" />
+                </motion.div>
+              )}
+
               {visibleRhythms.motor && <div style={{ height: `${r.motor/4}%`, backgroundColor: COLORS.MOTOR }} className="w-full border-t border-black/30" />}
               {visibleRhythms.physical && <div style={{ height: `${r.physical/4}%`, backgroundColor: COLORS.PHYSICAL }} className="w-full border-t border-black/30" />}
               {visibleRhythms.sensory && <div style={{ height: `${r.sensory/4}%`, backgroundColor: COLORS.SENSORY }} className="w-full border-t border-black/30" />}
               {visibleRhythms.analytical && <div style={{ height: `${r.analytical/4}%`, backgroundColor: COLORS.ANALYTICAL }} className="w-full border-t border-black/30" />}
-            </div>
+            </motion.div>
           );
         })}
       </div>
@@ -818,6 +853,10 @@ const Dashboard: React.FC<DashboardProps> = ({
         <ToggleButton label={t('toggle_phys')} active={visibleRhythms.physical} color={COLORS.PHYSICAL} onClick={() => setVisibleRhythms(v => ({...v, physical: !v.physical}))} />
         <ToggleButton label={t('toggle_sens')} active={visibleRhythms.sensory} color={COLORS.SENSORY} onClick={() => setVisibleRhythms(v => ({...v, sensory: !v.sensory}))} />
         <ToggleButton label={t('toggle_anlt')} active={visibleRhythms.analytical} color={COLORS.ANALYTICAL} onClick={() => setVisibleRhythms(v => ({...v, analytical: !v.analytical}))} />
+      </div>
+
+      <div className="pt-2">
+        <SolarActivityChart title={t('solar_monitor_title')} onCurrentIndexChange={setSolarKIndex} />
       </div>
     </div>
   );
@@ -1621,7 +1660,7 @@ const HighLevelIcon = () => (
       <path className="high_fil3" d="M237.22 213.39c-68.25,41.47 -157.19,19.76 -198.65,-48.49 -7.97,-13.11 -13.59,-26.98 -17.01,-41.14 -9.86,36.79 -5.26,77.4 16.09,112.52 41.47,68.25 130.41,89.96 198.65,48.49 55.14,-33.5 79.89,-97.99 65.5,-157.52 -9.3,34.7 -31.46,66 -64.58,86.13z"/>
       <path className="high_str0" d="M52.41 184.03c2.52,12.01 7.09,23.81 13.82,34.89 31.87,52.45 100.23,69.14 152.69,37.27 26.23,-15.94 43.51,-40.99 50.26,-68.63"/>
       <path className="high_str0" d="M257.14 180.21c0,0 9.88,12.19 26.35,5.76"/>
-      <path className="high_str0" d="M65.28 180.21c0,0 -9.88,12.19 -26.35,5.76"/>
+      <path className="high_str0" d="M65.28 180.21c0,0 -11.98,12.19 -26.35,5.76"/>
       <polyline className="high_str1" points="99.03,106.57 139.81,140.33 99.03,170.09 "/>
       <polyline className="high_str1" points="223.39,106.57 182.61,140.33 223.39,170.09 "/>
     </g>
