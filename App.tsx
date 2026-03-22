@@ -85,7 +85,7 @@ const App: React.FC = () => {
     const weekDaysShort = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
     const accentColor = '#8a2be2';
 
-    // Logo SVG for PDF (unused in simple implementation but kept for logic structure)
+    // Logo SVG for PDF
     const logoSvgString = `
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="2500 600 2100 2200" width="100" height="100">
         <path fill="#2893E3" d="M3071.24 1227.95c77.21,36.66 394.14,6.44 500.67,413.85 27.98,106.99 246.44,-45.6 286.14,-82.73 30.35,-28.37 69.21,-85.54 94.32,-134.48 184.52,-359.58 -201.17,-799.39 -607.75,-616.03 -146.05,65.87 -292.78,240.77 -273.38,419.39z"/>
@@ -95,8 +95,91 @@ const App: React.FC = () => {
       </svg>
     `;
     
-    // Stub: PDF Export logic would go here
-    alert("PDF Export triggered for: " + tempName);
+    const container = document.createElement('div');
+    container.style.position = 'absolute';
+    container.style.left = '-9999px';
+    container.style.top = '-9999px';
+    container.style.width = '1200px';
+    container.style.backgroundColor = '#050505';
+    container.style.color = '#ffffff';
+    container.style.padding = '40px';
+    container.style.fontFamily = 'Roboto, sans-serif';
+    
+    let html = `
+      <div style="display: flex; align-items: center; margin-bottom: 40px;">
+        <div style="width: 80px; height: 80px; margin-right: 20px;">${logoSvgString}</div>
+        <div>
+          <h1 style="margin: 0; font-size: 36px; color: #33b5e5; text-transform: uppercase;">RitmXoid Calendar ${year}</h1>
+          <p style="margin: 5px 0 0 0; font-size: 18px; color: #888;">Profile: ${tempName} | Birth: ${bdate.toFormat('dd.MM.yyyy')}</p>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px;">
+    `;
+
+    for (let m = 1; m <= 12; m++) {
+      html += `<div style="background: #111; padding: 20px; border-radius: 15px; border: 1px solid #333;">`;
+      html += `<h3 style="margin: 0 0 15px 0; color: ${accentColor}; text-align: center; font-size: 20px;">${monthNames[m-1]}</h3>`;
+      
+      html += `<div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; margin-bottom: 10px;">`;
+      weekDaysShort.forEach(wd => {
+        html += `<div style="color: #666; font-size: 12px; font-weight: bold;">${wd}</div>`;
+      });
+      html += `</div>`;
+      
+      html += `<div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center;">`;
+      
+      const firstDay = DateTime.local(year, m, 1).setZone(APP_ZONE);
+      const daysInMonth = firstDay.daysInMonth || 31;
+      let startDay = firstDay.weekday - 1;
+      
+      for (let i = 0; i < startDay; i++) {
+        html += `<div></div>`;
+      }
+      
+      for (let d = 1; d <= daysInMonth; d++) {
+        const currentDate = DateTime.local(year, m, d).setZone(APP_ZONE);
+        const balance = calculateFullBalance(bdate, currentDate);
+        const color = getBalanceColor(balance);
+        
+        html += `
+          <div style="
+            aspect-ratio: 1; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            background-color: ${color}40; 
+            color: ${color};
+            border: 1px solid ${color}80;
+            border-radius: 50%;
+            font-size: 14px;
+            font-weight: bold;
+          ">${d}</div>
+        `;
+      }
+      
+      html += `</div></div>`;
+    }
+    
+    html += `</div>`;
+    container.innerHTML = html;
+    document.body.appendChild(container);
+    
+    try {
+      const canvas = await html2canvas(container, { scale: 2, backgroundColor: '#050505' });
+      const imgData = canvas.toDataURL('image/jpeg', 0.9);
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'px',
+        format: [canvas.width, canvas.height]
+      });
+      pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+      pdf.save(`RitmXoid_${tempName}_${year}.pdf`);
+    } catch (e) {
+      console.error('PDF generation failed', e);
+      alert('Failed to generate PDF.');
+    } finally {
+      document.body.removeChild(container);
+    }
   };
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
