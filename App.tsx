@@ -81,98 +81,167 @@ const App: React.FC = () => {
     const APP_ZONE = 'utc+5';
     const bdate = DateTime.fromISO(tempDate).setZone(APP_ZONE, { keepLocalTime: true });
     const year = DateTime.now().setZone(APP_ZONE).year;
-    const monthNames = Info.months('long', { locale: 'en' }); 
-    const weekDaysShort = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
-    const accentColor = '#8a2be2';
-
-    // Logo SVG for PDF
-    const logoSvgString = `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="2500 600 2100 2200" width="100" height="100">
-        <path fill="#2893E3" d="M3071.24 1227.95c77.21,36.66 394.14,6.44 500.67,413.85 27.98,106.99 246.44,-45.6 286.14,-82.73 30.35,-28.37 69.21,-85.54 94.32,-134.48 184.52,-359.58 -201.17,-799.39 -607.75,-616.03 -146.05,65.87 -292.78,240.77 -273.38,419.39z"/>
-        <path fill="#FF8F19" d="M4050.99 2202.38c-54.99,-24.24 -316.95,-15.04 -452.91,-265.9 -37.76,-69.68 -36.83,-119.55 -64.11,-181.11 -88.32,-17.74 -196,55.58 -243.26,91.71 -131.25,100.38 -201.88,308.81 -147.79,484.98 25.28,82.35 83.15,172.49 129.24,209.5 224.37,180.21 532.87,158.28 698.49,-82.49 40.24,-58.51 92.8,-162.9 80.34,-256.69z"/>
-        <path fill="#A41213" d="M3071.01 2203.53c37.86,-207.93 84.4,-350.26 273.9,-446.34 73.38,-37.21 108.56,-38.88 184.13,-60.35 17.16,-131.38 -120.38,-317.05 -284.86,-380.11 -510.52,-195.72 -877.19,497.76 -426.68,807.9 54.12,37.26 171.94,96.91 253.51,78.9z"/>
-        <path fill="#7A3DD9" d="M3589.2 1739c-26.58,128.77 131.79,313.59 286.95,376.47 361.88,146.64 756.06,-235.22 578.82,-629.58 -75.53,-168.05 -289.81,-292.02 -398.74,-262 -30.85,72.31 -21.81,321.3 -284.48,452.37 -65.77,32.82 -119.66,37.82 -182.55,62.74z"/>
-      </svg>
-    `;
     
     const container = document.createElement('div');
     container.style.position = 'absolute';
     container.style.left = '-9999px';
     container.style.top = '-9999px';
-    container.style.width = '1200px';
-    container.style.backgroundColor = '#050505';
-    container.style.color = '#ffffff';
-    container.style.padding = '40px';
-    container.style.fontFamily = 'Roboto, sans-serif';
+    container.style.width = '794px'; // A4 width at 96 DPI
+    container.style.height = '1123px'; // A4 height at 96 DPI
+    container.style.backgroundColor = '#ffffff';
     
     let html = `
-      <div style="display: flex; align-items: center; margin-bottom: 40px;">
-        <div style="width: 80px; height: 80px; margin-right: 20px;">${logoSvgString}</div>
-        <div>
-          <h1 style="margin: 0; font-size: 36px; color: #33b5e5; text-transform: uppercase;">RitmXoid Calendar ${year}</h1>
-          <p style="margin: 5px 0 0 0; font-size: 18px; color: #888;">Profile: ${tempName} | Birth: ${bdate.toFormat('dd.MM.yyyy')}</p>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap');
+        * { box-sizing: border-box; }
+        .calendar-wrapper { 
+          font-family: 'Roboto', sans-serif; 
+          background: #fff; 
+          color: #000; 
+          margin: 0; 
+          padding: 8px; 
+          height: 100%; 
+          display: flex;
+          flex-direction: column;
+        }
+        .header { text-align: center; margin-bottom: 8px; border-bottom: 3px solid #8a2be2; padding-bottom: 4px; flex-shrink: 0; }
+        .header h1 { margin: 0; text-transform: uppercase; font-size: 20px; font-weight: 900; letter-spacing: -1px; color: #8a2be2; line-height: 1.1; }
+        .header h2 { margin: 0; font-size: 14px; font-weight: 700; color: #444; text-transform: uppercase; }
+        .header img.logo { height: 30px; width: 30px; margin: 0 auto 2px auto; display: block; }
+        .year-grid { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(4, 1fr); gap: 5px; flex: 1; min-height: 0; }
+        .month-box { border: 1px solid #8a2be2; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
+        .month-name { display: block; text-align: center; font-weight: 900; text-transform: uppercase; font-size: 15px; background: #8a2be2; color: #fff; margin: 0; padding: 2px 0 8px 0; line-height: 1; }
+        .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); flex: 1; background: #eee; gap: 1px; }
+        .day-header { text-align: center; font-size: 9px; font-weight: 900; color: #8a2be2; padding: 1px 0; background: #f8f8f8; text-transform: uppercase; border-bottom: 1px solid #ddd; }
+        .day-cell { position: relative; background: #fff; display: flex; align-items: stretch; justify-content: stretch; overflow: hidden; }
+        .day-num { position: absolute; top: 1px; left: 1px; font-size: 12px; font-weight: 900; color: #333; line-height: 1; z-index: 5; }
+        .risk-container { position: absolute; top: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 0; z-index: 4; width: 10px; }
+        .risk-mark { font-size: 8px; color: #ff0000; font-weight: 900; text-shadow: 1px 1px 0px #fff; line-height: 0.7; }
+        .footer { margin-top: 8px; padding-top: 6px; border-top: 1px solid #ddd; display: flex; justify-content: space-between; align-items: flex-start; flex-shrink: 0; font-size: 10px; }
+        .legend-section { display: flex; flex-direction: column; gap: 3px; }
+        .legend-title { font-weight: 900; text-transform: uppercase; color: #555; margin-bottom: 2px; font-size: 9px; }
+        .legend-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .legend-item { display: flex; align-items: center; gap: 3px; }
+        .swatch { width: 10px; height: 10px; border-radius: 2px; border: 1px solid rgba(0,0,0,0.1); }
+        .risk-icon-demo { color: #ff0000; font-weight: 900; }
+      </style>
+      <div class="calendar-wrapper">
+        <div class="header">
+          <img class="logo" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjEwMCIgaGVpZ2h0PSIyMjAwIiB2aWV3Qm94PSIyNTAwIDYwMCAyMTAwIDIyMDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHBvbHlnb24gZmlsbD0iI0ZERkRGRCIgcG9pbnRzPSIyNTg3LjQ2LDI3MDEuNTUgNDU2MC4xOCwyNzAxLjU1IDQ1NjAuMTgsNjk0Ljk1IDI1ODcuNDYsNjk0Ljk1ICIvPjxwYXRoIGZpbGw9IiMyODkzRTMiIGQ9Ik0zMDcxLjI0IDEyMjcuOTVjNzcuMjEsMzYuNjYgMzk0LjE0LDYuNDQgNTAwLjY3LDQxMy44NSAyNy45OCwxMDYuOTkgMjQ2LjQ0LC00NS42IDI4Ni4xNCwtODIuNzMgMzAuMzUsLTI4LjM3IDY5LjIxLC04NS41NCA5NC4zMiwtMTM0LjQ4IDE4NC41MiwtMzU5LjU4IC0yMDEuMTcsLTc5OS4zOSAtNjA3Ljc1LC02MTYuMDMgLTE0Ni4wNSw2NS44NyAtMjkyLjc4LDI0MC43NyAtMjczLjM4LDQxOS4zOXoiLz48cGF0aCBmaWxsPSIjRkY4RjE5IiBkPSJNNDA1MC45OSAyMjAyLjM4Yy01NC45OSwtMjQuMjQgLTMxNi45NSwtMTUuMDQgLTQ1Mi45MSwtMjY1LjkgLTM3Ljc2LC02OS42OCAtMzYuODMsLTExOS41NSAtNjQuMTEsLTE4MS4xMSAtODguMzIsLTE3Ljc0IC0xOTYsNTUuNTggLTI0My4yNiw5MS43MSAtMTMxLjI1LDEwMC4zOCAtMjAxLjg4LDMwOC44MSAtMTQ3Ljc5LDQ4NC45OCAyNS4yOCw4Mi4zNSA4My4xNSwxNzIuNDkgMTI5LjI0LDIwOS41IDIyNC4zNywxODAuMjEgNTMyLjg3LDE1OC4yOCA2OTguNDksLTgyLjQ5IDQwLjI0LC01OC41MSA5Mi44LC0xNjIuOSA4MC4zNCwtMjU2LjY5eiIvPjxwYXRoIGZpbGw9IiNBNDEyMTMiIGQ9Ik0zMDcxLjAxIDIyMDMuNTNjMzcuODYsLTIwNy45MyA4NC40LC0zNTAuMjYgMjczLjksLTQ0Ni4zNCA3My4zOCwtMzcuMjEgMTA4LjU2LC0zOC44OCAxODQuMTMsLTYwLjM1IDE3LjE2LC0xMzEuMzggLTEyMC4zOCwtMzE3LjA1IC0yODQuODYsLTM4MC4xMSAtNTEwLjUyLC0xOTUuNzIgLTg3Ny4xOSw0OTcuNzYgLTQyNi42OCw4MDcuOSA1NC4xMiwzNy4yNiAxNzEuOTQsOTYuOTEgMjUzLjUxLDc4Ljl6Ii8+PHBhdGggZmlsbD0iIzdBM0REOSIgZD0iTTM1ODkuMiAxNzM5Yy0yNi41OCwxMjguNzcgMTMxLjc5LDMxMy41OSAyODYuOTUsMzc2LjQ3IDM2MS44OCwxNDYuNjQgNzU2LjA2LC0yMzUuMjIgNTc4LjgyLC02MjkuNTggLTc1LjUzLC0xNjguMDUgLTI4OS44MSwtMjkyLjAyIC0zOTguNzQsLTI2MiAtMzAuODUsNzIuMzEgLTIxLjgxLDMyMS4zIC0yODQuNDgsNDUyLjM3IC02NS43NywzMi44MiAtMTE5LjY2LDM3LjgyIC0xODIuNTUsNjIuNzR6Ii8+PC9zdmc+" />
+          <h1>RITMXOID ${year}</h1>
+          <h2>${tempName}</h2>
         </div>
-      </div>
-      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 30px;">
+        <div class="year-grid">
     `;
 
+    const enMonths = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const enDays = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+
     for (let m = 1; m <= 12; m++) {
-      html += `<div style="background: #111; padding: 20px; border-radius: 15px; border: 1px solid #333;">`;
-      html += `<h3 style="margin: 0 0 15px 0; color: ${accentColor}; text-align: center; font-size: 20px;">${monthNames[m-1]}</h3>`;
+      html += `<div class="month-box">`;
+      html += `<div class="month-name">${enMonths[m-1]}</div>`;
+      html += `<div class="days-grid">`;
       
-      html += `<div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; margin-bottom: 10px;">`;
-      weekDaysShort.forEach(wd => {
-        html += `<div style="color: #666; font-size: 12px; font-weight: bold;">${wd}</div>`;
+      enDays.forEach(wd => {
+        html += `<div class="day-header">${wd}</div>`;
       });
-      html += `</div>`;
-      
-      html += `<div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center;">`;
-      
+
       const firstDay = DateTime.local(year, m, 1).setZone(APP_ZONE);
       const daysInMonth = firstDay.daysInMonth || 31;
       let startDay = firstDay.weekday - 1;
       
       for (let i = 0; i < startDay; i++) {
-        html += `<div></div>`;
+        html += `<div class="day-cell" style="background: #fafafa;"></div>`;
       }
       
       for (let d = 1; d <= daysInMonth; d++) {
         const currentDate = DateTime.local(year, m, d).setZone(APP_ZONE);
-        const balance = calculateFullBalance(bdate, currentDate);
+        const daysGone = calculateDaysGone(bdate, currentDate);
+        const balance = calculateFullBalance(daysGone);
         const color = getBalanceColor(balance);
+        const riskScore = getRiskLevel(daysGone, currentDate);
+        
+        let riskHtml = '';
+        if (riskScore >= 25) {
+          const count = riskScore >= 75 ? 3 : riskScore >= 50 ? 2 : 1;
+          riskHtml = `<div class="risk-container">`;
+          for(let r=0; r<count; r++) riskHtml += `<span class="risk-mark">⚡</span>`;
+          riskHtml += `</div>`;
+        }
         
         html += `
-          <div style="
-            aspect-ratio: 1; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            background-color: ${color}40; 
-            color: ${color};
-            border: 1px solid ${color}80;
-            border-radius: 50%;
-            font-size: 14px;
-            font-weight: bold;
-          ">${d}</div>
+          <div class="day-cell" style="background-color: ${color}66;">
+            <span class="day-num">${d}</span>
+            ${riskHtml}
+          </div>
         `;
       }
       
       html += `</div></div>`;
     }
     
-    html += `</div>`;
+    html += `
+        </div>
+        <div class="footer">
+           <div class="legend-section">
+              <div class="legend-title">ENERGY LEVELS</div>
+              <div class="legend-row">
+                 <div class="legend-item">
+                    <div class="swatch" style="background-color: #44aa00"></div>
+                    <span>Critical</span>
+                 </div>
+                 <div class="legend-item">
+                    <div class="swatch" style="background-color: #2196f3"></div>
+                    <span>Low</span>
+                 </div>
+                 <div class="legend-item">
+                    <div class="swatch" style="background-color: #ffd600"></div>
+                    <span>Optimal</span>
+                 </div>
+                 <div class="legend-item">
+                    <div class="swatch" style="background-color: #ff9800"></div>
+                    <span>High</span>
+                 </div>
+                 <div class="legend-item">
+                    <div class="swatch" style="background-color: #ff1744"></div>
+                    <span>Superhigh</span>
+                 </div>
+              </div>
+           </div>
+           <div class="legend-section" style="align-items: flex-end;">
+              <div class="legend-title">RISK FACTORS (⚡)</div>
+              <div class="legend-row">
+                 <div class="legend-item"><span class="risk-icon-demo">⚡</span> 1</div>
+                 <div class="legend-item"><span class="risk-icon-demo">⚡⚡</span> 2</div>
+                 <div class="legend-item"><span class="risk-icon-demo">⚡⚡⚡</span> 3</div>
+              </div>
+           </div>
+        </div>
+      </div>
+    `;
+    
     container.innerHTML = html;
     document.body.appendChild(container);
     
     try {
-      const canvas = await html2canvas(container, { scale: 2, backgroundColor: '#050505' });
+      // Wait briefly for fonts to load
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const canvas = await html2canvas(container, { 
+        scale: 2, 
+        backgroundColor: '#ffffff',
+        useCORS: true
+      });
       const imgData = canvas.toDataURL('image/jpeg', 0.9);
       const pdf = new jsPDF({
-        orientation: 'landscape',
-        unit: 'px',
-        format: [canvas.width, canvas.height]
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
       });
-      pdf.addImage(imgData, 'JPEG', 0, 0, canvas.width, canvas.height);
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
       pdf.save(`RitmXoid_${tempName}_${year}.pdf`);
     } catch (e) {
       console.error('PDF generation failed', e);
