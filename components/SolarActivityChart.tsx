@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Chart, registerables } from 'chart.js';
+import { DateTime } from 'luxon';
 
 Chart.register(...registerables);
 
@@ -119,8 +120,9 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
                 displayColors: false,
                 callbacks: { 
                     title: (items) => {
-                        const dateStr = items[0].label;
-                        return dateStr.substring(0, 16).replace(' ', ' T:'); 
+                        const label = items[0].label;
+                        const dt = DateTime.fromSQL(label, { zone: 'utc' }).setZone('utc+5');
+                        return dt.toFormat('dd.MM HH:mm');
                     } 
                 }
               }
@@ -146,9 +148,10 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
                 grid: { 
                   display: true,
                   color: (context) => {
-                     // Strictly check for midnight in the label string
                      const label = labels[context.index];
-                     if (label && (label.includes('00:00:00') || label.includes('T00:00:00'))) {
+                     if (!label) return 'transparent';
+                     const dt = DateTime.fromSQL(label, { zone: 'utc' }).setZone('utc+5');
+                     if (dt.hour === 0 && dt.minute === 0) {
                         return 'rgba(255,255,255,0.2)';
                      }
                      return 'transparent';
@@ -162,12 +165,9 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
                   font: { size: 10, weight: 'bold' },
                   callback: function(val, index) {
                     const label = this.getLabelForValue(val as number);
-                    // Strictly check for midnight in the label string
-                    if (label.includes('00:00:00') || label.includes('T00:00:00')) {
-                        const d = new Date(label);
-                        const day = d.getDate();
-                        const month = d.toLocaleString('en', { month: 'short' });
-                        return `${day} ${month}`;
+                    const dt = DateTime.fromSQL(label, { zone: 'utc' }).setZone('utc+5');
+                    if (dt.hour === 0 && dt.minute === 0) {
+                        return dt.toFormat('dd LLL', { locale: 'en' });
                     }
                     return '';
                   }
@@ -182,19 +182,13 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
     let isActive = true;
 
     // 1. Initialize Mock Chart immediately to show the "Scale"
-    const now = new Date();
+    const now = DateTime.now().setZone('utc');
     const mockLabels: string[] = [];
     const mockValues: number[] = [];
     // Generate 56 points (7 days * 8 intervals) backwards
     for (let i = 55; i >= 0; i--) {
-        const d = new Date(now.getTime() - i * 3 * 60 * 60 * 1000);
-        // Format roughly as expected ISO-ish string for the scale callback to work
-        // e.g. "2023-10-27 00:00:00"
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        const hour = String(d.getHours()).padStart(2, '0');
-        mockLabels.push(`${year}-${month}-${day} ${hour}:00:00`);
+        const dt = now.minus({ hours: i * 3 });
+        mockLabels.push(dt.toFormat('yyyy-MM-dd HH:00:00'));
         mockValues.push(0); // Empty values
     }
     initChart(mockLabels, mockValues, true);
@@ -203,9 +197,10 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
       const targetUrl = 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json';
       
       const endpoints = [
-        `https://corsproxy.io/?${targetUrl}`, 
         `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
-        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`
+        `https://corsproxy.io/?${targetUrl}`, 
+        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
+        `https://thingproxy.freeboard.io/fetch/${targetUrl}`
       ];
 
       for (const url of endpoints) {
@@ -213,27 +208,48 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
         try {
           const fetchOptions: RequestInit = {
             method: 'GET',
-            cache: 'no-store'
+            cache: 'no-store',
+            headers: {
+              'Accept': 'application/json'
+            }
           };
           
           const response = await fetch(url, fetchOptions);
           if (response.ok) {
             const json = await response.json();
             
-            if (Array.isArray(json) && json.length > 1) {
-              const data = json.slice(1).slice(-56); 
-              const labels = data.map((d: any) => d[0]);
-              const values = data.map((d: any) => parseFloat(d[1]));
+            if (Array.isArray(json) && json.length > 0) {
+              let data;
+              let labels;
+              let values;
+
+              // NOAA sometimes returns array of arrays (first row headers) 
+              // or array of objects. Handle both.
+              if (Array.isArray(json[0])) {
+                data = json.slice(1).slice(-56);
+                labels = data.map((d: any) => d[0]);
+                values = data.map((d: any) => parseFloat(d[2]));
+              } else {
+                data = json.slice(-56);
+                labels = data.map((d: any) => d.time_tag || d.time);
+                values = data.map((d: any) => parseFloat(d.Kp || d.kp || d.value));
+              }
+
+              // Filter out invalid data
+              const validIndices = values.map((v, i) => !isNaN(v) ? i : -1).filter(i => i !== -1);
+              const filteredLabels = validIndices.map(i => labels[i]);
+              const filteredValues = validIndices.map(i => values[i]);
               
-              if (onCurrentIndexChange && values.length > 0) {
-                 onCurrentIndexChange(values[values.length - 1]);
+              if (onCurrentIndexChange && filteredValues.length > 0) {
+                 onCurrentIndexChange(filteredValues[filteredValues.length - 1]);
               }
               
-              if (isActive) {
-                 initChart(labels, values, false);
+              if (isActive && filteredValues.length > 0) {
+                 initChart(filteredLabels, filteredValues, false);
                  setLoading(false);
+                 setError(false);
+                 return; 
               }
-              return; 
             }
           }
         } catch (e) {
@@ -285,10 +301,23 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
       {/* Error Overlay */}
       {!loading && error && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20 backdrop-blur-sm rounded-xl">
-             <div className="text-center">
+             <div className="text-center p-4">
                 <i className="fa-solid fa-triangle-exclamation text-amber-500 text-2xl mb-2" />
                 <p className="text-[10px] text-slate-400 font-bold uppercase">Data Unavailable</p>
-                <p className="text-[8px] text-slate-600 mt-1">Check Connection</p>
+                <p className="text-[8px] text-slate-600 mt-1 mb-3">Check Connection</p>
+                <button 
+                  onClick={() => {
+                    setLoading(true);
+                    setError(false);
+                    setTimer(0);
+                    // The useEffect will trigger fetchData again because of the dependency on initChart/onCurrentIndexChange
+                    // but we need a way to force it. Let's just reload the page or use a state to trigger.
+                    window.location.reload();
+                  }}
+                  className="px-3 py-1 bg-[#33b5e5]/20 hover:bg-[#33b5e5]/40 text-[#33b5e5] text-[9px] font-bold uppercase rounded transition-colors"
+                >
+                  Retry
+                </button>
              </div>
         </div>
       )}
