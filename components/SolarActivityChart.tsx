@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Chart, registerables } from 'chart.js';
 import { DateTime } from 'luxon';
+import { solarDataService } from '../services/solarDataService';
 
 Chart.register(...registerables);
 
@@ -194,72 +195,22 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
     initChart(mockLabels, mockValues, true);
 
     const fetchData = async () => {
-      const targetUrl = 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json';
-      
-      const endpoints = [
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
-        `https://corsproxy.io/?${targetUrl}`, 
-        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
-        `https://thingproxy.freeboard.io/fetch/${targetUrl}`
-      ];
-
-      for (const url of endpoints) {
-        if (!isActive) return;
-        try {
-          const fetchOptions: RequestInit = {
-            method: 'GET',
-            cache: 'no-store',
-            headers: {
-              'Accept': 'application/json'
-            }
-          };
-          
-          const response = await fetch(url, fetchOptions);
-          if (response.ok) {
-            const json = await response.json();
-            
-            if (Array.isArray(json) && json.length > 0) {
-              let data;
-              let labels;
-              let values;
-
-              // NOAA sometimes returns array of arrays (first row headers) 
-              // or array of objects. Handle both.
-              if (Array.isArray(json[0])) {
-                data = json.slice(1).slice(-56);
-                labels = data.map((d: any) => d[0]);
-                values = data.map((d: any) => parseFloat(d[2]));
-              } else {
-                data = json.slice(-56);
-                labels = data.map((d: any) => d.time_tag || d.time);
-                values = data.map((d: any) => parseFloat(d.Kp || d.kp || d.value));
-              }
-
-              // Filter out invalid data
-              const validIndices = values.map((v, i) => !isNaN(v) ? i : -1).filter(i => i !== -1);
-              const filteredLabels = validIndices.map(i => labels[i]);
-              const filteredValues = validIndices.map(i => values[i]);
-              
-              if (onCurrentIndexChange && filteredValues.length > 0) {
-                 onCurrentIndexChange(filteredValues[filteredValues.length - 1]);
-              }
-              
-              if (isActive && filteredValues.length > 0) {
-                 initChart(filteredLabels, filteredValues, false);
-                 setLoading(false);
-                 setError(false);
-                 return; 
-              }
-            }
+      try {
+        const data = await solarDataService.getSolarData();
+        if (isActive) {
+          if (onCurrentIndexChange && data.values.length > 0) {
+            onCurrentIndexChange(data.values[data.values.length - 1]);
           }
-        } catch (e) {
-           console.warn(`Fetch failed for proxy: ${url}`, e);
+          initChart(data.labels, data.values, false);
+          setLoading(false);
+          setError(false);
         }
-      }
-
-      if (isActive) {
+      } catch (e) {
+        if (isActive) {
+          console.error('Failed to fetch solar data', e);
           setLoading(false);
           setError(true);
+        }
       }
     };
 
@@ -307,6 +258,7 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
                 <p className="text-[8px] text-slate-600 mt-1 mb-3">Check Connection</p>
                 <button 
                   onClick={() => {
+                    solarDataService.clearCache();
                     setLoading(true);
                     setError(false);
                     setTimer(0);

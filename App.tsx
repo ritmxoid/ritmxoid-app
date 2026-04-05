@@ -8,6 +8,7 @@ import { DateTime, Info } from 'luxon';
 import { calculateDaysGone, getRiskLevel, calculateFullBalance, getBalanceColor, COLORS } from './core/engine';
 import { getT } from './core/i18n';
 import { logEvent } from './core/analytics';
+import { solarDataService } from './services/solarDataService';
 
 const App: React.FC = () => {
   const [profiles, setProfiles] = useState<Profile[]>(() => {
@@ -26,6 +27,11 @@ const App: React.FC = () => {
   const [nameError, setNameError] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Pre-fetch solar data on app start
+  useEffect(() => {
+    solarDataService.getSolarData().catch(err => console.warn('Early solar fetch failed', err));
+  }, []);
 
   useEffect(() => {
     if (profiles.length > 0) {
