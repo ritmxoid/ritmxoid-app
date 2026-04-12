@@ -59,7 +59,8 @@ export const TRANSLATIONS: Record<string, any> = {
     help_calendar_year_title: 'YEARLY CALENDAR',
     help_calendar_year_desc: 'Generates a printable rhythm calendar for the year. Navigate to the "Calendar" tab and scroll to January of the desired year to see the export button.',
     help_solar_title: 'SOLAR ACTIVITY MONITOR',
-    help_solar_desc: 'High levels of solar activity require correcting the rhythm balance upwards at low values, and downwards at high values.'
+    help_solar_desc: 'High levels of solar activity require correcting the rhythm balance upwards at low values, and downwards at high values.',
+    compat_aerobic: 'Dynamics', compat_anaerobic: 'Strong', compat_sensory: 'Sensory', compat_sexual: 'Sexual', compat_analytic: 'Analytical', person_a: 'Person A', person_b: 'Person B', calculate: 'Calculate', synthesis_btn: 'Synthesis of Relationships', synthesis_archetype: 'Couple Archetype', synthesis_blind_spots: 'Blind Spots', synthesis_advice: 'Golden Advice', compat_very_low: 'VERY LOW', compat_low: 'LOW', compat_normal: 'NORMAL', compat_high: 'HIGH', compat_very_high: 'VERY HIGH'
   },
   ru: {
     sync: 'СИНХРОНИЗАЦИЯ', user_name: 'Имя пользователя', birth_label: 'Дата и время рождения', name_placeholder: 'Ваше имя...',
@@ -109,7 +110,8 @@ export const TRANSLATIONS: Record<string, any> = {
     help_calendar_year_title: 'ГОДОВОЙ КАЛЕНДАРЬ',
     help_calendar_year_desc: 'Генерирует ритмокалендарь профиля на год. Для этого перейдите во вкладку «Календарь» и пролистайте до января нужного года.',
     help_solar_title: 'МОНИТОР СОЛНЕЧНОЙ АКТИВНОСТИ',
-    help_solar_desc: 'Высокий уровень солнечной активности требует коррекции ритмобаланса в сторону повышения на низких значениях, и в сторону понижения на высоких.'
+    help_solar_desc: 'Высокий уровень солнечной активности требует коррекции ритмобаланса в сторону повышения на низких значениях, и в сторону понижения на высоких.',
+    compat_aerobic: 'Динамика', compat_anaerobic: 'Сила', compat_sensory: 'Сенсорика', compat_sexual: 'Сексуальность', compat_analytic: 'Аналитика', person_a: 'Персона А', person_b: 'Персона Б', calculate: 'Рассчитать', synthesis_btn: 'Синтез отношений', synthesis_archetype: 'Архетип пары', synthesis_blind_spots: 'Слепые зоны', synthesis_advice: 'Золотой совет', compat_very_low: 'ОЧЕНЬ НИЗКАЯ', compat_low: 'НИЗКАЯ', compat_normal: 'НОРМАЛЬНАЯ', compat_high: 'ВЫСОКАЯ', compat_very_high: 'СВЕРХВЫСОКАЯ'
   },
   es: {
     sync: 'SINCRONIZACIÓN', user_name: 'Usuario', birth_label: 'Fecha de nacimiento', name_placeholder: 'Nombre...',
@@ -144,7 +146,8 @@ export const TRANSLATIONS: Record<string, any> = {
     help_calendar_year_title: 'CALENDARIO ANUAL',
     help_calendar_year_desc: 'Genera un calendario rítmico anual. Vaya a la pestaña "Calendario" y desplácese hasta enero del año deseado.',
     help_solar_title: 'MONITOR DE ACTIVIDAD SOLAR',
-    help_solar_desc: 'Los altos niveles de actividad solar requieren corregir el equilibrio rítmico hacia arriba en valores bajos y hacia abajo en valores altos.'
+    help_solar_desc: 'Los altos niveles de actividad solar requieren corregir el equilibrio rítmico hacia arriba en valores bajos y hacia abajo en valores altos.',
+    compat_aerobic: 'Dinámica', compat_anaerobic: 'Fuerte', compat_sensory: 'Sensorial', compat_sexual: 'Sexual', compat_analytic: 'Analítica', person_a: 'Persona A', person_b: 'Persona B', calculate: 'Calcular', synthesis_btn: 'Síntesis de Relaciones', synthesis_archetype: 'Arquetipo de Pareja', synthesis_blind_spots: 'Puntos Ciegos', synthesis_advice: 'Consejo de Oro', compat_very_low: 'MUY BAJA', compat_low: 'BAJA', compat_normal: 'NORMAL', compat_high: 'ALTA', compat_very_high: 'MUY ALTA'
   },
   de: {
     sync: 'SYNCHRONISATION', user_name: 'Nutzername', birth_label: 'Geburtsdatum', name_placeholder: 'Name...',
@@ -179,7 +182,8 @@ export const TRANSLATIONS: Record<string, any> = {
     help_calendar_year_title: 'JAHRESKALENDER',
     help_calendar_year_desc: 'Erstellt einen Jahres-Rhythmuskalender. Gehen Sie zum Reiter "Kalender" und scrollen Sie zum Januar des gewünschten Jahres.',
     help_solar_title: 'SONNENAKTIVITÄTSMONITOR',
-    help_solar_desc: 'Hohe Sonnenaktivität erfordert eine Korrektur der Rhythmusbalance nach oben bei niedrigen Werten und nach unten bei hohen Werten.'
+    help_solar_desc: 'Hohe Sonnenaktivität erfordert eine Korrektur der Rhythmusbalance nach oben bei niedrigen Werten und nach unten bei hohen Werten.',
+    compat_aerobic: 'Dynamik', compat_anaerobic: 'Stark', compat_sensory: 'Sensorisch', compat_sexual: 'Sexuell', compat_analytic: 'Analytisch', person_a: 'Person A', person_b: 'Person B', calculate: 'Berechnen', synthesis_btn: 'Synthese der Beziehungen', synthesis_archetype: 'Paar-Archetyp', synthesis_blind_spots: 'Blinde Flecken', synthesis_advice: 'Goldener Rat', compat_very_low: 'SEHR NIEDRIG', compat_low: 'NIEDRIG', compat_normal: 'NORMAL', compat_high: 'HOCH', compat_very_high: 'SEHR HOCH'
   },
   fr: {
     sync: 'SYNCHRONISATION', user_name: 'Nom', birth_label: 'Date de naissance', name_placeholder: 'Nom...',
@@ -214,7 +218,8 @@ export const TRANSLATIONS: Record<string, any> = {
     help_calendar_year_title: 'CALENDRIER ANNUEL',
     help_calendar_year_desc: 'Génère un calendrier rythmique annuel. Allez dans l\'onglet "Calendrier" et faites défiler jusqu\'à janvier de l\'année souhaitée.',
     help_solar_title: 'MONITEUR D\'ACTIVITÉ SOLAIRE',
-    help_solar_desc: 'Des niveaux élevés d\'activité solaire nécessitent de corriger l\'équilibre rythmique vers le haut pour les valeurs basses et vers le bas pour les valeurs hautes.'
+    help_solar_desc: 'Des niveaux élevés d\'activité solaire nécessitent de corriger l\'équilibre rythmique vers le haut pour les valeurs basses et vers le bas pour les valeurs hautes.',
+    compat_aerobic: 'Dynamique', compat_anaerobic: 'Fort', compat_sensory: 'Sensoriel', compat_sexual: 'Sexuel', compat_analytic: 'Analytique', person_a: 'Personne A', person_b: 'Personne B', calculate: 'Calculer', synthesis_btn: 'Synthèse des Relations', synthesis_archetype: 'Archétype de Couple', synthesis_blind_spots: 'Angles Morts', synthesis_advice: 'Conseil en Or', compat_very_low: 'TRÈS BASSE', compat_low: 'BASSE', compat_normal: 'NORMALE', compat_high: 'HAUTE', compat_very_high: 'TRÈS HAUTE'
   },
   pt: {
     sync: 'SINCRONIZAÇÃO', user_name: 'Usuário', birth_label: 'Data de nascimento', name_placeholder: 'Nome...',
@@ -249,7 +254,8 @@ export const TRANSLATIONS: Record<string, any> = {
     help_calendar_year_title: 'CALENDÁRIO ANUAL',
     help_calendar_year_desc: 'Gera um calendário rítmico anual. Vá para a guia "Calendário" e role até janeiro do ano desejado.',
     help_solar_title: 'MONITOR DE ATIVIDADE SOLAR',
-    help_solar_desc: 'Altos níveis de atividade solar exigem a correção do equilíbrio rítmico para cima em valores baixos e para baixo em valores altos.'
+    help_solar_desc: 'Altos níveis de atividade solar exigem a correção do equilíbrio rítmico para cima em valores baixos e para baixo em valores altos.',
+    compat_aerobic: 'Dinâmica', compat_anaerobic: 'Forte', compat_sensory: 'Sensorial', compat_sexual: 'Sexual', compat_analytic: 'Analítica', person_a: 'Pessoa A', person_b: 'Pessoa B', calculate: 'Calcular', synthesis_btn: 'Síntese de Relacionamentos', synthesis_archetype: 'Arquétipo de Casal', synthesis_blind_spots: 'Pontos Cegos', synthesis_advice: 'Conselho de Ouro', compat_very_low: 'MUITO BAIXA', compat_low: 'BAIXA', compat_normal: 'NORMAL', compat_high: 'ALTA', compat_very_high: 'MUITO ALTA'
   },
   zh: {
     sync: '同步', user_name: '用户名', birth_label: '出生日期', name_placeholder: '姓名...',
@@ -284,7 +290,8 @@ export const TRANSLATIONS: Record<string, any> = {
     help_calendar_year_title: '年度日历',
     help_calendar_year_desc: '生成年度节奏日历。请转到“日历”选项卡并滚动到所需年份的 1 月。',
     help_solar_title: '太阳活动监测',
-    help_solar_desc: '高水平的太阳活动需要在低值时向上修正节律平衡，在高值时向下修正。'
+    help_solar_desc: '高水平的太阳活动需要在低值时向上修正节律平衡，在高值时向下修正。',
+    compat_aerobic: '动力', compat_anaerobic: '强壮', compat_sensory: '感官', compat_sexual: '性', compat_analytic: '分析', person_a: '人 A', person_b: '人 B', calculate: '计算', synthesis_btn: '关系综合', synthesis_archetype: '情侣原型', synthesis_blind_spots: '盲点', synthesis_advice: '黄金建议', compat_very_low: '极低', compat_low: '低', compat_normal: '正常', compat_high: '高', compat_very_high: '极高'
   },
   ja: {
     sync: '同期', user_name: 'ユーザー名', birth_label: '生年月日', name_placeholder: '名前...',
@@ -319,7 +326,8 @@ export const TRANSLATIONS: Record<string, any> = {
     help_calendar_year_title: '年間カレンダー',
     help_calendar_year_desc: '年間リズムカレンダーを生成します。「カレンダー」タブに移動し、目的の年の1月までスクロールしてください。',
     help_solar_title: '太陽活動モニター',
-    help_solar_desc: '太陽活動のレベルが高い場合、低い値ではリズムバランスを上方に、高い値では下方に修正する必要があります。'
+    help_solar_desc: '太陽活動のレベルが高い場合、低い値ではリズムバランスを上方に、高い値では下方に修正する必要があります。',
+    compat_aerobic: 'ダイナミクス', compat_anaerobic: 'ストロング', compat_sensory: '感覚', compat_sexual: '性的', compat_analytic: '分析', person_a: '人物 A', person_b: '人物 B', calculate: '計算する', synthesis_btn: '関係の統合', synthesis_archetype: 'カップルの原型', synthesis_blind_spots: '盲点', synthesis_advice: '黄金のアドバイス', compat_very_low: '非常に低い', compat_low: '低い', compat_normal: '普通', compat_high: '高い', compat_very_high: '非常に高い'
   },
   ar: {
     sync: 'مزامنة', user_name: 'الاسم', birth_label: 'تاريخ الميلاد', name_placeholder: 'الاسم...',
@@ -354,7 +362,8 @@ export const TRANSLATIONS: Record<string, any> = {
     help_calendar_year_title: 'التقويم السنوي',
     help_calendar_year_desc: 'ينشئ تقويم الإيقاع السنوي. انتقل إلى علامة التبويب "التقويم" وقم بالتمرير إلى يناير من العام المطلوب.',
     help_solar_title: 'مراقب النشاط الشمسي',
-    help_solar_desc: 'تتطلب مستويات النشاط الشمسي العالية تصحيح توازن الإيقاع صعودًا عند القيم المنخفضة، وهبوطًا عند القيم العالية.'
+    help_solar_desc: 'تتطلب مستويات النشاط الشمسي العالية تصحيح توازن الإيقاع صعودًا عند القيم المنخفضة، وهبوطًا عند القيم العالية.',
+    compat_aerobic: 'ديناميات', compat_anaerobic: 'قوي', compat_sensory: 'حسي', compat_sexual: 'جنسي', compat_analytic: 'تحليلي', person_a: 'الشخص أ', person_b: 'الشخص ب', calculate: 'احسب', synthesis_btn: 'توليف العلاقات', synthesis_archetype: 'النموذج الأصلي للزوجين', synthesis_blind_spots: 'النقاط العمياء', synthesis_advice: 'نصيحة ذهبية', compat_very_low: 'منخفض جدا', compat_low: 'منخفض', compat_normal: 'عادي', compat_high: 'عالي', compat_very_high: 'عالي جدا'
   },
   hi: {
     sync: 'सिंक्रनाइज़ेशन', user_name: 'उपयोगकर्ता', birth_label: 'जन्म तिथि', name_placeholder: 'नाम...',
@@ -389,7 +398,8 @@ export const TRANSLATIONS: Record<string, any> = {
     help_calendar_year_title: 'वार्षिक कैलेंडर',
     help_calendar_year_desc: 'वार्षिक ताल कैलेंडर बनाता है। "कैलेंडर" टैब पर जाएं और वांछित वर्ष की जनवरी तक स्क्रॉल करें।',
     help_solar_title: 'सौर गतिविधि मॉनिटर',
-    help_solar_desc: 'सौर गतिविधि के उच्च स्तरों के लिए लय संतुलन को कम मूल्यों पर ऊपर की ओर और उच्च मूल्यों पर नीचे की ओर सही करने की आवश्यकता होती है।'
+    help_solar_desc: 'सौर गतिविधि के उच्च स्तरों के लिए लय संतुलन को कम मूल्यों पर ऊपर की ओर और उच्च मूल्यों पर नीचे की ओर सही करने की आवश्यकता होती है।',
+    compat_aerobic: 'गतिशीलता', compat_anaerobic: 'मजबूत', compat_sensory: 'संवेदी', compat_sexual: 'यौन', compat_analytic: 'विश्लेषणात्मक', person_a: 'व्यक्ति ए', person_b: 'व्यक्ति बी', calculate: 'गणना करें', synthesis_btn: 'रिश्तों का संश्लेषण', synthesis_archetype: 'युगल मूलरूप', synthesis_blind_spots: 'अंधे धब्बे', synthesis_advice: 'सुनहरी सलाह', compat_very_low: 'बहुत कम', compat_low: 'कम', compat_normal: 'सामान्य', compat_high: 'उच्च', compat_very_high: 'बहुत उच्च'
   }
 };
 

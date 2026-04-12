@@ -24,6 +24,7 @@ interface DashboardProps {
   onSelectProfile: (id: string) => void;
   onReset: () => void;
   onImportProfiles: (profiles: Profile[]) => void;
+  onOpenCompatibility?: (date1?: string, date2?: string, lang?: string) => void;
   onLogout: () => void;
 }
 
@@ -32,7 +33,7 @@ type ListMode = 'NONE' | 'EDIT' | 'DELETE' | 'SELECT';
 type ArenaMode = 'TOTAL' | 'BASIC' | 'REACTIVE';
 
 const Dashboard: React.FC<DashboardProps> = ({ 
-  profile, allProfiles, onAddProfile, onUpdateProfile, onDeleteProfile, onGroupProfiles, onRenameGroup, onUngroup, onMoveToGroup, onSelectProfile, onReset, onImportProfiles, onLogout 
+  profile, allProfiles, onAddProfile, onUpdateProfile, onDeleteProfile, onGroupProfiles, onRenameGroup, onUngroup, onMoveToGroup, onSelectProfile, onReset, onImportProfiles, onOpenCompatibility, onLogout 
 }) => {
   const APP_ZONE = 'utc+5';
 
@@ -1331,11 +1332,28 @@ const Dashboard: React.FC<DashboardProps> = ({
                     </div>
                  </div>
                  
-                 <div className="p-4 bg-white/5 border border-white/5 rounded-xl text-xs text-slate-400 leading-relaxed italic text-center">
+                 <button 
+                   onClick={() => {
+                     setShowCompatDialog(false);
+                     if (onOpenCompatibility) {
+                       const selectedIds = Array.from(totalEffectiveSelected);
+                       const p1 = allProfiles.find(p => p.id === selectedIds[0]);
+                       const p2 = allProfiles.find(p => p.id === selectedIds[1]);
+                       if (p1 && p2) {
+                         onOpenCompatibility(p1.birthDate, p2.birthDate, lang);
+                       }
+                     }
+                   }}
+                   className="w-full p-4 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-[#33b5e5]/50 rounded-xl text-xs text-slate-400 hover:text-white leading-relaxed italic text-center transition-all cursor-pointer group"
+                 >
                     {(compatIndex === 0 || compatIndex === 1 || compatIndex === 12 || compatIndex === 13) && t('help_compat_resonant_desc')}
                     {((compatIndex >= 2 && compatIndex <= 4) || (compatIndex >= 9 && compatIndex <= 11)) && t('help_compat_optimal_desc')}
                     {(compatIndex >= 5 && compatIndex <= 8) && t('help_compat_polar_desc')}
-                 </div>
+                    <div className="mt-2 text-[#33b5e5] text-[10px] uppercase font-bold tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                      <i className="fa-solid fa-wand-magic-sparkles mr-2" />
+                      {t('synthesis_btn')}
+                    </div>
+                 </button>
                </div>
 
                <button onClick={() => setShowCompatDialog(false)} className="w-full bg-white/5 hover:bg-white/10 text-white font-black py-4 rounded-xl uppercase tracking-widest transition-all border border-white/10 shadow-lg">{t('close')}</button>

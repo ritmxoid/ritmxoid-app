@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Profile } from './types';
 import Dashboard from './components/Dashboard';
+import CompatibilityChecker from './components/CompatibilityChecker';
 import { motion, AnimatePresence } from 'framer-motion';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
@@ -22,6 +23,10 @@ const App: React.FC = () => {
   });
 
   const [isAuthorized, setIsAuthorized] = useState(() => profiles.length > 0);
+  const [showCompatibility, setShowCompatibility] = useState(false);
+  const [compatDate1, setCompatDate1] = useState('');
+  const [compatDate2, setCompatDate2] = useState('');
+  const [compatLang, setCompatLang] = useState('en');
   const [tempDate, setTempDate] = useState('1990-01-01T12:00');
   const [tempName, setTempName] = useState('');
   const [nameError, setNameError] = useState(false);
@@ -318,6 +323,21 @@ const App: React.FC = () => {
     if (imported.length > 0) setActiveProfileId(imported[0].id);
   };
 
+  if (showCompatibility) {
+    return (
+      <CompatibilityChecker 
+        initialDate={compatDate1 || (isAuthorized && activeProfile ? activeProfile.birthDate : tempDate)} 
+        initialDate2={compatDate2}
+        initialLang={compatLang}
+        onClose={() => {
+          setShowCompatibility(false);
+          setCompatDate1('');
+          setCompatDate2('');
+        }} 
+      />
+    );
+  }
+
   if (!isAuthorized) {
     return (
       <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 relative overflow-hidden font-['Roboto']">
@@ -385,6 +405,13 @@ const App: React.FC = () => {
                   className="w-full bg-black border border-white/10 rounded-2xl pl-12 pr-16 py-4 focus:outline-none focus:border-[#33b5e5] transition-all text-white color-scheme-dark"
                 />
                 <button
+                  onClick={() => setShowCompatibility(true)}
+                  title="Check Compatibility"
+                  className="absolute right-12 top-1/2 -translate-y-1/2 flex items-center justify-center text-[#33b5e5] hover:scale-110 active:scale-95 transition-transform"
+                >
+                  <i className="fa-solid fa-plus text-xl drop-shadow-[0_0_8px_rgba(51,181,229,0.4)]" />
+                </button>
+                <button
                   onClick={handleQuickPdfExport}
                   title="Quick Download PDF Calendar"
                   className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center text-red-600 hover:scale-110 active:scale-95 transition-transform"
@@ -443,6 +470,12 @@ const App: React.FC = () => {
       onMoveToGroup={handleMoveToGroup}
       onSelectProfile={setActiveProfileId}
       onImportProfiles={handleImportProfiles}
+      onOpenCompatibility={(date1, date2, lang) => {
+        if (date1) setCompatDate1(date1);
+        if (date2) setCompatDate2(date2);
+        if (lang) setCompatLang(lang);
+        setShowCompatibility(true);
+      }}
       onLogout={() => {
         setProfiles([]);
         setActiveProfileId(null);
