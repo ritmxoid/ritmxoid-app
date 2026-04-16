@@ -369,7 +369,7 @@ const App: React.FC = () => {
             <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Username</label>
               <div className="relative group">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-[#33b5e5] transition-colors">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-[#33b5e5] transition-colors hidden sm:block">
                   <i className="fa-solid fa-file-signature text-sm" />
                 </div>
                 <input 
@@ -380,7 +380,7 @@ const App: React.FC = () => {
                       if (e.target.value) setNameError(false);
                   }}
                   placeholder="Enter name..."
-                  className={`w-full bg-black border ${nameError ? 'border-red-600 shadow-[0_0_20px_rgba(220,38,38,0.5)]' : 'border-white/10'} rounded-2xl pl-12 pr-12 py-4 focus:outline-none focus:border-[#33b5e5] transition-all text-white placeholder:text-slate-800`}
+                  className={`w-full bg-black border ${nameError ? 'border-red-600 shadow-[0_0_20px_rgba(220,38,38,0.5)]' : 'border-white/10'} rounded-2xl pl-4 sm:pl-12 pr-14 py-4 focus:outline-none focus:border-[#33b5e5] transition-all text-white placeholder:text-slate-800`}
                 />
                 <button 
                   onClick={() => fileInputRef.current?.click()}
@@ -395,14 +395,14 @@ const App: React.FC = () => {
             <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Birth Date</label>
               <div className="relative group">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-[#33b5e5] transition-colors pointer-events-none">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-[#33b5e5] transition-colors pointer-events-none hidden sm:block">
                   <i className="fa-solid fa-calendar-day text-sm" />
                 </div>
                 <input 
                   type="datetime-local" 
                   value={tempDate} 
                   onChange={e => setTempDate(e.target.value)}
-                  className="w-full bg-black border border-white/10 rounded-2xl pl-12 pr-16 py-4 focus:outline-none focus:border-[#33b5e5] transition-all text-white color-scheme-dark"
+                  className="w-full bg-black border border-white/10 rounded-2xl pl-4 sm:pl-12 pr-[80px] py-4 focus:outline-none focus:border-[#33b5e5] transition-all text-white color-scheme-dark text-[13px] sm:text-base tracking-tighter sm:tracking-normal"
                 />
                 <button
                   onClick={() => setShowCompatibility(true)}

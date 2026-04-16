@@ -240,14 +240,14 @@ const CompatibilityChecker: React.FC<Props> = ({ initialDate, initialDate2 = '',
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setShowSynthesis(false)}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
           >
             <motion.div 
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               onClick={e => e.stopPropagation()}
-              className="bg-[#0a0a0a] border border-white/10 rounded-3xl p-6 md:p-8 shadow-2xl max-w-lg w-full relative overflow-hidden my-8"
+              className="bg-[#0a0a0a] border border-white/10 rounded-3xl shadow-2xl max-w-lg w-full relative flex flex-col max-h-[85vh] my-8"
             >
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-500 to-[#33b5e5]" />
               <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-[#33b5e5]/10 blur-[80px] pointer-events-none" />
@@ -255,12 +255,12 @@ const CompatibilityChecker: React.FC<Props> = ({ initialDate, initialDate2 = '',
               
               <button 
                 onClick={() => setShowSynthesis(false)}
-                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-colors z-10"
+                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-colors z-20"
               >
                 <i className="fa-solid fa-xmark" />
               </button>
 
-              <div className="relative z-10">
+              <div className="relative z-10 overflow-y-auto flex-1 p-6 md:p-8 pb-16">
                 <div className="text-center mb-8">
                   <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2 block">
                     {t('synthesis_archetype')}
@@ -325,7 +325,7 @@ const CompatibilityChecker: React.FC<Props> = ({ initialDate, initialDate2 = '',
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
               onClick={e => e.stopPropagation()}
-              className="bg-[#111] border border-white/10 rounded-3xl p-6 shadow-2xl max-w-sm w-full relative overflow-hidden"
+              className="bg-[#111] border border-white/10 rounded-3xl p-6 shadow-2xl max-w-sm w-full relative overflow-y-auto max-h-[85vh] pb-16"
             >
               <div 
                 className="absolute -top-20 -right-20 w-40 h-40 rounded-full blur-[60px] opacity-20 pointer-events-none"
