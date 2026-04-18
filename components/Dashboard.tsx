@@ -859,6 +859,10 @@ const Dashboard: React.FC<DashboardProps> = ({
       <div className="pt-2">
         <SolarActivityChart title={t('solar_monitor_title')} onCurrentIndexChange={setSolarKIndex} />
       </div>
+
+      <div className="pb-12">
+        <CosmicEnergyChart targetDate={targetDate} lang={lang} />
+      </div>
     </div>
   );
 
@@ -910,6 +914,31 @@ const Dashboard: React.FC<DashboardProps> = ({
     </div>
   );
 
+  const getAstroEvents = (dt: DateTime) => {
+    const events = [];
+    
+    if (dt.month === 3 && dt.day === 20) events.push({ type: 'equinox', icon: '🌱' }); // Vernal Equinox
+    if (dt.month === 6 && dt.day === 21) events.push({ type: 'solstice', icon: '☀️' }); // Summer Solstice
+    if (dt.month === 9 && dt.day === 22) events.push({ type: 'equinox', icon: '🍂' }); // Autumnal Equinox
+    if (dt.month === 12 && dt.day === 21) events.push({ type: 'solstice', icon: '❄️' }); // Winter Solstice
+
+    const fullMoonRef = DateTime.fromObject({ year: 1996, month: 1, day: 6, hour: 16, minute: 15 }, { zone: 'utc' });
+    const lunarPeriodMillis = 29.530588 * 24 * 3600 * 1000;
+    
+    const diffMillisStart = dt.set({hour: 0}).toUTC().diff(fullMoonRef).as('milliseconds');
+    const diffMillisEnd = dt.set({hour: 23, minute: 59}).toUTC().diff(fullMoonRef).as('milliseconds');
+    
+    const angleStart = ((diffMillisStart % lunarPeriodMillis + lunarPeriodMillis) % lunarPeriodMillis * 360) / lunarPeriodMillis;
+    const angleEnd = ((diffMillisEnd % lunarPeriodMillis + lunarPeriodMillis) % lunarPeriodMillis * 360) / lunarPeriodMillis;
+
+    if (angleStart > 300 && angleEnd < 60) events.push({ type: 'moon', icon: '🌕' });
+    else if (angleStart <= 90 && angleEnd > 90) events.push({ type: 'moon', icon: '🌗' });
+    else if (angleStart <= 180 && angleEnd > 180) events.push({ type: 'moon', icon: '🌑' });
+    else if (angleStart <= 270 && angleEnd > 270) events.push({ type: 'moon', icon: '🌓' });
+    
+    return events;
+  };
+
   const renderCalendar = () => {
     const startOfMonth = targetDate.startOf('month');
     const firstDayOfWeek = startOfMonth.weekday; 
@@ -954,16 +983,26 @@ const Dashboard: React.FC<DashboardProps> = ({
             const bgColor = isCurrentMonth ? getBalanceColor(bal) : 'transparent';
             const riskLvl = getRiskLevel(dg, d);
             const isToday = d.hasSame(DateTime.now().setZone(APP_ZONE), 'day');
+            const astroEvts = getAstroEvents(d);
             return (
               <div key={i} className={`aspect-square relative flex flex-col items-center justify-center border border-white/10 transition-all duration-300 ${isCurrentMonth ? 'shadow-[inset_0_0_12px_rgba(255,255,255,0.05)]' : ''}`} style={{ backgroundColor: isCurrentMonth ? `${bgColor}99` : 'transparent', opacity: isCurrentMonth ? 1 : 0.15 }}>
                 {isToday && <div className="absolute inset-0 border-2 border-[#33b5e5] z-10 shadow-[0_0_15px_#33b5e5,inset_0_0_10px_#33b5e5]" />}
-                <span className={`text-[13px] font-black absolute top-1 left-1.5 ${isCurrentMonth ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]' : 'text-slate-800'}`}>{d.day}</span>
+                <span className={`text-lg font-black absolute top-1 left-1.5 ${isCurrentMonth ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]' : 'text-slate-800'}`}>{d.day}</span>
+                
+                {isCurrentMonth && astroEvts.length > 0 && (
+                  <div className="absolute bottom-1 left-1.5 flex gap-1 z-10">
+                    {astroEvts.map((e, ei) => (
+                      <span key={ei} className="text-sm drop-shadow-[0_0_3px_rgba(255,255,255,0.5)]" title={e.type}>{e.icon}</span>
+                    ))}
+                  </div>
+                )}
+
                 {isCurrentMonth && riskLvl >= 25 && (
                   <div className="absolute top-1 right-1 flex flex-col gap-0.5">
                     {[...Array(riskLvl >= 75 ? 3 : riskLvl >= 50 ? 2 : 1)].map((_, idx) => (
-                      <div key={idx} className="relative w-3.5 h-3.5 flex items-center justify-center">
-                        <div className="absolute w-2 h-2 rounded-full bg-red-600/80 blur-[2px] animate-pulse-red" />
-                        <span className="text-[10px] leading-none text-white relative z-10 drop-shadow-sm">⚡</span>
+                      <div key={idx} className="relative w-4 h-4 flex items-center justify-center">
+                        <div className="absolute w-3 h-3 rounded-full bg-red-600/80 blur-[2px] animate-pulse-red" />
+                        <span className="text-sm leading-none text-white relative z-10 drop-shadow-sm">⚡</span>
                       </div>
                     ))}
                   </div>
@@ -1247,6 +1286,20 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <h3 className="text-[#ffd600] font-black uppercase text-sm border-b border-white/10 pb-1">{t('help_solar_title')}</h3>
                 <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-xs text-slate-300 leading-relaxed italic">
                    {t('help_solar_desc')}
+                </div>
+              </section>
+
+              <section className="space-y-4">
+                <h3 className="text-[#ffd600] font-black uppercase text-sm border-b border-white/10 pb-1">{t('help_cosmic_energy_title')}</h3>
+                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-xs text-slate-300 leading-relaxed italic">
+                   {t('help_cosmic_energy_desc')}
+                </div>
+              </section>
+
+              <section className="space-y-4">
+                <h3 className="text-[#ffd600] font-black uppercase text-sm border-b border-white/10 pb-1">{t('help_astro_events_title')}</h3>
+                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-xs text-slate-300 leading-relaxed italic">
+                   {t('help_astro_events_desc')}
                 </div>
               </section>
             </div>
@@ -1579,6 +1632,198 @@ const RadarMarker = ({ angle, color, radius, label, glowColor }: { angle: number
   </motion.div>
 );
 
+const CosmicEnergyChart = ({ targetDate, lang }: { targetDate: DateTime, lang: string }) => {
+  const t = getT(lang);
+  const [mode, setMode] = useState<'day' | 'month' | 'quarter' | '12years'>('day');
+
+  const data = useMemo(() => {
+    const points = [];
+    
+    const fullMoonRef = DateTime.fromObject({ year: 1996, month: 1, day: 6, hour: 16, minute: 15 }, { zone: 'utc' });
+    const lunarPeriodMillis = 29.530588 * 24 * 3600 * 1000;
+
+    const createPoint = (dt: DateTime, label: string, isNow: boolean = false) => {
+        const hourDec = dt.hour + dt.minute / 60;
+        const sunScore = ((Math.cos((hourDec - 12) * Math.PI / 12) + 1) / 2) * 50;
+
+        const diffMillis = dt.toUTC().diff(fullMoonRef).as('milliseconds');
+        const phaseProgress = (diffMillis % lunarPeriodMillis + lunarPeriodMillis) % lunarPeriodMillis;
+        const moonAngle = (phaseProgress * 360) / lunarPeriodMillis;
+        const moonScore = ((Math.cos(moonAngle * Math.PI / 180) + 1) / 2) * 25;
+
+        const june21 = DateTime.fromObject({ year: dt.year, month: 6, day: 21 }, { zone: 'utc' });
+        const daysSinceJune = dt.toUTC().diff(june21).as('days');
+        const earthScore = ((Math.cos(daysSinceJune / 365.2425 * Math.PI * 2) + 1) / 2) * 12;
+
+        const march21_2020 = DateTime.fromObject({ year: 2020, month: 3, day: 21 }, { zone: 'utc' });
+        const daysSince2020 = dt.toUTC().diff(march21_2020).as('days');
+        const jpScore = ((Math.cos(daysSince2020 / (12 * 365.2425) * Math.PI * 2) + 1) / 2) * 8;
+
+        const dec1_2019 = DateTime.fromObject({ year: 2019, month: 12, day: 1 }, { zone: 'utc' });
+        const daysSince2019 = dt.toUTC().diff(dec1_2019).as('days');
+        const solarScore = ((-Math.cos(daysSince2019 / (11.1 * 365.2425) * Math.PI * 2) + 1) / 2) * 5;
+
+        return {
+            label,
+            isNow,
+            sun: sunScore,
+            moon: moonScore,
+            earth: earthScore,
+            jp: jpScore,
+            sol: solarScore,
+            total: sunScore + moonScore + earthScore + jpScore + solarScore
+        };
+    };
+
+    const now = DateTime.now().setZone(targetDate.zoneName || 'utc');
+
+    if (mode === 'day') {
+        const startOfTarget = targetDate.startOf('day');
+        for (let i = 0; i < 24; i++) {
+            const current = startOfTarget.plus({ hours: i });
+            points.push(createPoint(current.plus({ minutes: 30 }), current.toFormat('HH:00'), now.hasSame(current, 'hour')));
+        }
+    } else if (mode === 'month') {
+        const startOfTarget = targetDate.startOf('month');
+        const daysInMonth = targetDate.daysInMonth!;
+        for (let i = 0; i < daysInMonth; i++) {
+            const current = startOfTarget.plus({ days: i });
+            points.push(createPoint(current.plus({ hours: 12 }), current.toFormat('dd.MM'), now.hasSame(current, 'day')));
+        }
+    } else if (mode === 'quarter') {
+        const startOfTarget = targetDate.startOf('month');
+        const endOfTarget = startOfTarget.plus({ months: 3 });
+        let current = startOfTarget;
+        while (current < endOfTarget) {
+            points.push(createPoint(current.plus({ days: 3, hours: 12 }), current.toFormat('dd.MM'), now >= current && now < current.plus({ weeks: 1 })));
+            current = current.plus({ weeks: 1 });
+        }
+    } else if (mode === '12years') {
+        const startOfTarget = targetDate.startOf('year').minus({ years: 6 });
+        for (let i = 0; i < 48; i++) {
+            const current = startOfTarget.plus({ months: i * 3 });
+            const quarterNum = Math.floor((current.month - 1) / 3) + 1;
+            points.push(createPoint(current.plus({ months: 1, days: 15 }), `Q${quarterNum} '${current.toFormat('yy')}`, now >= current && now < current.plus({ months: 3 })));
+        }
+    }
+
+    return points;
+  }, [targetDate, mode]);
+
+  const envLabel = t('cosmic_energy');
+  const dayLabel = t('cosmic_day');
+  const monthLabel = t('cosmic_month');
+  const qtLabel = t('cosmic_quarter');
+  const y12Label = t('cosmic_12years');
+  const totalLabel = t('cosmic_total');
+  const isDay = mode === 'day';
+
+  const legend = [
+    { key: 'sun', color: '#dc2626', label: t('cosmic_sun') },
+    { key: 'moon', color: '#eab308', label: t('cosmic_moon') },
+    { key: 'earth', color: '#33b5e5', label: t('cosmic_earth') },
+    { key: 'jp', color: '#22c55e', label: t('cosmic_jp') },
+    { key: 'sol', color: '#ffffff', label: t('cosmic_sol') },
+  ];
+  
+  const activeLegend = isDay ? legend : legend.filter(l => l.key !== 'sun');
+
+  return (
+    <div className="mt-6 bg-[#111] border border-white/10 rounded-xl p-3 flex flex-col gap-3 relative z-10 box-border w-full">
+       <div className="flex justify-between items-center flex-wrap gap-2">
+         <h3 className="text-sm font-black text-white tracking-widest uppercase">{envLabel}</h3>
+         <div className="flex bg-black rounded p-0.5 border border-white/10">
+           <button onClick={() => setMode('day')} className={`px-2 py-1 text-[10px] font-black uppercase rounded-sm transition-colors ${mode === 'day' ? 'bg-[#33b5e5] text-black' : 'text-slate-400'}`}>{dayLabel}</button>
+           <button onClick={() => setMode('month')} className={`px-2 py-1 text-[10px] font-black uppercase rounded-sm transition-colors ${mode === 'month' ? 'bg-[#33b5e5] text-black' : 'text-slate-400'}`}>{monthLabel}</button>
+           <button onClick={() => setMode('quarter')} className={`px-2 py-1 text-[10px] font-black uppercase rounded-sm transition-colors ${mode === 'quarter' ? 'bg-[#33b5e5] text-black' : 'text-slate-400'}`}>{qtLabel}</button>
+           <button onClick={() => setMode('12years')} className={`px-2 py-1 text-[10px] font-black uppercase rounded-sm transition-colors ${mode === '12years' ? 'bg-[#33b5e5] text-black' : 'text-slate-400'}`}>{y12Label}</button>
+         </div>
+       </div>
+
+       <div className="relative h-48 flex items-end justify-between px-1 gap-[2px] border-b border-l border-white/20 mt-2">
+         <div className="absolute inset-0 grid grid-rows-4 pointer-events-none">
+           {[100, 75, 50, 25].map(v => (
+             <div key={v} className="border-t border-white/5 w-full flex items-start">
+               <span className="text-[9px] text-slate-600 ml-1 mt-[-6px] font-bold">{isDay ? v : v / 2}%</span>
+             </div>
+           ))}
+         </div>
+         {data.map((d, i) => {
+           let showLabel = false;
+           if (mode === 'day' && i % 4 === 0) showLabel = true;
+           if (mode === 'month' && i % 5 === 0) showLabel = true;
+           if (mode === 'quarter') showLabel = true;
+           if (mode === '12years' && i % 4 === 0) showLabel = true;
+           
+           const scale = isDay ? 1 : 2;
+
+           return (
+           <div key={i} className={`relative flex flex-col justify-end gap-[1px] w-full group h-full ${mode === 'quarter' ? 'w-8' : 'min-w-[2px]'} ${d.isNow ? 'z-20' : 'z-10'}`}>
+             <div 
+               style={{ height: `${d.sol * scale}%`, backgroundColor: '#ffffff' }} 
+               className={`w-full transition-all group-hover:opacity-100 border-t border-black/30 ${d.isNow ? 'opacity-100 animate-pulse ring-1 ring-white/50 shadow-[0_0_8px_rgba(255,255,255,0.4)]' : 'opacity-80'}`} 
+             />
+             <div 
+               style={{ height: `${d.jp * scale}%`, backgroundColor: '#22c55e' }} 
+               className={`w-full transition-all group-hover:opacity-100 border-t border-black/30 ${d.isNow ? 'opacity-100 animate-pulse ring-1 ring-white/20' : 'opacity-80'}`} 
+             />
+             <div 
+               style={{ height: `${d.earth * scale}%`, backgroundColor: '#33b5e5' }} 
+               className={`w-full transition-all group-hover:opacity-100 border-t border-black/30 ${d.isNow ? 'opacity-100 animate-pulse ring-1 ring-white/20' : 'opacity-80'}`} 
+             />
+             <div 
+               style={{ height: `${d.moon * scale}%`, backgroundColor: '#eab308' }} 
+               className={`w-full transition-all group-hover:opacity-100 border-t border-black/30 ${d.isNow ? 'opacity-100 animate-pulse ring-1 ring-white/20' : 'opacity-80'}`} 
+             />
+             {isDay && (
+               <div 
+                 style={{ height: `${d.sun * scale}%`, backgroundColor: '#dc2626' }} 
+                 className={`w-full transition-all group-hover:opacity-100 border-t border-black/30 ${d.isNow ? 'opacity-100 animate-pulse ring-1 ring-white/20' : 'opacity-80'}`} 
+               />
+             )}
+             
+             {showLabel && (
+               <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[9px] text-slate-500 font-bold whitespace-nowrap">
+                  {d.label}
+               </div>
+             )}
+             
+             {/* Tooltip */}
+             <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-black/90 backdrop-blur-md border border-white/20 px-2 py-1.5 rounded opacity-0 group-hover:opacity-100 pointer-events-none z-[100] flex flex-col gap-0.5 shadow-[0_0_20px_rgba(0,0,0,0.8)] transition-opacity scale-90 group-hover:scale-100 origin-bottom">
+               <div className="text-[10px] text-white font-bold whitespace-nowrap mb-1 border-b border-white/10 pb-0.5 text-center">{d.label}</div>
+               {activeLegend.slice().reverse().map(leg => {
+                  const val = d[leg.key as keyof typeof d] as number;
+                  return (
+                    <div key={leg.key} className="flex items-center justify-between gap-3 text-[9px]">
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: leg.color }} />
+                        <span className="text-slate-300 font-bold">{leg.label}</span>
+                      </div>
+                      <span className="text-white font-black tabular-nums">{val.toFixed(1)}%</span>
+                    </div>
+                  );
+               })}
+               <div className="border-t border-white/10 mt-1 pt-1 flex justify-between gap-3 text-[10px]">
+                 <span className="text-slate-400 font-black">{totalLabel}</span>
+                 <span className="text-[#33b5e5] font-black">{Math.round(isDay ? d.total : d.total - d.sun)}%</span>
+               </div>
+             </div>
+           </div>
+         )})}
+       </div>
+
+       <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 mt-6 pb-2">
+         {activeLegend.map(l => (
+           <div key={l.key} className="flex items-center gap-1.5">
+             <div className="w-2.5 h-2.5 rounded-[2px] shadow-[0_0_5px_rgba(255,255,255,0.1)]" style={{ backgroundColor: l.color }} />
+             <span className="text-[9px] font-black tracking-widest text-slate-400 uppercase">{l.label}</span>
+           </div>
+         ))}
+       </div>
+    </div>
+  );
+};
+
 const LegendItem = ({ color, label }: { color: string, label: string }) => (
   <div className="flex items-center gap-1.5 bg-[#111] px-2.5 py-1.5 rounded border border-white/10 shadow-sm">
     <div className="w-3 h-3 rounded-sm shadow-[0_0_5px_rgba(255,255,255,0.2)]" style={{ backgroundColor: color }} />
@@ -1595,125 +1840,23 @@ const getBalanceEmoji = (val: number) => {
 };
 
 const CriticalLevelIcon = () => (
-  <svg className="w-full h-full" viewBox="0 0 496.79 496.78" version="1.1" xmlns="http://www.w3.org/2000/svg">
-    <style type="text/css">{`
-      .crit_str1 {stroke:#606062;stroke-width:15.73;stroke-miterlimit:10;fill:none}
-      .crit_str0 {stroke:#606062;stroke-width:11.8;stroke-miterlimit:10;fill:none}
-      .crit_fil2 {fill:#B2D573;fill-rule:nonzero}
-      .crit_fil0 {fill:#9EC46A;fill-rule:nonzero}
-      .crit_fil1 {fill:#8DC85E;fill-rule:nonzero}
-      .crit_fil3 {fill:#7EAD50;fill-rule:nonzero}
-    `}</style>
-    <g id="crit_layer1">
-      <path className="crit_fil0" d="M460.64 119.43c71.23,117.22 33.93,269.99 -83.29,341.21 -117.22,71.22 -269.98,33.93 -341.21,-83.29 -71.22,-117.22 -33.93,-269.99 83.29,-341.21 117.22,-71.23 269.99,-33.93 341.21,83.29z"/>
-      <path className="crit_fil1" d="M460.64 119.43c71.23,117.22 33.93,269.99 -83.29,341.21 -117.22,71.22 -269.98,33.93 -341.21,-83.29 -71.22,-117.22 -33.93,-269.99 83.29,-341.21 117.22,-71.23 269.99,-33.93 341.21,83.29z"/>
-      <path className="crit_fil2" d="M391.97 76.74c-48.18,-57.57 -151.51,-75.89 -230.8,-40.91 -79.3,34.98 -104.52,110.01 -56.34,167.58 48.18,57.57 151.51,75.89 230.81,40.91 79.29,-34.98 104.52,-110 56.34,-167.58z"/>
-      <path className="crit_fil3" d="M365.5 328.79c-105.16,63.89 -242.19,30.44 -306.08,-74.72 -12.27,-20.2 -20.94,-41.58 -26.21,-63.38 -15.19,56.69 -8.09,119.26 24.79,173.38 63.89,105.15 200.93,138.6 306.08,74.71 84.95,-51.62 123.09,-150.98 100.93,-242.7 -14.33,53.46 -48.47,101.69 -99.5,132.7z"/>
-      <path className="crit_str0" d="M80.76 283.55c3.88,18.51 10.92,36.68 21.29,53.76 49.11,80.82 154.44,106.53 235.26,57.42 40.41,-24.55 67.04,-63.16 77.43,-105.73"/>
-      <path className="crit_str0" d="M396.2 277.67c0,0 15.23,18.78 40.6,8.88"/>
-      <path className="crit_str0" d="M100.6 277.67c0,0 -15.23,18.78 -40.6,8.88"/>
-      <line className="crit_str1" x1="132.5" y1="145.34" x2="217.33" y2="258.77" />
-      <line className="crit_str1" x1="217.33" y1="145.34" x2="132.5" y2="258.77" />
-      <line className="crit_str1" x1="283.33" y1="145.34" x2="368.16" y2="258.77" />
-      <line className="crit_str1" x1="368.16" y1="145.34" x2="283.33" y2="258.77" />
-    </g>
-  </svg>
+  <img src="/icons/critical.svg" className="w-full h-full object-contain" alt="Critical" />
 );
 
 const LowLevelIcon = () => (
-  <svg className="w-full h-full" viewBox="0 0 497.17 497.17" version="1.1" xmlns="http://www.w3.org/2000/svg">
-    <style type="text/css">{`
-      .low_str0 {stroke:#606062;stroke-width:11.81;stroke-miterlimit:10;fill:none}
-      .low_fil5 {fill:#606062}
-      .low_fil2 {fill:#BAE4ED;fill-rule:nonzero}
-      .low_fil0 {fill:#9EC46A;fill-rule:nonzero}
-      .low_fil1 {fill:#61CAE3;fill-rule:nonzero}
-      .low_fil3 {fill:#22C1E5;fill-rule:nonzero}
-    `}</style>
-    <g id="low_layer1">
-      <path className="low_fil0" d="M461 119.52c71.28,117.31 33.96,270.2 -83.35,341.47 -117.31,71.28 -270.2,33.96 -341.47,-83.35 -71.28,-117.31 -33.96,-270.19 83.35,-341.47 117.31,-71.27 270.19,-33.96 341.47,83.35z"/>
-      <path className="low_fil1" d="M461 119.52c71.28,117.31 33.96,270.2 -83.35,341.47 -117.31,71.28 -270.2,33.96 -341.47,-83.35 -71.28,-117.31 -33.96,-270.19 83.35,-341.47 117.31,-71.27 270.19,-33.96 341.47,83.35z"/>
-      <path className="low_fil2" d="M392.27 76.81c-48.22,-57.62 -151.64,-75.95 -230.99,-40.94 -79.35,35.01 -104.6,110.09 -56.38,167.71 48.22,57.61 151.63,75.95 230.99,40.94 79.36,-35 104.6,-110.09 56.39,-167.7z"/>
-      <path className="low_fil3" d="M365.78 329.05c-105.23,63.93 -242.38,30.46 -306.32,-74.77 -12.28,-20.21 -20.95,-41.61 -26.23,-63.44 -15.21,56.74 -8.11,119.35 24.8,173.51 63.94,105.24 201.09,138.71 306.32,74.77 85.02,-51.66 123.19,-151.09 101,-242.89 -14.34,53.5 -48.5,101.77 -99.58,132.81z"/>
-      <path className="low_str0" d="M80.82 283.77c3.88,18.52 10.92,36.71 21.31,53.8 49.14,80.88 154.55,106.61 235.43,57.47 40.45,-24.57 67.1,-63.21 77.5,-105.82"/>
-      <path className="low_str0" d="M396.5 277.88c0,0 15.24,18.79 40.63,8.88"/>
-      <path className="low_str0" d="M100.67 277.88c0,0 -15.24,18.79 -40.64,8.88"/>
-      <path className="low_fil5" d="M162.48 189.24c-1.82,8.11 -2.86,17.22 -2.86,26.9 0,33.38 12.14,60.44 27.11,60.44 13.13,0 24.07,-20.8 26.57,-48.43l-50.82 -38.91z"/>
-      <path className="low_fil5" d="M280.31 227.22c2.34,28.08 13.36,49.36 26.64,49.36 14.97,0 27.11,-27.06 27.11,-60.44 0,-10.01 -1.11,-19.43 -3.04,-27.75l-50.7 38.83z"/>
-    </g>
-  </svg>
+  <img src="/icons/low.svg" className="w-full h-full object-contain" alt="Low" />
 );
 
 const OptimalLevelIcon = () => (
-  <svg className="w-full h-full" viewBox="0 0 391.05 391.05" version="1.1" xmlns="http://www.get.org/2000/svg">
-    <style type="text/css">{`
-      .opt_str0 {stroke:#727376;stroke-width:9.29;stroke-miterlimit:10;fill:none}
-      .opt_fil4 {fill:#727376}
-      .opt_fil3 {fill:#FFFBD6}
-      .opt_fil1 {fill:#FFF688}
-      .opt_fil2 {fill:#F8EC22}
-      .opt_fil0 {fill:#9EC46A}
-    `}</style>
-    <g id="opt_layer1">
-      <path className="opt_fil0" d="M362.6 94.01c56.06,92.27 26.71,212.52 -65.56,268.59 -92.27,56.06 -212.52,26.71 -268.58,-65.56 -56.06,-92.27 -26.71,-212.52 65.56,-268.58 92.27,-56.07 212.52,-26.71 268.58,65.56z"/>
-      <path className="opt_fil1" d="M362.6 94.01c-56.07,-92.27 -176.31,-121.62 -268.58,-65.56 -92.27,56.06 -121.62,176.31 -65.56,268.58 56.06,92.27 176.31,121.62 268.58,65.56 92.27,-56.06 121.62,-176.31 65.56,-268.59z"/>
-      <path className="opt_fil2" d="M287.71 258.81c-82.77,50.29 -190.64,23.96 -240.93,-58.81 -9.66,-15.9 -16.48,-32.73 -20.63,-49.89 -11.96,44.63 -6.37,93.87 19.51,136.47 50.29,82.77 158.16,109.1 240.93,58.81 66.87,-40.63 96.89,-118.84 79.44,-191.04 -11.28,42.08 -38.15,80.05 -78.32,104.46z"/>
-      <path className="opt_fil3" d="M308.54 60.41c-37.93,-45.32 -119.27,-59.74 -181.68,-32.2 -62.42,27.53 -82.27,86.59 -44.35,131.91 37.92,45.32 119.26,59.74 181.68,32.2 62.42,-27.53 82.27,-86.59 44.35,-131.91z"/>
-      <path className="opt_fil4" d="M148.24 121.19c-11.78,0 -21.32,21.29 -21.32,47.54 0,26.26 9.55,47.54 21.32,47.54 11.77,0 21.32,-21.29 21.32,-47.54 0,-26.26 -9.55,-47.54 -21.32,-47.54z"/>
-      <path className="opt_fil4" d="M242.8 121.19c-11.77,0 -21.32,21.29 -21.32,47.54 0,26.26 9.55,47.54 21.32,47.54 11.78,0 21.32,-21.29 21.32,-47.54 0,-26.26 -9.55,-47.54 -21.32,-47.54z"/>
-      <path className="opt_str0" d="M63.57 223.2c3.06,14.57 8.59,28.87 16.76,42.32 38.66,63.62 121.56,83.86 185.18,45.2 31.81,-19.33 52.77,-49.72 60.96,-83.23"/>
-      <path className="opt_str0" d="M311.87 218.57c0,0 11.98,14.78 31.96,6.99"/>
-      <path className="opt_str0" d="M79.18 218.57c0,0 -11.99,14.78 -31.96,6.99"/>
-    </g>
-  </svg>
+  <img src="/icons/optimal.svg" className="w-full h-full object-contain" alt="Optimal" />
 );
 
 const HighLevelIcon = () => (
-  <svg className="w-full h-full" viewBox="0 0 322.43 322.43" version="1.1" xmlns="http://www.get.org/2000/svg">
-    <style type="text/css">{`
-      .high_str1 {stroke:#606062;stroke-width:10.21;stroke-miterlimit:10;fill:none}
-      .high_str0 {stroke:#606062;stroke-width:7.66;stroke-miterlimit:10;fill:none}
-      .high_fil2 {fill:#FECA66;fill-rule:nonzero}
-      .high_fil1 {fill:#FBB24E;fill-rule:nonzero}
-      .high_fil3 {fill:#F89B4B;fill-rule:nonzero}
-      .high_fil0 {fill:#9EC46A}
-    `}</style>
-    <g id="high_layer1">
-      <path className="high_fil0" d="M298.97 77.51c46.22,76.08 22.02,175.23 -54.06,221.45 -76.08,46.23 -175.23,22.02 -221.45,-54.06 -46.23,-76.08 -22.02,-175.23 54.06,-221.45 76.08,-46.23 175.23,-22.02 221.45,54.06z"/>
-      <path className="high_fil1" d="M298.97 77.51c46.22,76.08 22.02,175.23 -54.06,221.45 -76.08,46.23 -175.23,22.02 -221.45,-54.06 -46.23,-76.08 -22.02,-175.23 54.06,-221.45 76.08,-46.23 175.23,-22.02 221.45,54.06z"/>
-      <path className="high_fil2" d="M254.4 49.81c-31.27,-37.37 -98.34,-49.25 -149.8,-26.55 -51.46,22.7 -67.84,71.4 -36.57,108.76 31.27,37.37 98.34,49.25 149.8,26.55 51.46,-22.7 67.83,-71.4 36.57,-108.76z"/>
-      <path className="high_fil3" d="M237.22 213.39c-68.25,41.47 -157.19,19.76 -198.65,-48.49 -7.97,-13.11 -13.59,-26.98 -17.01,-41.14 -9.86,36.79 -5.26,77.4 16.09,112.52 41.47,68.25 130.41,89.96 198.65,48.49 55.14,-33.5 79.89,-97.99 65.5,-157.52 -9.3,34.7 -31.46,66 -64.58,86.13z"/>
-      <path className="high_str0" d="M52.41 184.03c2.52,12.01 7.09,23.81 13.82,34.89 31.87,52.45 100.23,69.14 152.69,37.27 26.23,-15.94 43.51,-40.99 50.26,-68.63"/>
-      <path className="high_str0" d="M257.14 180.21c0,0 9.88,12.19 26.35,5.76"/>
-      <path className="high_str0" d="M65.28 180.21c0,0 -11.98,12.19 -26.35,5.76"/>
-      <polyline className="high_str1" points="99.03,106.57 139.81,140.33 99.03,170.09 "/>
-      <polyline className="high_str1" points="223.39,106.57 182.61,140.33 223.39,170.09 "/>
-    </g>
-  </svg>
+  <img src="/icons/high.svg" className="w-full h-full object-contain" alt="High" />
 );
 
 const SuperHighLevelIcon = () => (
-  <svg className="w-full h-full" viewBox="0 0 391.05 391.05" version="1.1" xmlns="http://www.get.org/2000/svg">
-    <style type="text/css">{`
-      .super_str0 {stroke:#606062;stroke-width:9.29;stroke-miterlimit:10;fill:none}
-      .super_fil5 {fill:#606062}
-      .super_fil2 {fill:#F69889;fill-rule:nonzero}
-      .super_fil1 {fill:#F4846B;fill-rule:nonzero}
-      .super_fil3 {fill:#F16657;fill-rule:nonzero}
-      .super_fil0 {fill:#9EC46A}
-    `}</style>
-    <g id="super_layer1">
-      <path className="super_fil0" d="M362.6 94.01c56.06,92.27 26.71,212.52 -65.56,268.58 -92.27,56.07 -212.52,26.71 -268.58,-65.56 -56.06,-92.27 -26.71,-212.52 65.56,-268.58 92.27,-56.06 212.52,-26.71 268.58,65.56z"/>
-      <path className="super_fil1" d="M362.6 94.01c56.06,92.27 26.71,212.52 -65.56,268.58 -92.27,56.07 -212.52,26.71 -268.58,-65.56 -56.06,-92.27 -26.71,-212.52 65.56,-268.58 92.27,-56.06 212.52,-26.71 268.58,65.56z"/>
-      <path className="super_fil2" d="M308.54 60.41c-37.93,-45.32 -119.27,-59.74 -181.68,-32.2 -62.42,27.53 -82.27,86.59 -44.35,131.91 37.92,45.32 119.26,59.74 181.68,32.2 62.42,-27.53 82.27,-86.59 44.35,-131.91z"/>
-      <path className="super_fil3" d="M287.71 258.81c-82.77,50.29 -190.64,23.96 -240.93,-58.81 -9.66,-15.9 -16.48,-32.73 -20.63,-49.89 -11.96,44.62 -6.37,93.88 19.51,136.47 50.29,82.77 158.16,109.11 240.93,58.81 66.87,-40.63 96.89,-118.84 79.44,-191.04 -11.28,42.08 -38.15,80.05 -78.32,104.46z"/>
-      <path className="super_str0" d="M63.57 223.19c3.06,14.57 8.59,28.88 16.76,42.32 38.66,63.62 121.56,83.86 185.18,45.2 31.81,-19.33 52.77,-49.72 60.96,-83.23"/>
-      <path className="super_str0" d="M311.87 218.56c0,0 11.98,14.78 31.96,6.99"/>
-      <path className="super_str0" d="M79.18 218.56c0,0 -11.99,14.78 -31.96,6.99"/>
-      <polygon className="super_fil5" points="147.33,148.64 138.81,111.46 118.61,143.82 80.61,140.43 105.15,169.64 90.18,204.73 125.54,190.42 154.29,215.5 151.61,177.45 184.34,157.86 "/>
-      <polygon className="super_fil5" points="310.44,140.43 272.44,143.82 252.24,111.46 243.72,148.64 206.7,157.86 239.44,177.45 236.76,215.5 265.5,190.42 300.87,204.73 285.9,169.64 "/>
-    </g>
-  </svg>
+  <img src="/icons/super.svg" className="w-full h-full object-contain" alt="Super" />
 );
 
 export default Dashboard;

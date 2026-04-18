@@ -60,6 +60,11 @@ export const TRANSLATIONS: Record<string, any> = {
     help_calendar_year_desc: 'Generates a printable rhythm calendar for the year. Navigate to the "Calendar" tab and scroll to January of the desired year to see the export button.',
     help_solar_title: 'SOLAR ACTIVITY MONITOR',
     help_solar_desc: 'High levels of solar activity require correcting the rhythm balance upwards at low values, and downwards at high values.',
+    help_cosmic_energy_title: 'COSMIC ENERGY CHART',
+    help_cosmic_energy_desc: 'Visualizes the composite energy background from 5 key astronomical cycles (Sun, Moon, Earth, Jupiter, and 11-year Solar cycle). Displays data across 4 timescales (Day, Month, Quarter, 12-Years).',
+    help_astro_events_title: 'ASTRONOMICAL EVENTS',
+    help_astro_events_desc: 'The calendar displays key astronomical events: lunar phases (🌑🌓🌕🌗) and solar events like equinoxes and solstices (🌱☀️🍂❄️).',
+    cosmic_energy: 'Cosmic Energy', cosmic_day: 'Day', cosmic_month: 'Month', cosmic_quarter: 'Quarter', cosmic_12years: '12 Years', cosmic_total: 'TOTAL', cosmic_sun: 'SUN', cosmic_moon: 'MOON', cosmic_earth: 'EARTH', cosmic_jp: '12-YEAR', cosmic_sol: '11.1-YEAR',
     compat_aerobic: 'Dynamics', compat_anaerobic: 'Strong', compat_sensory: 'Sensory', compat_sexual: 'Sexual', compat_analytic: 'Analytical', person_a: 'Person A', person_b: 'Person B', calculate: 'Calculate', synthesis_btn: 'Synthesis of Relationships', synthesis_archetype: 'Couple Archetype', synthesis_blind_spots: 'Blind Spots', synthesis_advice: 'Golden Advice', compat_very_low: 'VERY LOW', compat_low: 'LOW', compat_normal: 'NORMAL', compat_high: 'HIGH', compat_very_high: 'VERY HIGH'
   },
   ru: {
@@ -111,6 +116,11 @@ export const TRANSLATIONS: Record<string, any> = {
     help_calendar_year_desc: 'Генерирует ритмокалендарь профиля на год. Для этого перейдите во вкладку «Календарь» и пролистайте до января нужного года.',
     help_solar_title: 'МОНИТОР СОЛНЕЧНОЙ АКТИВНОСТИ',
     help_solar_desc: 'Высокий уровень солнечной активности требует коррекции ритмобаланса в сторону повышения на низких значениях, и в сторону понижения на высоких.',
+    help_cosmic_energy_title: 'ГРАФИК ЭНЕРГЕТИЧЕСКОГО ФОНА',
+    help_cosmic_energy_desc: 'Отображает суммарный энергетический фон 5 ключевых астрономических циклов (Солнца, Луны, Земли, Юпитера и 11-летнего цикла Солнца) на 4 временных масштабах (Сутки, Месяц, Квартал, 12 Лет).',
+    help_astro_events_title: 'АСТРОНОМИЧЕСКИЕ СОБЫТИЯ',
+    help_astro_events_desc: 'На календаре отмечаются фазы луны (🌑🌓🌕🌗), а также дни равноденствий и солнцестояний (🌱☀️🍂❄️).',
+    cosmic_energy: 'Энергетический фон', cosmic_day: 'Сутки', cosmic_month: 'Месяц', cosmic_quarter: 'Квартал', cosmic_12years: '12 Лет', cosmic_total: 'ОБЩИЙ ФОН', cosmic_sun: 'СОЛНЦЕ', cosmic_moon: 'ЛУНА', cosmic_earth: 'ЗЕМЛЯ', cosmic_jp: '12-ЛЕТНИЙ', cosmic_sol: '11.1-ЛЕТНИЙ',
     compat_aerobic: 'Динамика', compat_anaerobic: 'Сила', compat_sensory: 'Сенсорика', compat_sexual: 'Сексуальность', compat_analytic: 'Аналитика', person_a: 'Персона А', person_b: 'Персона Б', calculate: 'Рассчитать', synthesis_btn: 'Синтез отношений', synthesis_archetype: 'Архетип пары', synthesis_blind_spots: 'Слепые зоны', synthesis_advice: 'Золотой совет', compat_very_low: 'ОЧЕНЬ НИЗКАЯ', compat_low: 'НИЗКАЯ', compat_normal: 'НОРМАЛЬНАЯ', compat_high: 'ВЫСОКАЯ', compat_very_high: 'СВЕРХВЫСОКАЯ'
   },
   es: {
@@ -147,6 +157,11 @@ export const TRANSLATIONS: Record<string, any> = {
     help_calendar_year_desc: 'Genera un calendario rítmico anual. Vaya a la pestaña "Calendario" y desplácese hasta enero del año deseado.',
     help_solar_title: 'MONITOR DE ACTIVIDAD SOLAR',
     help_solar_desc: 'Los altos niveles de actividad solar requieren corregir el equilibrio rítmico hacia arriba en valores bajos y hacia abajo en valores altos.',
+    help_cosmic_energy_title: 'GRÁFICO DE ENERGÍA CÓSMICA',
+    help_cosmic_energy_desc: 'Visualiza el fondo de energía compuesto de 5 ciclos astronómicos (Sol, Luna, Tierra, Júpiter y ciclo solar de 11 años). Escalas: Día, Mes, Trimestre, 12 Años.',
+    help_astro_events_title: 'EVENTOS ASTRONÓMICOS',
+    help_astro_events_desc: 'El calendario muestra eventos astronómicos clave: fases lunares (🌑🌓🌕🌗) y solsticios/equinoccios (🌱☀️🍂❄️).',
+    cosmic_energy: 'Energía Cósmica', cosmic_day: 'Día', cosmic_month: 'Mes', cosmic_quarter: 'Trimestre', cosmic_12years: '12 Años', cosmic_total: 'TOTAL', cosmic_sun: 'SOL', cosmic_moon: 'LUNA', cosmic_earth: 'TIERRA', cosmic_jp: '12 AÑOS', cosmic_sol: '11.1 AÑOS',
     compat_aerobic: 'Dinámica', compat_anaerobic: 'Fuerte', compat_sensory: 'Sensorial', compat_sexual: 'Sexual', compat_analytic: 'Analítica', person_a: 'Persona A', person_b: 'Persona B', calculate: 'Calcular', synthesis_btn: 'Síntesis de Relaciones', synthesis_archetype: 'Arquetipo de Pareja', synthesis_blind_spots: 'Puntos Ciegos', synthesis_advice: 'Consejo de Oro', compat_very_low: 'MUY BAJA', compat_low: 'BAJA', compat_normal: 'NORMAL', compat_high: 'ALTA', compat_very_high: 'MUY ALTA'
   },
   de: {
@@ -183,6 +198,11 @@ export const TRANSLATIONS: Record<string, any> = {
     help_calendar_year_desc: 'Erstellt einen Jahres-Rhythmuskalender. Gehen Sie zum Reiter "Kalender" und scrollen Sie zum Januar des gewünschten Jahres.',
     help_solar_title: 'SONNENAKTIVITÄTSMONITOR',
     help_solar_desc: 'Hohe Sonnenaktivität erfordert eine Korrektur der Rhythmusbalance nach oben bei niedrigen Werten und nach unten bei hohen Werten.',
+    help_cosmic_energy_title: 'KOSMISCHES ENERGIEDIAGRAMM',
+    help_cosmic_energy_desc: 'Visualisiert den kombinierten Energiehintergrund von 5 astronomischen Zyklen (Sonne, Mond, Erde, Jupiter und 11-jähriger Sonnenzyklus). Skalen: Tag, Monat, Quartal, 12 Jahre.',
+    help_astro_events_title: 'ASTRONOMISCHE EREIGNISSE',
+    help_astro_events_desc: 'Der Kalender zeigt wichtige astronomische Ereignisse: Mondphasen (🌑🌓🌕🌗) sowie Tagundnachtgleichen und Sonnenwenden (🌱☀️🍂❄️).',
+    cosmic_energy: 'Kosmische Energie', cosmic_day: 'Tag', cosmic_month: 'Monat', cosmic_quarter: 'Quartal', cosmic_12years: '12 Jahre', cosmic_total: 'GESAMT', cosmic_sun: 'SONNE', cosmic_moon: 'MOND', cosmic_earth: 'ERDE', cosmic_jp: '12-JÄHRIG', cosmic_sol: '11.1-JÄHRIG',
     compat_aerobic: 'Dynamik', compat_anaerobic: 'Stark', compat_sensory: 'Sensorisch', compat_sexual: 'Sexuell', compat_analytic: 'Analytisch', person_a: 'Person A', person_b: 'Person B', calculate: 'Berechnen', synthesis_btn: 'Synthese der Beziehungen', synthesis_archetype: 'Paar-Archetyp', synthesis_blind_spots: 'Blinde Flecken', synthesis_advice: 'Goldener Rat', compat_very_low: 'SEHR NIEDRIG', compat_low: 'NIEDRIG', compat_normal: 'NORMAL', compat_high: 'HOCH', compat_very_high: 'SEHR HOCH'
   },
   fr: {
@@ -219,6 +239,11 @@ export const TRANSLATIONS: Record<string, any> = {
     help_calendar_year_desc: 'Génère un calendrier rythmique annuel. Allez dans l\'onglet "Calendrier" et faites défiler jusqu\'à janvier de l\'année souhaitée.',
     help_solar_title: 'MONITEUR D\'ACTIVITÉ SOLAIRE',
     help_solar_desc: 'Des niveaux élevés d\'activité solaire nécessitent de corriger l\'équilibre rythmique vers le haut pour les valeurs basses et vers le bas pour les valeurs hautes.',
+    help_cosmic_energy_title: 'GRAPHIQUE D\'ÉNERGIE COSMIQUE',
+    help_cosmic_energy_desc: 'Visualise l\'arrière-plan énergétique composé de 5 cycles astronomiques (Soleil, Lune, Terre, Jupiter et cycle solaire de 11 ans). Échelles: Jour, Mois, Trimestre, 12 Ans.',
+    help_astro_events_title: 'ÉVÉNEMENTS ASTRONOMIQUES',
+    help_astro_events_desc: 'Le calendrier affiche les événements astronomiques clés : phases lunaires (🌑🌓🌕🌗) et solstices/équinoxes (🌱☀️🍂❄️).',
+    cosmic_energy: 'Énergie Cosmique', cosmic_day: 'Jour', cosmic_month: 'Mois', cosmic_quarter: 'Trimestre', cosmic_12years: '12 Ans', cosmic_total: 'TOTAL', cosmic_sun: 'SOLEIL', cosmic_moon: 'LUNE', cosmic_earth: 'TERRE', cosmic_jp: '12 ANS', cosmic_sol: '11.1 ANS',
     compat_aerobic: 'Dynamique', compat_anaerobic: 'Fort', compat_sensory: 'Sensoriel', compat_sexual: 'Sexuel', compat_analytic: 'Analytique', person_a: 'Personne A', person_b: 'Personne B', calculate: 'Calculer', synthesis_btn: 'Synthèse des Relations', synthesis_archetype: 'Archétype de Couple', synthesis_blind_spots: 'Angles Morts', synthesis_advice: 'Conseil en Or', compat_very_low: 'TRÈS BASSE', compat_low: 'BASSE', compat_normal: 'NORMALE', compat_high: 'HAUTE', compat_very_high: 'TRÈS HAUTE'
   },
   pt: {
@@ -255,6 +280,11 @@ export const TRANSLATIONS: Record<string, any> = {
     help_calendar_year_desc: 'Gera um calendário rítmico anual. Vá para a guia "Calendário" e role até janeiro do ano desejado.',
     help_solar_title: 'MONITOR DE ATIVIDADE SOLAR',
     help_solar_desc: 'Altos níveis de atividade solar exigem a correção do equilíbrio rítmico para cima em valores baixos e para baixo em valores altos.',
+    help_cosmic_energy_title: 'GRÁFICO DE ENERGIA CÓSMICA',
+    help_cosmic_energy_desc: 'Visualiza o fundo de energia composto de 5 ciclos astronômicos (Sol, Lua, Terra, Júpiter e ciclo solar de 11 anos). Escalas: Dia, Mês, Trimestre, 12 Anos.',
+    help_astro_events_title: 'EVENTOS ASTRONÔMICOS',
+    help_astro_events_desc: 'O calendário exibe eventos astronômicos: fases lunares (🌑🌓🌕🌗) e solstícios/equinócios (🌱☀️🍂❄️).',
+    cosmic_energy: 'Energia Cósmica', cosmic_day: 'Dia', cosmic_month: 'Mês', cosmic_quarter: 'Trimestre', cosmic_12years: '12 Anos', cosmic_total: 'TOTAL', cosmic_sun: 'SOL', cosmic_moon: 'LUA', cosmic_earth: 'TERRA', cosmic_jp: '12 ANOS', cosmic_sol: '11.1 ANOS',
     compat_aerobic: 'Dinâmica', compat_anaerobic: 'Forte', compat_sensory: 'Sensorial', compat_sexual: 'Sexual', compat_analytic: 'Analítica', person_a: 'Pessoa A', person_b: 'Pessoa B', calculate: 'Calcular', synthesis_btn: 'Síntese de Relacionamentos', synthesis_archetype: 'Arquétipo de Casal', synthesis_blind_spots: 'Pontos Cegos', synthesis_advice: 'Conselho de Ouro', compat_very_low: 'MUITO BAIXA', compat_low: 'BAIXA', compat_normal: 'NORMAL', compat_high: 'ALTA', compat_very_high: 'MUITO ALTA'
   },
   zh: {
@@ -291,6 +321,11 @@ export const TRANSLATIONS: Record<string, any> = {
     help_calendar_year_desc: '生成年度节奏日历。请转到“日历”选项卡并滚动到所需年份的 1 月。',
     help_solar_title: '太阳活动监测',
     help_solar_desc: '高水平的太阳活动需要在低值时向上修正节律平衡，在高值时向下修正。',
+    help_cosmic_energy_title: '宇宙能量图表',
+    help_cosmic_energy_desc: '可视化5个主要天文周期（太阳，月亮，地球，木星和11年太阳周期）的综合能量背景。提供4个时间尺度（日，月，季度，12年）。',
+    help_astro_events_title: '天文事件',
+    help_astro_events_desc: '日历显示关键天文事件：月相（🌑🌓🌕🌗）以及春分秋分和夏至冬至（🌱☀️🍂❄️）。',
+    cosmic_energy: '宇宙能量', cosmic_day: '日', cosmic_month: '月', cosmic_quarter: '季度', cosmic_12years: '12年', cosmic_total: '总计', cosmic_sun: '太阳', cosmic_moon: '月亮', cosmic_earth: '地球', cosmic_jp: '12年', cosmic_sol: '11.1年',
     compat_aerobic: '动力', compat_anaerobic: '强壮', compat_sensory: '感官', compat_sexual: '性', compat_analytic: '分析', person_a: '人 A', person_b: '人 B', calculate: '计算', synthesis_btn: '关系综合', synthesis_archetype: '情侣原型', synthesis_blind_spots: '盲点', synthesis_advice: '黄金建议', compat_very_low: '极低', compat_low: '低', compat_normal: '正常', compat_high: '高', compat_very_high: '极高'
   },
   ja: {
@@ -327,6 +362,11 @@ export const TRANSLATIONS: Record<string, any> = {
     help_calendar_year_desc: '年間リズムカレンダーを生成します。「カレンダー」タブに移動し、目的の年の1月までスクロールしてください。',
     help_solar_title: '太陽活動モニター',
     help_solar_desc: '太陽活動のレベルが高い場合、低い値ではリズムバランスを上方に、高い値では下方に修正する必要があります。',
+    help_cosmic_energy_title: '宇宙エネルギーチャート',
+    help_cosmic_energy_desc: '5つの主要な天体サイクル（太陽、月、地球、木星、11年太陽サイクル）からの複合エネルギー背景を視覚化します。4つの時間区分（日、月、四半期、12年）があります。',
+    help_astro_events_title: '天文イベント',
+    help_astro_events_desc: 'カレンダーには主要な天文イベントが表示されます：月相（🌑🌓🌕🌗）や夏至・冬至、春分・秋分（🌱☀️🍂❄️）。',
+    cosmic_energy: '宇宙エネルギー', cosmic_day: '日', cosmic_month: '月', cosmic_quarter: '四半期', cosmic_12years: '12年', cosmic_total: '合計', cosmic_sun: '太陽', cosmic_moon: '月', cosmic_earth: '地球', cosmic_jp: '12年', cosmic_sol: '11.1年',
     compat_aerobic: 'ダイナミクス', compat_anaerobic: 'ストロング', compat_sensory: '感覚', compat_sexual: '性的', compat_analytic: '分析', person_a: '人物 A', person_b: '人物 B', calculate: '計算する', synthesis_btn: '関係の統合', synthesis_archetype: 'カップルの原型', synthesis_blind_spots: '盲点', synthesis_advice: '黄金のアドバイス', compat_very_low: '非常に低い', compat_low: '低い', compat_normal: '普通', compat_high: '高い', compat_very_high: '非常に高い'
   },
   ar: {
@@ -363,6 +403,11 @@ export const TRANSLATIONS: Record<string, any> = {
     help_calendar_year_desc: 'ينشئ تقويم الإيقاع السنوي. انتقل إلى علامة التبويب "التقويم" وقم بالتمرير إلى يناير من العام المطلوب.',
     help_solar_title: 'مراقب النشاط الشمسي',
     help_solar_desc: 'تتطلب مستويات النشاط الشمسي العالية تصحيح توازن الإيقاع صعودًا عند القيم المنخفضة، وهبوطًا عند القيم العالية.',
+    help_cosmic_energy_title: 'رسم بياني للطاقة الكونية',
+    help_cosmic_energy_desc: 'يصور خلفية الطاقة المركبة من 5 دورات فلكية (الشمس، القمر، الأرض، المشتري، الدورة الشمسية). للعمل على مقاييس: يوم، شهر، ربع سنة، 12 سنة.',
+    help_astro_events_title: 'الأحداث الفلكية',
+    help_astro_events_desc: 'يعرض التقويم الأحداث الفلكية: أطوار القمر (🌑🌓🌕🌗) والانقلابات والاعتدالات (🌱☀️🍂❄️).',
+    cosmic_energy: 'الطاقة الكونية', cosmic_day: 'يوم', cosmic_month: 'شهر', cosmic_quarter: 'ربع سنة', cosmic_12years: '12 سنة', cosmic_total: 'المجموع', cosmic_sun: 'شمس', cosmic_moon: 'قمر', cosmic_earth: 'أرض', cosmic_jp: '12 سنة', cosmic_sol: '11.1 سنة',
     compat_aerobic: 'ديناميات', compat_anaerobic: 'قوي', compat_sensory: 'حسي', compat_sexual: 'جنسي', compat_analytic: 'تحليلي', person_a: 'الشخص أ', person_b: 'الشخص ب', calculate: 'احسب', synthesis_btn: 'توليف العلاقات', synthesis_archetype: 'النموذج الأصلي للزوجين', synthesis_blind_spots: 'النقاط العمياء', synthesis_advice: 'نصيحة ذهبية', compat_very_low: 'منخفض جدا', compat_low: 'منخفض', compat_normal: 'عادي', compat_high: 'عالي', compat_very_high: 'عالي جدا'
   },
   hi: {
@@ -399,6 +444,11 @@ export const TRANSLATIONS: Record<string, any> = {
     help_calendar_year_desc: 'वार्षिक ताल कैलेंडर बनाता है। "कैलेंडर" टैब पर जाएं और वांछित वर्ष की जनवरी तक स्क्रॉल करें।',
     help_solar_title: 'सौर गतिविधि मॉनिटर',
     help_solar_desc: 'सौर गतिविधि के उच्च स्तरों के लिए लय संतुलन को कम मूल्यों पर ऊपर की ओर और उच्च मूल्यों पर नीचे की ओर सही करने की आवश्यकता होती है।',
+    help_cosmic_energy_title: 'ब्रह्मांडीय ऊर्जा चार्ट',
+    help_cosmic_energy_desc: '5 प्रमुख खगोलीय चक्रों (सूर्य, चंद्रमा, पृथ्वी, बृहस्पति, सौर चक्र) से समग्र ऊर्जा को दर्शाता है। पैमाने: दिन, महीना, तिमाही, 12 वर्ष।',
+    help_astro_events_title: 'खगोलीय घटनाएँ',
+    help_astro_events_desc: 'कैलेंडर खगोलीय घटनाओं को दिखाता है: चंद्र चरण (🌑🌓🌕🌗) और संक्रांति/विषुव (🌱☀️🍂❄️)।',
+    cosmic_energy: 'ब्रह्मांडीय ऊर्जा', cosmic_day: 'दिन', cosmic_month: 'महीना', cosmic_quarter: 'तिमाही', cosmic_12years: '12 वर्ष', cosmic_total: 'कुल', cosmic_sun: 'सूर्य', cosmic_moon: 'चंद्रमा', cosmic_earth: 'पृथ्वी', cosmic_jp: '12-वर्षीय', cosmic_sol: '11.1-वर्षीय',
     compat_aerobic: 'गतिशीलता', compat_anaerobic: 'मजबूत', compat_sensory: 'संवेदी', compat_sexual: 'यौन', compat_analytic: 'विश्लेषणात्मक', person_a: 'व्यक्ति ए', person_b: 'व्यक्ति बी', calculate: 'गणना करें', synthesis_btn: 'रिश्तों का संश्लेषण', synthesis_archetype: 'युगल मूलरूप', synthesis_blind_spots: 'अंधे धब्बे', synthesis_advice: 'सुनहरी सलाह', compat_very_low: 'बहुत कम', compat_low: 'कम', compat_normal: 'सामान्य', compat_high: 'उच्च', compat_very_high: 'बहुत उच्च'
   }
 };
