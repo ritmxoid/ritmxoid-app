@@ -8,13 +8,14 @@ const path = require('path');
   page.on('console', msg => console.log('PAGE LOG:', msg.text()));
   page.on('pageerror', error => console.log('PAGE ERROR:', error.message));
   
-  const filePath = 'file://' + path.resolve('index_offline.html');
+  const filePath = 'file://' + path.resolve('test_assembled.html');
   console.log('Opening', filePath);
   
   await page.goto(filePath, { waitUntil: 'networkidle0' });
   
-  const content = await page.content();
-  console.log('Body length:', content.length);
+  const content = await page.evaluate(() => document.getElementById('root').innerHTML);
+  console.log('Root content preview:', content.substring(0, 500));
+  await page.screenshot({ path: 'test_assembled.png' });
   
   await browser.close();
 })();

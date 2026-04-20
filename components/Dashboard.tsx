@@ -1,5 +1,10 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { DateTime, Info } from 'luxon';
+import criticalIcon from '../public/icons/critical.svg';
+import lowIcon from '../public/icons/low.svg';
+import optimalIcon from '../public/icons/optimal.svg';
+import highIcon from '../public/icons/high.svg';
+import superIcon from '../public/icons/super.svg';
 import { 
   calculateDaysGone, calculateFullBalance, calculateBasicBalance, calculateReactiveBalance, calculateSpecificRhythms, getRiskLevel, 
   COLORS, ACTIVITY_CONFIG, getActivitiesPack, MAP_NAMES, calculateMapAngles, calculateSecondsGone,
@@ -7,6 +12,12 @@ import {
 } from '../core/engine';
 import { TRANSLATIONS as GLOBAL_TRANSLATIONS, LANGUAGES as GLOBAL_LANGUAGES, getT } from '../core/i18n';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { 
+  Check, Swords, Users, FolderPlus, X, Upload, Download, PenTool, Trash2, 
+  ChevronUp, ChevronDown, CalendarCheck, Globe, HelpCircle, Power, 
+  AlertTriangle, Wand2, Folder, FolderOpen, ChevronLeft, ChevronRight,
+  FolderMinus, UserMinus, Crown
+} from 'lucide-react';
 import { Profile } from '../types';
 import { logEvent, logPageView } from '../core/analytics';
 import SolarActivityChart from './SolarActivityChart';
@@ -584,7 +595,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         {isSelectMode && (
           <div className="absolute top-2 left-2">
              <div className={`w-4 h-4 rounded border flex items-center justify-center ${isChecked ? 'bg-[#33b5e5] border-[#33b5e5]' : 'border-white/20'}`}>
-                {isChecked && <i className="fa-solid fa-check text-[10px] text-black" />}
+                {isChecked && <Check className="w-2.5 h-2.5 text-black" />}
              </div>
           </div>
         )}
@@ -609,7 +620,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                       title={t('arena')} 
                       className="w-8 h-8 flex items-center justify-center bg-fuchsia-600 text-white border border-fuchsia-400 rounded-lg transition-all active:scale-95 shadow-[0_0_8px_fuchsia]"
                     >
-                      <i className="fa-solid fa-khanda text-[12px]" />
+                      <Swords className="w-3 h-3" />
                     </button>
                     {(selectedIds.size + selectedGroupNames.size) === 2 && (
                       <button 
@@ -617,21 +628,21 @@ const Dashboard: React.FC<DashboardProps> = ({
                         title={t('compatibility')} 
                         className="w-8 h-8 flex items-center justify-center bg-[#33b5e5] text-black border border-[#33b5e5] rounded-lg transition-all active:scale-95 shadow-[0_0_8px_#33b5e5]"
                       >
-                        <i className="fa-solid fa-people-arrows text-[12px]" />
+                        <Users className="w-3 h-3" />
                       </button>
                     )}
                   </>
                 )}
-                <button onClick={() => setShowGroupDialog(true)} title={t('group')} className="w-8 h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[#33b5e5] transition-all active:scale-95"><i className="fa-solid fa-folder-plus text-[12px]" /></button>
-                <button onClick={() => { setListMode('NONE'); setSelectedIds(new Set()); setSelectedGroupNames(new Set()); setListMode('NONE'); }} title={t('close')} className="w-8 h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-slate-400 transition-all active:scale-95"><i className="fa-solid fa-xmark text-[12px]" /></button>
+                <button onClick={() => setShowGroupDialog(true)} title={t('group')} className="w-8 h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[#33b5e5] transition-all active:scale-95"><FolderPlus className="w-3 h-3" /></button>
+                <button onClick={() => { setListMode('NONE'); setSelectedIds(new Set()); setSelectedGroupNames(new Set()); setListMode('NONE'); }} title={t('close')} className="w-8 h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-slate-400 transition-all active:scale-95"><X className="w-3 h-3" /></button>
               </>
             ) : (
               <>
-                <button onClick={() => fileInputRef.current?.click()} title={t('import')} className="w-8 h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-slate-400 transition-all active:scale-95"><i className="fa-solid fa-upload text-[10px]" /></button>
-                <button onClick={handleExport} title={t('export')} className="w-8 h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-slate-400 transition-all active:scale-95"><i className="fa-solid fa-download text-[10px]" /></button>
+                <button onClick={() => fileInputRef.current?.click()} title={t('import')} className="w-8 h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-slate-400 transition-all active:scale-95"><Upload className="w-2.5 h-2.5" /></button>
+                <button onClick={handleExport} title={t('export')} className="w-8 h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-slate-400 transition-all active:scale-95"><Download className="w-2.5 h-2.5" /></button>
                 <div className="w-[1px] h-4 bg-white/10 mx-0.5" />
-                <button onClick={() => setListMode(listMode === 'EDIT' ? 'NONE' : 'EDIT')} title={t('edit')} className={`w-8 h-8 flex items-center justify-center border rounded-lg transition-all active:scale-95 ${listMode === 'EDIT' ? 'bg-cyan-400 border-cyan-400 text-black shadow-[0_0_8px_#33b5e5]' : 'bg-white/5 border-white/10 text-slate-400'}`}><i className="fa-solid fa-pen text-[10px]" /></button>
-                <button onClick={() => setListMode(listMode === 'DELETE' ? 'NONE' : 'DELETE')} title={t('delete')} className={`w-8 h-8 flex items-center justify-center border rounded-lg transition-all active:scale-95 ${listMode === 'DELETE' ? 'bg-red-600 border-red-600 text-white shadow-[0_0_10px_red]' : 'bg-white/5 border-white/10 text-slate-400'}`}><i className="fa-solid fa-trash text-[10px]" /></button>
+                <button onClick={() => setListMode(listMode === 'EDIT' ? 'NONE' : 'EDIT')} title={t('edit')} className={`w-8 h-8 flex items-center justify-center border rounded-lg transition-all active:scale-95 ${listMode === 'EDIT' ? 'bg-cyan-400 border-cyan-400 text-black shadow-[0_0_8px_#33b5e5]' : 'bg-white/5 border-white/10 text-slate-400'}`}><PenTool className="w-2.5 h-2.5" /></button>
+                <button onClick={() => setListMode(listMode === 'DELETE' ? 'NONE' : 'DELETE')} title={t('delete')} className={`w-8 h-8 flex items-center justify-center border rounded-lg transition-all active:scale-95 ${listMode === 'DELETE' ? 'bg-red-600 border-red-600 text-white shadow-[0_0_10px_red]' : 'bg-white/5 border-white/10 text-slate-400'}`}><Trash2 className="w-2.5 h-2.5" /></button>
                 <div className="w-[1px] h-4 bg-white/10 mx-0.5" />
                 <button onClick={() => { setShowAddForm(!showAddForm); setListMode('NONE'); }} className="bg-white/5 hover:bg-white/10 border border-white/20 px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all">{showAddForm ? t('close') : t('add')}</button>
               </>
@@ -645,7 +656,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="bg-[#1b2531] p-4 mx-4 rounded-xl border border-white/10 space-y-3 overflow-hidden shadow-2xl">
               <div className="flex justify-between items-center">
                 <h3 className="text-[10px] font-black uppercase text-[#33b5e5]">{editingProfileId ? t('edit') : t('add')}</h3>
-                <button onClick={() => { setEditingProfileId(null); setShowAddForm(false); }} className="text-slate-500 hover:text-white"><i className="fa-solid fa-xmark text-xs" /></button>
+                <button onClick={() => { setEditingProfileId(null); setShowAddForm(false); }} className="text-slate-500 hover:text-white"><X className="w-3 h-3" /></button>
               </div>
               <input type="text" placeholder={t('name_placeholder')} value={newPName} onChange={e => setNewPName(e.target.value)} className="w-full bg-black border border-white/10 p-2 rounded text-sm outline-none focus:border-[#33b5e5] text-white" />
               <input type="datetime-local" value={newPDate} onChange={e => setNewPDate(e.target.value)} className="w-full bg-black border border-white/10 p-2 rounded text-sm outline-none focus:border-[#33b5e5] color-scheme-dark text-white" />
@@ -718,7 +729,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   }`}
                  >
                     <div className={`flex items-center gap-2 ${isDragging ? 'pointer-events-none' : ''}`}>
-                      <i className={`fa-solid fa-folder${isExpanded ? '-open' : ''} text-[#33b5e5]`} />
+                      {isExpanded ? <FolderOpen className="w-3 h-3 text-[#33b5e5]" /> : <Folder className="w-3 h-3 text-[#33b5e5]" />}
                       <span className="text-[11px] font-black uppercase text-slate-300">{groupName}</span>
                       <span className="text-[9px] bg-white/5 px-1.5 rounded-full text-slate-500 font-bold">{groupProfiles.length}</span>
                     </div>
@@ -741,7 +752,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                                 setGroupActionActive(null); 
                               }}
                               className="w-10 h-10 flex items-center justify-center bg-cyan-500 text-black rounded-lg border border-cyan-400 hover:bg-white transition-colors shadow-lg active:scale-90"
-                             ><i className="fa-solid fa-pen text-[14px]" /></button>
+                             ><PenTool className="w-4 h-4" /></button>
                              <button 
                               onMouseDown={(e) => e.stopPropagation()}
                               onClick={(e) => { 
@@ -750,16 +761,18 @@ const Dashboard: React.FC<DashboardProps> = ({
                                 setGroupActionActive(null); 
                               }}
                               className="w-10 h-10 flex items-center justify-center bg-red-600 text-white rounded-lg border border-red-500 hover:bg-white hover:text-red-600 transition-colors shadow-lg active:scale-90"
-                             ><i className="fa-solid fa-trash-can text-[14px]" /></button>
+                             ><Trash2 className="w-4 h-4" /></button>
                           </motion.div>
                         )}
                       </AnimatePresence>
                       {!isContextActive && listMode === 'SELECT' && (
                         <div className={`w-4 h-4 rounded border flex items-center justify-center ${isGroupChecked ? 'bg-[#33b5e5] border-[#33b5e5]' : 'border-white/20'}`}>
-                           {isGroupChecked && <i className="fa-solid fa-check text-[10px] text-black" />}
+                           {isGroupChecked && <Check className="w-2.5 h-2.5 text-black" />}
                         </div>
                       )}
-                      {!isContextActive && listMode !== 'SELECT' && <i className={`fa-solid fa-chevron-${isExpanded ? 'up' : 'down'} text-[10px] text-slate-600 pointer-events-none`} />}
+                      {!isContextActive && listMode !== 'SELECT' && (
+                        isExpanded ? <ChevronUp className="w-2.5 h-2.5 text-slate-600 pointer-events-none" /> : <ChevronDown className="w-2.5 h-2.5 text-slate-600 pointer-events-none" />
+                      )}
                     </div>
                  </div>
                  <AnimatePresence>
@@ -967,7 +980,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 onClick={handleExportYearlyCalendar}
                 className="bg-[#33b5e5] text-black px-3 py-1 rounded text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-white transition-colors active:scale-95 shadow-[0_0_10px_rgba(51,181,229,0.4)]"
              >
-                <i className="fa-solid fa-calendar-check" />
+                <CalendarCheck className="w-4 h-4" />
                 {t('export_year')}
              </button>
            )}
@@ -987,22 +1000,22 @@ const Dashboard: React.FC<DashboardProps> = ({
             return (
               <div key={i} className={`aspect-square relative flex flex-col items-center justify-center border border-white/10 transition-all duration-300 ${isCurrentMonth ? 'shadow-[inset_0_0_12px_rgba(255,255,255,0.05)]' : ''}`} style={{ backgroundColor: isCurrentMonth ? `${bgColor}99` : 'transparent', opacity: isCurrentMonth ? 1 : 0.15 }}>
                 {isToday && <div className="absolute inset-0 border-2 border-[#33b5e5] z-10 shadow-[0_0_15px_#33b5e5,inset_0_0_10px_#33b5e5]" />}
-                <span className={`text-lg font-black absolute top-1 left-1.5 ${isCurrentMonth ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]' : 'text-slate-800'}`}>{d.day}</span>
+                <span className={`text-[10px] sm:text-xs md:text-lg lg:text-xl xl:text-3xl font-black absolute top-0.5 left-1 sm:top-1 sm:left-1.5 lg:top-2 lg:left-2.5 ${isCurrentMonth ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]' : 'text-slate-800'}`}>{d.day}</span>
                 
                 {isCurrentMonth && astroEvts.length > 0 && (
-                  <div className="absolute bottom-1 left-1.5 flex gap-1 z-10">
+                  <div className="absolute bottom-0.5 left-1 sm:bottom-1 sm:left-1.5 lg:bottom-2 lg:left-2.5 flex gap-0.5 md:gap-1.5 z-10">
                     {astroEvts.map((e, ei) => (
-                      <span key={ei} className="text-sm drop-shadow-[0_0_3px_rgba(255,255,255,0.5)]" title={e.type}>{e.icon}</span>
+                      <span key={ei} className="text-[10px] sm:text-xs md:text-lg lg:text-xl xl:text-3xl drop-shadow-[0_0_3px_rgba(255,255,255,0.5)]" title={e.type}>{e.icon}</span>
                     ))}
                   </div>
                 )}
 
                 {isCurrentMonth && riskLvl >= 25 && (
-                  <div className="absolute top-1 right-1 flex flex-col gap-0.5">
+                  <div className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 lg:top-2 lg:right-2 flex flex-col gap-0 sm:gap-0.5 lg:gap-1">
                     {[...Array(riskLvl >= 75 ? 3 : riskLvl >= 50 ? 2 : 1)].map((_, idx) => (
-                      <div key={idx} className="relative w-4 h-4 flex items-center justify-center">
-                        <div className="absolute w-3 h-3 rounded-full bg-red-600/80 blur-[2px] animate-pulse-red" />
-                        <span className="text-sm leading-none text-white relative z-10 drop-shadow-sm">⚡</span>
+                      <div key={idx} className="relative w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 xl:w-8 xl:h-8 flex items-center justify-center">
+                        <div className="absolute w-2 h-2 sm:w-2.5 sm:h-2.5 md:w-3.5 md:h-3.5 lg:w-4.5 lg:h-4.5 xl:w-6 xl:h-6 rounded-full bg-red-600/80 blur-[1.5px] md:blur-[2px] lg:blur-[3px] animate-pulse-red" />
+                        <span className="text-[10px] sm:text-xs md:text-lg lg:text-xl xl:text-3xl leading-none text-white relative z-10 drop-shadow-sm">⚡</span>
                       </div>
                     ))}
                   </div>
@@ -1104,7 +1117,7 @@ const Dashboard: React.FC<DashboardProps> = ({
            </div>
         </div>
         <div className="flex items-center gap-1 shrink-0 relative">
-          <button onClick={() => setIsLangMenuOpen(!isLangMenuOpen)} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"><i className="fa-solid fa-globe text-lg text-[#33b5e5]" /></button>
+          <button onClick={() => setIsLangMenuOpen(!isLangMenuOpen)} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"><Globe className="w-5 h-5 text-[#33b5e5]" /></button>
           <AnimatePresence>
             {isLangMenuOpen && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute top-12 right-0 bg-[#1b2531] border border-white/20 rounded-xl shadow-2xl z-[10000] overflow-hidden w-40 backdrop-blur-md">
@@ -1114,8 +1127,8 @@ const Dashboard: React.FC<DashboardProps> = ({
               </motion.div>
             )}
           </AnimatePresence>
-          <button onClick={() => { setIsHelpOpen(true); logEvent('Open Help', 'Navigation'); }} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"><i className="fa-solid fa-circle-question text-lg text-[#33b5e5]" /></button>
-          <button onClick={() => setShowLogoutConfirm(true)} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors" title="Выход"><i className="fa-solid fa-power-off text-lg text-red-500" /></button>
+          <button onClick={() => { setIsHelpOpen(true); logEvent('Open Help', 'Navigation'); }} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"><HelpCircle className="w-5 h-5 text-[#33b5e5]" /></button>
+          <button onClick={() => setShowLogoutConfirm(true)} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors" title="Выход"><Power className="w-5 h-5 text-red-500" /></button>
         </div>
       </header>
 
@@ -1137,14 +1150,14 @@ const Dashboard: React.FC<DashboardProps> = ({
       </main>
 
       <footer className="bg-[#1b2531] p-4 flex items-center justify-between border-t-2 border-black z-40 shadow-[0_-5px_25px_rgba(0,0,0,0.6)]">
-         <button onClick={() => stepDate(false)} className="w-12 h-12 flex items-center justify-center bg-black/40 rounded border border-white/5 text-[#33b5e5] active:scale-95 transition-transform"><i className="fa-solid fa-chevron-left text-xl" /></button>
+         <button onClick={() => stepDate(false)} className="w-12 h-12 flex items-center justify-center bg-black/40 rounded border border-white/5 text-[#33b5e5] active:scale-95 transition-transform"><ChevronLeft className="w-6 h-6" /></button>
          <div onClick={resetToToday} className="flex flex-col items-center cursor-pointer hover:opacity-80 active:scale-95 transition-all group" title="Вернуться к сегодняшнему дню">
             <span className="text-2xl font-black tracking-tighter text-white uppercase tabular-nums group-hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
               {activeTab === 'CALENDAR' ? targetDate.toFormat('LLLL yyyy', { locale: lang }) : targetDate.toFormat('dd LLL. yyyy', { locale: lang })}
             </span>
             <span className="text-[10px] font-bold text-[#33b5e5] tabular-nums group-hover:text-white transition-colors">{targetDate.toFormat('HH:mm')}</span>
          </div>
-         <button onClick={() => stepDate(true)} className="w-12 h-12 flex items-center justify-center bg-black/40 rounded border border-white/5 text-[#33b5e5] active:scale-95 transition-transform"><i className="fa-solid fa-chevron-right text-xl" /></button>
+         <button onClick={() => stepDate(true)} className="w-12 h-12 flex items-center justify-center bg-black/40 rounded border border-white/5 text-[#33b5e5] active:scale-95 transition-transform"><ChevronRight className="w-6 h-6" /></button>
       </footer>
 
       <AnimatePresence>
@@ -1152,7 +1165,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[1200] bg-black/90 backdrop-blur-md flex items-center justify-center p-6">
             <div className="bg-[#1b2531] border border-white/20 p-8 rounded-[2rem] w-full max-w-sm space-y-6 shadow-2xl">
               <div className="text-center space-y-2">
-                <i className="fa-solid fa-folder-plus text-4xl text-[#33b5e5]" />
+                <FolderPlus className="w-10 h-10 text-[#33b5e5]" />
                 <h2 className="text-2xl font-black uppercase tracking-tighter">{t('group')}</h2>
               </div>
               <input autoFocus type="text" placeholder={t('group_placeholder')} value={tempGroupName} onChange={e => setTempGroupName(e.target.value)} className="w-full bg-black border border-white/10 p-4 rounded-2xl text-sm outline-none focus:border-[#33b5e5] text-white" />
@@ -1170,7 +1183,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[1200] bg-black/90 backdrop-blur-md flex items-center justify-center p-6">
             <div className="bg-[#1b2531] border border-white/20 p-8 rounded-[2rem] w-full max-w-sm space-y-6 shadow-2xl">
               <div className="text-center space-y-2">
-                <i className="fa-solid fa-pen text-4xl text-[#33b5e5]" />
+                <PenTool className="w-10 h-10 text-[#33b5e5]" />
                 <h2 className="text-2xl font-black uppercase tracking-tighter">{t('rename')}</h2>
               </div>
               <input autoFocus type="text" placeholder={t('group_placeholder')} value={tempGroupName} onChange={e => setTempGroupName(e.target.value)} className="w-full bg-black border border-white/10 p-4 rounded-2xl text-sm outline-none focus:border-[#33b5e5] text-white" />
@@ -1188,7 +1201,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[5000] bg-black/90 backdrop-blur-xl flex flex-col p-6 overflow-hidden">
             <div className="flex justify-between items-center mb-6 border-b border-[#33b5e5]/30 pb-4">
               <h2 className="text-2xl font-black text-[#33b5e5] uppercase italic tracking-tighter">{t('help_title')}</h2>
-              <button onClick={() => setIsHelpOpen(false)} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white"><i className="fa-solid fa-xmark text-xl" /></button>
+              <button onClick={() => setIsHelpOpen(false)} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white"><X className="w-6 h-6" /></button>
             </div>
             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-10 pr-2 pb-12">
               <section className="space-y-4">
@@ -1312,7 +1325,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         {profileToDelete && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[1100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#1b2531] border border-white/20 p-8 rounded-[2rem] w-full max-sm text-center space-y-6 shadow-2xl">
-              <div className="text-4xl text-red-600 mb-2"><i className="fa-solid fa-triangle-exclamation" /></div>
+              <div className="text-4xl text-red-600 mb-2"><AlertTriangle className="w-10 h-10 mx-auto" /></div>
               <h2 className="text-2xl font-black uppercase tracking-tighter">{t('confirm_delete')}</h2>
               <p className="text-slate-400 text-sm font-bold uppercase">{profileToDelete.name}</p>
               <div className="flex gap-3 pt-4">
@@ -1328,7 +1341,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         {groupToDelete && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[1100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#1b2531] border border-white/20 p-8 rounded-[2rem] w-full max-sm text-center space-y-6 shadow-2xl">
-              <div className="text-4xl text-red-600 mb-2"><i className="fa-solid fa-folder-minus" /></div>
+              <div className="text-4xl text-red-600 mb-2"><FolderMinus className="w-10 h-10 mx-auto" /></div>
               <h2 className="text-2xl font-black uppercase tracking-tighter">{t('ungroup')}</h2>
               <p className="text-slate-300 text-xs font-bold uppercase">{groupToDelete}</p>
               <p className="text-slate-500 text-[10px] italic">{t('confirm_ungroup')}</p>
@@ -1345,7 +1358,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         {showLogoutConfirm && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[1100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#1b2531] border border-white/20 p-8 rounded-[2rem] w-full max-sm text-center space-y-6 shadow-2xl">
-              <div className="text-4xl text-red-600 mb-2"><i className="fa-solid fa-power-off" /></div>
+              <div className="text-4xl text-red-600 mb-2"><Power className="w-10 h-10 mx-auto" /></div>
               <h2 className="text-2xl font-black uppercase tracking-tighter">{t('confirm_logout')}</h2>
               <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">{profile.name}</p>
               <div className="flex gap-3 pt-4">
@@ -1403,7 +1416,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                     {((compatIndex >= 2 && compatIndex <= 4) || (compatIndex >= 9 && compatIndex <= 11)) && t('help_compat_optimal_desc')}
                     {(compatIndex >= 5 && compatIndex <= 8) && t('help_compat_polar_desc')}
                     <div className="mt-2 text-[#33b5e5] text-[10px] uppercase font-bold tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
-                      <i className="fa-solid fa-wand-magic-sparkles mr-2" />
+                      <Wand2 className="w-4 h-4 mr-2" />
                       {t('synthesis_btn')}
                     </div>
                  </button>
@@ -1420,10 +1433,10 @@ const Dashboard: React.FC<DashboardProps> = ({
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[1200] bg-black/95 backdrop-blur-xl flex flex-col p-4">
              <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-3">
-                  <i className="fa-solid fa-khanda text-3xl text-fuchsia-500" />
+                  <Swords className="w-10 h-10 text-fuchsia-500 mx-auto" />
                   <h2 className="text-3xl font-black uppercase italic tracking-tighter text-white">{t('arena')}</h2>
                 </div>
-                <button onClick={() => setShowArenaDialog(false)} className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-white"><i className="fa-solid fa-xmark text-2xl" /></button>
+                <button onClick={() => setShowArenaDialog(false)} className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-white"><X className="w-6 h-6" /></button>
              </div>
 
              <div className="flex gap-1 bg-[#1b2531] p-1 rounded-xl mb-6 shadow-lg border border-white/10">
@@ -1461,7 +1474,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         {arenaEntityToRemove && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[1300] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#1b2531] border border-white/20 p-8 rounded-[2rem] w-full max-sm text-center space-y-6 shadow-2xl">
-              <div className="text-4xl text-fuchsia-500 mb-2"><i className={arenaEntityToRemove.isGroup ? "fa-solid fa-folder-minus" : "fa-solid fa-user-minus"} /></div>
+              <div className="text-4xl text-fuchsia-500 mb-2">{arenaEntityToRemove.isGroup ? <FolderMinus className="w-10 h-10 mx-auto" /> : <UserMinus className="w-10 h-10 mx-auto" />}</div>
               <h2 className="text-2xl font-black uppercase tracking-tighter">{t('remove_arena')}</h2>
               <p className="text-slate-400 text-sm font-bold uppercase">{arenaEntityToRemove.name}</p>
               <div className="flex gap-3 pt-4">
@@ -1527,8 +1540,8 @@ const ArenaItem: React.FC<ArenaItemProps> = ({ p, idx, t, onRemove }) => {
         style={{ opacity: bgOpacity }}
         className="absolute inset-0 bg-red-600/20 rounded-2xl flex items-center justify-between px-6 pointer-events-none"
       >
-        <i className="fa-solid fa-trash-can text-white/20 text-xl" />
-        <i className="fa-solid fa-trash-can text-white/20 text-xl" />
+        <Trash2 className="text-white/20 w-8 h-8" />
+        <Trash2 className="text-white/20 w-8 h-8" />
       </motion.div>
       <motion.div 
         layout
@@ -1556,7 +1569,7 @@ const ArenaItem: React.FC<ArenaItemProps> = ({ p, idx, t, onRemove }) => {
         <div className="flex-1 min-w-0">
            <div className="flex items-center gap-2">
              <div className="text-lg font-black uppercase text-white truncate">{p.name}</div>
-             {p.isGroup && <i className="fa-solid fa-folder text-[#33b5e5] text-xs" />}
+             {p.isGroup && <Folder className="w-3 h-3 text-[#33b5e5] inline-block mr-1" />}
            </div>
            {p.isGroup ? (
              <div className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1">
@@ -1579,7 +1592,7 @@ const ArenaItem: React.FC<ArenaItemProps> = ({ p, idx, t, onRemove }) => {
         </div>
         {idx === 0 && (
           <div className="absolute -right-4 -top-4 opacity-10 text-8xl text-fuchsia-500">
-             <i className="fa-solid fa-crown" />
+             <Crown className="w-4 h-4 text-yellow-500 ml-1" />
           </div>
         )}
       </motion.div>
@@ -1840,23 +1853,24 @@ const getBalanceEmoji = (val: number) => {
 };
 
 const CriticalLevelIcon = () => (
-  <img src="/icons/critical.svg" className="w-full h-full object-contain" alt="Critical" />
+  <img src={criticalIcon} className="w-full h-full object-contain" alt="Critical" />
 );
 
 const LowLevelIcon = () => (
-  <img src="/icons/low.svg" className="w-full h-full object-contain" alt="Low" />
+  <img src={lowIcon} className="w-full h-full object-contain" alt="Low" />
 );
 
 const OptimalLevelIcon = () => (
-  <img src="/icons/optimal.svg" className="w-full h-full object-contain" alt="Optimal" />
+  <img src={optimalIcon} className="w-full h-full object-contain" alt="Optimal" />
 );
 
 const HighLevelIcon = () => (
-  <img src="/icons/high.svg" className="w-full h-full object-contain" alt="High" />
+  <img src={highIcon} className="w-full h-full object-contain" alt="High" />
 );
 
 const SuperHighLevelIcon = () => (
-  <img src="/icons/super.svg" className="w-full h-full object-contain" alt="Super" />
+  <img src={superIcon} className="w-full h-full object-contain" alt="Super" />
 );
+
 
 export default Dashboard;

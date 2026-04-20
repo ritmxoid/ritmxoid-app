@@ -10,22 +10,26 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^7.2.0",
     "@google/genai": "^1.37.0",
     "chart.js": "^4.4.1",
     "framer-motion": "^12.26.2",
     "html2canvas": "^1.4.1",
     "jspdf": "^2.5.1",
+    "lucide-react": "^1.8.0",
     "luxon": "^3.7.2",
-    "puppeteer": "^24.41.0",
     "react": "^19.2.3",
-    "react-dom": "^19.2.3"
+    "react-dom": "^19.2.3",
+    "tailwindcss": "^4.2.2"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.2.2",
     "@types/chart.js": "^2.9.41",
     "@types/luxon": "^3.7.1",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
     "adm-zip": "^0.5.17",
+    "puppeteer": "^24.41.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0",
     "vite-plugin-singlefile": "^2.3.2"

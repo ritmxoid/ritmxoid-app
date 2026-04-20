@@ -3,6 +3,7 @@ import { Profile } from './types';
 import Dashboard from './components/Dashboard';
 import CompatibilityChecker from './components/CompatibilityChecker';
 import { motion, AnimatePresence } from 'framer-motion';
+import { PenTool, Download, Calendar, Plus } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { DateTime, Info } from 'luxon';
@@ -370,7 +371,7 @@ const App: React.FC = () => {
               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Username</label>
               <div className="relative group">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-[#33b5e5] transition-colors hidden sm:block">
-                  <i className="fa-solid fa-file-signature text-sm" />
+                  <PenTool className="w-4 h-4" />
                 </div>
                 <input 
                   type="text" 
@@ -387,7 +388,7 @@ const App: React.FC = () => {
                   title="Import contacts from file"
                   className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-[#33b5e5] hover:bg-[#33b5e5]/10 rounded-xl transition-colors"
                 >
-                  <i className="fa-solid fa-file-import" />
+                  <Download className="w-5 h-5" />
                 </button>
               </div>
             </div>
@@ -396,7 +397,7 @@ const App: React.FC = () => {
               <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Birth Date</label>
               <div className="relative group">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-[#33b5e5] transition-colors pointer-events-none hidden sm:block">
-                  <i className="fa-solid fa-calendar-day text-sm" />
+                  <Calendar className="w-4 h-4" />
                 </div>
                 <input 
                   type="datetime-local" 
@@ -409,7 +410,7 @@ const App: React.FC = () => {
                   title="Check Compatibility"
                   className="absolute right-12 top-1/2 -translate-y-1/2 flex items-center justify-center text-[#33b5e5] hover:scale-110 active:scale-95 transition-transform"
                 >
-                  <i className="fa-solid fa-plus text-xl drop-shadow-[0_0_8px_rgba(51,181,229,0.4)]" />
+                  <Plus className="w-5 h-5 drop-shadow-[0_0_8px_rgba(51,181,229,0.4)]" />
                 </button>
                 <button
                   onClick={handleQuickPdfExport}

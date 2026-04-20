@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Chart, registerables } from 'chart.js';
 import { DateTime } from 'luxon';
+import { AlertTriangle } from 'lucide-react';
 import { solarDataService } from '../services/solarDataService';
 
 Chart.register(...registerables);
@@ -253,7 +254,7 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
       {!loading && error && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20 backdrop-blur-sm rounded-xl">
              <div className="text-center p-4">
-                <i className="fa-solid fa-triangle-exclamation text-amber-500 text-2xl mb-2" />
+                <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
                 <p className="text-[10px] text-slate-400 font-bold uppercase">Data Unavailable</p>
                 <p className="text-[8px] text-slate-600 mt-1 mb-3">Check Connection</p>
                 <button 
