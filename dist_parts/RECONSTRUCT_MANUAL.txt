@@ -1,7 +1,0 @@
-HOW TO RECONSTRUCT THE OFFLINE APP:
-1. Open all Offline_Part_X.txt files.
-2. Create a new file named "RitmXoid_Offline.html".
-3. Copy and paste the content of Part 1, then Part 2, etc., in order.
-4. Save the file.
-5. Open "RitmXoid_Offline.html" in any modern browser (Chrome, Firefox, Safari).
-6. No internet connection is required.
