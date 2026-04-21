@@ -12,6 +12,7 @@ import {
   calculateReactiveBalance, getRiskLevel, getBalanceColor, COLORS 
 } from '../core/engine';
 import { getT, LANGUAGES } from '../core/i18n';
+import { logEvent, logPageView } from '../core/analytics';
 import criticalIcon from '../public/icons/critical.svg';
 import lowIcon from '../public/icons/low.svg';
 import optimalIcon from '../public/icons/optimal.svg';
@@ -59,6 +60,10 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
 
   const t = getT(lang);
+
+  useEffect(() => {
+    logPageView('SportProphet');
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('sportprophet_profiles', JSON.stringify(profiles));
@@ -124,6 +129,7 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
     setProfiles([...profiles, ...newProfiles]);
     setTeamText('');
     setTeamName('');
+    logEvent('SportProphet Team Add', 'Features', tName);
   };
 
   const arenaData = useMemo(() => {
@@ -169,6 +175,13 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
 
     return data.sort((a, b) => b.score - a.score);
   }, [showArena, profiles, selectedGroups, selectedIds, arenaMode, targetDt]);
+
+  useEffect(() => {
+    if (showArena) {
+        logPageView('Arena (SportProphet)');
+        logEvent('Arena Mode', 'Features', arenaMode);
+    }
+  }, [showArena, arenaMode]);
 
   const toggleSelect = (id: string) => {
     const next = new Set(selectedIds);

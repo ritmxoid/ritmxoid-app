@@ -5,6 +5,7 @@ import { calculateCompatibility, CompatibilityResult } from '../core/compatibili
 import { COMPATIBILITY_TEXTS_I18N } from '../core/i18nCompatibility';
 import { generateSynthesis, SynthesisProfile } from '../core/synthesisEngine';
 import { LANGUAGES, getInitialLanguage, getT } from '../core/i18n';
+import { logEvent, logPageView } from '../core/analytics';
 
 interface Props {
   initialDate: string;
@@ -23,6 +24,11 @@ const CompatibilityChecker: React.FC<Props> = ({ initialDate, initialDate2 = '',
   const [results, setResults] = useState<CompatibilityResult | null>(null);
   const [synthesis, setSynthesis] = useState<SynthesisProfile | null>(null);
   const [showSynthesis, setShowSynthesis] = useState(false);
+
+  useEffect(() => {
+    logPageView('Compatibility Checker');
+  }, []);
+
   const [selectedCard, setSelectedCard] = useState<{
     id: string;
     title: string;
@@ -42,6 +48,7 @@ const CompatibilityChecker: React.FC<Props> = ({ initialDate, initialDate2 = '',
     const res = calculateCompatibility(d1, d2);
     setResults(res);
     setSynthesis(generateSynthesis(res, lang));
+    logEvent('Compatibility Calculate', 'Features', `${DateTime.now().year}`);
   };
 
   useEffect(() => {
@@ -223,7 +230,10 @@ const CompatibilityChecker: React.FC<Props> = ({ initialDate, initialDate2 = '',
             {renderResultCard('analytic', t('compat_analytic'), 'fa-solid fa-brain', results.analytic)}
             
             <button 
-              onClick={() => setShowSynthesis(true)}
+              onClick={() => {
+                  setShowSynthesis(true);
+                  logEvent('Compatibility Synthesis', 'Features', 'View Synthesis');
+              }}
               className="w-full mt-6 bg-gradient-to-r from-purple-500 to-[#33b5e5] py-5 rounded-2xl font-black text-white hover:opacity-90 transition-all shadow-[0_0_30px_rgba(51,181,229,0.4)] uppercase tracking-widest text-sm active:scale-[0.98] flex items-center justify-center gap-3"
             >
               <i className="fa-solid fa-wand-magic-sparkles" />

@@ -76,6 +76,7 @@ const App: React.FC = () => {
       birthDate: tempDate,
       isMaster: true
     };
+    logEvent('Registration', 'Onboarding', 'Master Profile Created');
     setProfiles([master]);
     setActiveProfileId(master.id);
     setIsAuthorized(true);
@@ -273,6 +274,7 @@ const App: React.FC = () => {
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
+        logEvent('Database Import', 'Sync', 'File');
         const content = event.target?.result as string;
         const imported = JSON.parse(content);
         if (Array.isArray(imported)) {
@@ -342,6 +344,7 @@ const App: React.FC = () => {
 
   if (currentApp === 'SPORT') {
     return <SportProphet onBack={() => {
+        logEvent('App Switch', 'Navigation', 'Return to RitmXoid');
         window.history.replaceState({}, '', window.location.pathname);
         setCurrentApp('RITMXOID');
     }} />;
@@ -524,6 +527,7 @@ const App: React.FC = () => {
       onAddTeam={handleAddTeam}
       onImportProfiles={handleImportProfiles}
       onOpenCompatibility={(date1, date2, lang) => {
+        logEvent('Compatibility Open', 'Navigation', 'From Dashboard');
         if (date1) setCompatDate1(date1);
         if (date2) setCompatDate2(date2);
         if (lang) setCompatLang(lang);
