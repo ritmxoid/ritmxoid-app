@@ -4,21 +4,26 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Swords, Users, Plus, X, Upload, Download, Trash2, 
   ChevronUp, ChevronDown, Calendar, Crown, Folder,
-  UserPlus, ClipboardList, Info, ArrowLeft, Send
+  UserPlus, ClipboardList, Info, ArrowLeft, Send, Globe
 } from 'lucide-react';
 import { Profile } from '../types';
 import { 
   calculateDaysGone, calculateFullBalance, calculateBasicBalance, 
   calculateReactiveBalance, getRiskLevel, getBalanceColor, COLORS 
 } from '../core/engine';
-import { getT } from '../core/i18n';
+import { getT, LANGUAGES } from '../core/i18n';
+import criticalIcon from '../public/icons/critical.svg';
+import lowIcon from '../public/icons/low.svg';
+import optimalIcon from '../public/icons/optimal.svg';
+import highIcon from '../public/icons/high.svg';
+import superIcon from '../public/icons/super.svg';
 
 // Reusing icons from Dashboard style
-const CriticalLevelIcon = () => <div className="w-full h-full rounded-full bg-red-600/20 flex items-center justify-center text-[10px] font-bold text-red-500">C</div>;
-const LowLevelIcon = () => <div className="w-full h-full rounded-full bg-blue-600/20 flex items-center justify-center text-[10px] font-bold text-blue-500">L</div>;
-const OptimalLevelIcon = () => <div className="w-full h-full rounded-full bg-yellow-600/20 flex items-center justify-center text-[10px] font-bold text-yellow-500">O</div>;
-const HighLevelIcon = () => <div className="w-full h-full rounded-full bg-orange-600/20 flex items-center justify-center text-[10px] font-bold text-orange-500">H</div>;
-const SuperHighLevelIcon = () => <div className="w-full h-full rounded-full bg-fuchsia-600/20 flex items-center justify-center text-[10px] font-bold text-fuchsia-500">S</div>;
+const CriticalLevelIcon = () => <img src={criticalIcon} className="w-full h-full object-contain" alt="C" />;
+const LowLevelIcon = () => <img src={lowIcon} className="w-full h-full object-contain" alt="L" />;
+const OptimalLevelIcon = () => <img src={optimalIcon} className="w-full h-full object-contain" alt="O" />;
+const HighLevelIcon = () => <img src={highIcon} className="w-full h-full object-contain" alt="H" />;
+const SuperHighLevelIcon = () => <img src={superIcon} className="w-full h-full object-contain" alt="S" />;
 
 const getBalanceEmoji = (val: number) => {
   if (val >= 75) return <SuperHighLevelIcon />;
@@ -47,16 +52,21 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedGroups, setSelectedGroups] = useState<Set<string>>(new Set());
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
-  const [lang] = useState(() => {
+  const [lang, setLang] = useState(() => {
     const saved = localStorage.getItem('ritmxoid_lang');
     return saved || 'ru';
   });
+  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
 
   const t = getT(lang);
 
   useEffect(() => {
     localStorage.setItem('sportprophet_profiles', JSON.stringify(profiles));
   }, [profiles]);
+
+  useEffect(() => {
+    localStorage.setItem('ritmxoid_lang', lang);
+  }, [lang]);
 
   const targetDt = useMemo(() => {
     const dt = DateTime.fromISO(targetDate);
@@ -107,7 +117,8 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
       id: `sp-${Date.now()}-${idx}`,
       name: r.name,
       birthDate: r.date,
-      teamName: tName
+      teamName: tName,
+      isMaster: false
     }));
 
     setProfiles([...profiles, ...newProfiles]);
@@ -175,125 +186,118 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
 
   return (
     <div className="min-h-screen bg-black text-white font-['Roboto'] overflow-hidden flex flex-col">
-      {/* Header */}
-      <div className="p-6 bg-[#1b2531]/50 backdrop-blur-xl border-b border-white/10 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button onClick={onBack} className="p-2 hover:bg-white/10 rounded-full transition-colors text-[#33b5e5]">
-            <ArrowLeft className="w-6 h-6" />
-          </button>
-          <div className="space-y-1">
-            <h1 className="text-3xl font-black italic tracking-tighter text-[#33b5e5] uppercase">SportPROphet</h1>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest opacity-80">Rhythmic Team Analytics</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-            <div className="flex flex-col items-end">
-              <label className="text-[9px] font-black text-slate-500 uppercase mb-1 tracking-widest">{t('target_date')}</label>
-              <input 
-                type="datetime-local" 
-                value={targetDate} 
-                onChange={e => setTargetDate(e.target.value)}
-                className="bg-black border border-white/20 rounded-lg p-2 text-xs text-white focus:border-[#33b5e5] outline-none color-scheme-dark"
-              />
-            </div>
-            <button 
-                onClick={() => profiles.length > 0 && setShowArena(true)}
-                disabled={selectedIds.size === 0 && selectedGroups.size === 0}
-                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-black uppercase text-sm tracking-widest transition-all ${
-                  (selectedIds.size > 0 || selectedGroups.size > 0) 
-                  ? 'bg-fuchsia-600 hover:bg-fuchsia-500 shadow-[0_0_20px_rgba(255,0,255,0.3)]' 
-                  : 'bg-white/5 text-slate-500 cursor-not-allowed border border-white/5'
-                }`}
-            >
-                <Swords className="w-4 h-4" />
-                ARENA
-            </button>
+      {/* Header - Logo Only */}
+      <div className="p-6 bg-[#1b2531]/50 backdrop-blur-xl border-b border-white/10 flex justify-center">
+        <div className="flex flex-col items-center gap-1">
+          <h1 className="text-4xl font-black italic tracking-tighter text-[#33b5e5] uppercase">SportPROphet</h1>
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.4em] opacity-80">Rhythmic Team Analytics</p>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-8">
-        {/* Welcome / Input Section */}
-        <section className="max-w-4xl mx-auto space-y-6">
-          <div className="bg-[#1b2531] p-6 rounded-[2rem] border border-white/10 shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-fuchsia-900/20 rounded-full blur-[100px] pointer-events-none" />
-            <h2 className="text-xl font-black uppercase tracking-widest text-[#33b5e5] mb-6 flex items-center gap-3">
-              <ClipboardList className="w-6 h-6" />
-              CREATE TEAM / LIST
-            </h2>
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-8">
+        {/* Step 1: Input Section */}
+        <section className="max-w-xl mx-auto space-y-4">
+          <div className="bg-[#1b2531] p-6 rounded-[2.5rem] border border-white/10 shadow-2xl relative">
+            <div className="absolute top-0 right-0 w-48 h-48 bg-[#33b5e5]/10 rounded-full blur-[80px] pointer-events-none" />
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Team Name</label>
-                        <input 
-                            type="text" 
-                            placeholder="Enter team name..." 
-                            value={teamName}
-                            onChange={e => setTeamName(e.target.value)}
-                            className="w-full bg-black border border-white/10 p-4 rounded-2xl text-sm outline-none focus:border-[#33b5e5] text-white"
-                        />
-                    </div>
-                    <div className="p-4 bg-black/40 rounded-2xl border border-white/5 space-y-3">
-                        <div className="flex items-center gap-3 text-[#33b5e5]">
-                            <Info className="w-4 h-4 shrink-0" />
-                            <p className="text-[10px] font-bold uppercase leading-relaxed text-slate-400">
-                                Format: Name - DD.MM.YYYY<br/>One player per line
-                            </p>
-                        </div>
-                        <button 
-                            onClick={handleAddTeam}
-                            className="w-full bg-[#33b5e5] hover:bg-white text-black font-black py-4 rounded-xl text-xs uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-2"
-                        >
-                            <Plus className="w-4 h-4" /> ADD PLAYERS
-                        </button>
-                    </div>
+            <div className="flex justify-between items-start mb-4 relative z-10">
+                <h2 className="text-sm font-black uppercase tracking-widest text-[#33b5e5] flex items-center gap-2">
+                    <ClipboardList className="w-4 h-4" />
+                    {t('select_team').toUpperCase()}
+                </h2>
+
+                <div className="relative">
+                    <button 
+                        onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
+                        className="flex items-center gap-2 bg-black/40 border border-white/10 px-3 py-1.5 rounded-xl hover:bg-black/60 transition-colors"
+                    >
+                        <Globe className="w-3.5 h-3.5 text-[#33b5e5]" />
+                        <span className="text-[10px] font-black uppercase text-white">{lang}</span>
+                    </button>
+
+                    <AnimatePresence>
+                        {isLangMenuOpen && (
+                            <motion.div 
+                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                className="absolute right-0 mt-2 w-32 bg-[#1b2531] border border-white/10 rounded-xl shadow-2xl z-[100] overflow-hidden"
+                            >
+                                {LANGUAGES.map(l => (
+                                    <button 
+                                        key={l.code}
+                                        onClick={() => {
+                                            setLang(l.code);
+                                            setIsLangMenuOpen(false);
+                                        }}
+                                        className={`w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-white/5 transition-colors ${lang === l.code ? 'bg-[#33b5e5]/10' : ''}`}
+                                    >
+                                        <span className="text-sm">{l.flag}</span>
+                                        <span className={`text-[10px] font-black uppercase ${lang === l.code ? 'text-[#33b5e5]' : 'text-slate-400'}`}>{l.code}</span>
+                                    </button>
+                                ))}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
-                <div className="relative group">
-                    <textarea 
-                        placeholder="John Doe - 15.05.1995\nJane Smith - 22.08.1990" 
-                        value={teamText}
-                        onChange={e => setTeamText(e.target.value)}
-                        className="w-full h-full min-h-[180px] bg-black border border-white/10 p-4 rounded-2xl text-xs outline-none focus:border-[#33b5e5] text-white font-mono leading-relaxed"
-                    />
-                </div>
+            </div>
+            
+            <div className="space-y-4">
+                <input 
+                    type="text" 
+                    placeholder={t('team_name_input')} 
+                    value={teamName}
+                    onChange={e => setTeamName(e.target.value)}
+                    className="w-full bg-black/50 border border-white/10 p-4 rounded-2xl text-sm outline-none focus:border-[#33b5e5] text-white transition-all"
+                />
+                <textarea 
+                    placeholder={t('team_list_hint')} 
+                    value={teamText}
+                    onChange={e => setTeamText(e.target.value)}
+                    className="w-full min-h-[120px] bg-black/50 border border-white/10 p-4 rounded-2xl text-xs outline-none focus:border-[#33b5e5] text-white font-mono leading-loose"
+                />
+                <button 
+                    onClick={handleAddTeam}
+                    disabled={!teamText.trim()}
+                    className="w-full bg-[#33b5e5] hover:bg-white text-black font-black py-4 rounded-2xl text-xs uppercase tracking-[0.2em] transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-20 disabled:grayscale"
+                >
+                    <Plus className="w-4 h-4" /> {t('add_team_btn')}
+                </button>
             </div>
           </div>
         </section>
 
-        {/* Existing Teams / Players Section */}
-        <section className="max-w-4xl mx-auto space-y-4 pb-20">
-            <h2 className="text-xl font-black uppercase tracking-widest text-slate-400 flex items-center gap-3 px-4">
-              <Users className="w-6 h-6" />
-              AVAILABLE FOR ARENA
+        {/* Step 2: Available Content */}
+        <section className="max-w-xl mx-auto space-y-4">
+            <h2 className="text-xs font-black uppercase tracking-widest text-slate-500 flex items-center gap-2 px-2">
+              <Users className="w-4 h-4" />
+              {t('select_players').toUpperCase()}
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-3">
                 {/* Groups */}
-                {Object.entries(groupedData.groups).map(([gn, members]) => (
+                {Object.entries(groupedData.groups).map(([gn, members]: [string, any]) => (
                     <div 
                         key={gn}
                         onClick={() => toggleGroupSelect(gn)}
-                        className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between overflow-hidden relative shadow-lg ${
+                        className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between relative overflow-hidden ${
                             selectedGroups.has(gn) ? 'bg-fuchsia-600/20 border-fuchsia-500 ring-1 ring-fuchsia-500' : 'bg-[#0a0a0a] border-white/5 hover:border-white/20'
                         }`}
                     >
                         <div className="flex items-center gap-4">
-                            <div className={`w-12 h-12 rounded-xl flex items-center justify-center bg-fuchsia-900/40 text-fuchsia-400`}>
-                                <Folder className="w-6 h-6" />
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${selectedGroups.has(gn) ? 'bg-fuchsia-500 text-white' : 'bg-slate-800 text-slate-400'}`}>
+                                <Folder className="w-5 h-5" />
                             </div>
                             <div>
-                                <h3 className="font-black uppercase tracking-tighter text-white text-lg">{gn}</h3>
-                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{members.length} MEMBERS</p>
+                                <h3 className="font-black uppercase tracking-tighter text-white">{gn}</h3>
+                                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{members.length} {t('members_count')}</p>
                             </div>
                         </div>
                         <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                            selectedGroups.has(gn) ? 'bg-fuchsia-600 border-fuchsia-400' : 'border-white/20'
+                            selectedGroups.has(gn) ? 'bg-fuchsia-600 border-fuchsia-400' : 'border-white/10'
                         }`}>
                             {selectedGroups.has(gn) && <Swords className="w-3 h-3 text-white" />}
                         </div>
-                        {selectedGroups.has(gn) && (
-                            <motion.div layoutId={`glow-${gn}`} className="absolute inset-0 bg-fuchsia-500/5 blur-[20px] pointer-events-none" />
-                        )}
                     </div>
                 ))}
 
@@ -302,61 +306,85 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
                     <div 
                         key={p.id}
                         onClick={() => toggleSelect(p.id)}
-                        className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between shadow-lg ${
+                        className={`p-4 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
                             selectedIds.has(p.id) ? 'bg-[#33b5e5]/20 border-[#33b5e5] ring-1 ring-[#33b5e5]' : 'bg-[#0a0a0a] border-white/5 hover:border-white/20'
                         }`}
                     >
                         <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-slate-900/50 flex items-center justify-center">
-                                <Users className="w-6 h-6 text-slate-500" />
+                            <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center">
+                                <Users className="w-5 h-5 text-slate-500" />
                             </div>
                             <div>
                                 <h3 className="font-black uppercase tracking-tighter text-white">{p.name}</h3>
-                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{DateTime.fromISO(p.birthDate).toFormat('dd.MM.yyyy')}</p>
+                                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{DateTime.fromISO(p.birthDate).toFormat('dd.MM.yyyy')}</p>
                             </div>
                         </div>
                         <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                            selectedIds.has(p.id) ? 'bg-[#33b5e5] border-[#33b5e5]' : 'border-white/20'
+                            selectedIds.has(p.id) ? 'bg-[#33b5e5] border-[#33b5e5]' : 'border-white/10'
                         }`}>
                             {selectedIds.has(p.id) && <Plus className="w-3 h-3 text-black" />}
                         </div>
                     </div>
                 ))}
-
-                {profiles.length === 0 && (
-                    <div className="md:col-span-2 py-12 text-center space-y-3 opacity-30">
-                        <Users className="w-16 h-16 mx-auto mb-4" />
-                        <p className="text-sm font-black uppercase tracking-[0.3em]">No players available</p>
-                        <p className="text-[10px] font-bold uppercase tracking-widest">Start by adding players or a team list above</p>
-                    </div>
-                )}
             </div>
             
             {profiles.length > 0 && (
-                <div className="flex justify-center pt-8">
-                     <button 
-                        onClick={() => {
-                            if (window.confirm("Clear all data from SportPROphet?")) {
-                                setProfiles([]);
-                                setSelectedIds(new Set());
-                                setSelectedGroups(new Set());
-                            }
-                        }}
-                        className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-red-500/50 hover:text-red-500 transition-colors"
-                     >
-                        <Trash2 className="w-3 h-3" /> CLEAR ALL DATA
-                     </button>
-                </div>
+                <button 
+                   onClick={() => window.confirm(t('confirm_delete')) && setProfiles([])}
+                   className="w-full py-4 text-[9px] font-black uppercase tracking-widest text-red-500/30 hover:text-red-500 transition-colors"
+                >
+                   <Trash2 className="w-3 h-3 inline mr-1" /> {t('clear_data_btn')}
+                </button>
             )}
+        </section>
+
+        {/* Step 3: Global Action Block */}
+        <section className="max-w-xl mx-auto pb-10">
+            <div className="bg-[#1b2531]/80 backdrop-blur-xl p-6 rounded-[2.5rem] border border-white/10 shadow-2xl space-y-6">
+                <div className="flex flex-col items-center">
+                  <label className="text-[10px] font-black text-[#33b5e5] uppercase mb-2 tracking-[0.3em] flex items-center gap-2">
+                    <Calendar className="w-3 h-3" />
+                    {t('calendar').toUpperCase()}
+                  </label>
+                  <input 
+                    type="datetime-local" 
+                    value={targetDate} 
+                    onChange={e => setTargetDate(e.target.value)}
+                    className="w-full bg-black border border-white/10 rounded-2xl p-4 text-sm text-center text-white focus:border-fuchsia-500 outline-none color-scheme-dark"
+                  />
+                </div>
+
+                <button 
+                    onClick={() => profiles.length > 0 && setShowArena(true)}
+                    disabled={selectedIds.size === 0 && selectedGroups.size === 0}
+                    className={`w-full py-6 rounded-[2rem] font-black uppercase text-base tracking-[0.3em] transition-all flex items-center justify-center gap-4 ${
+                      (selectedIds.size > 0 || selectedGroups.size > 0) 
+                      ? 'bg-fuchsia-600 hover:bg-fuchsia-500 shadow-[0_0_30px_rgba(255,0,255,0.4)] text-white scale-105' 
+                      : 'bg-white/5 text-slate-700 cursor-not-allowed border border-white/5'
+                    }`}
+                >
+                    <Swords className="w-6 h-6" />
+                    {t('arena').toUpperCase()}
+                </button>
+            </div>
+
+            <div className="mt-8 flex justify-center">
+                <button 
+                    onClick={onBack}
+                    className="flex items-center gap-2 px-6 py-3 rounded-full bg-slate-900/50 hover:bg-slate-800 text-slate-500 hover:text-[#33b5e5] text-[10px] font-black uppercase tracking-[0.2em] transition-all border border-white/5 hover:border-[#33b5e5]/20 group"
+                >
+                    <ArrowLeft className="w-3 h-3 transition-transform group-hover:-translate-x-1" />
+                    {t('back')} RitmXoid
+                </button>
+            </div>
         </section>
       </div>
 
-      {/* Arena Dialog (Full Screen Overlay) */}
       <AnimatePresence>
         {showArena && (
           <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
+            initial={{ opacity: 0, scale: 1.1 }} 
+            animate={{ opacity: 1, scale: 1 }} 
             exit={{ opacity: 0 }} 
             className="fixed inset-0 z-[2000] bg-black/95 backdrop-blur-2xl flex flex-col p-4 sm:p-8 overflow-hidden"
           >
@@ -364,7 +392,7 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
                 <div className="flex items-center gap-4">
                   <Swords className="w-12 h-12 text-fuchsia-500" />
                   <div>
-                    <h2 className="text-4xl font-black uppercase italic tracking-tighter text-white leading-none">ARENA</h2>
+                    <h2 className="text-4xl font-black uppercase italic tracking-tighter text-white leading-none">{t('arena').toUpperCase()}</h2>
                     <p className="text-[10px] font-bold text-fuchsia-500/70 uppercase tracking-[0.3em] mt-1">{targetDt.toFormat('dd.MM.yyyy HH:mm')}</p>
                   </div>
                 </div>
@@ -514,7 +542,7 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
                     onClick={() => setShowArena(false)} 
                     className="w-full bg-white/5 hover:bg-white/10 text-white font-black py-5 rounded-[2rem] uppercase tracking-widest text-sm transition-all border border-white/10 shadow-2xl active:scale-95"
                 >
-                    EXIT ARENA
+                    {t('exit_arena').toUpperCase()}
                 </button>
              </div>
           </motion.div>

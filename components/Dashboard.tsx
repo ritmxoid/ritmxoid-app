@@ -55,7 +55,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [visibleRhythms, setVisibleRhythms] = useState({ motor: true, physical: true, sensory: true, analytical: true });
   const [selectedMapIdx, setSelectedMapIdx] = useState(3);
   const [expandedActivity, setExpandedActivity] = useState<string | null>(null);
-  const [lang, setLang] = useState('ru');
+  const [lang, setLang] = useState(() => localStorage.getItem('ritmxoid_lang') || 'ru');
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   
@@ -111,6 +111,10 @@ const Dashboard: React.FC<DashboardProps> = ({
     }, 1000);
     return () => clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('ritmxoid_lang', lang);
+  }, [lang]);
 
   const t = getT(lang);
 
