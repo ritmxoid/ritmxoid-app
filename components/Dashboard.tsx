@@ -26,6 +26,7 @@ interface DashboardProps {
   profile: Profile;
   allProfiles: Profile[];
   onAddProfile: (name: string, date: string) => void;
+  onAddTeam: (teamName: string, members: {name: string, date: string}[]) => void;
   onUpdateProfile: (id: string, name: string, date: string) => void;
   onDeleteProfile: (id: string) => void;
   onGroupProfiles: (ids: string[], groupName: string) => void;
@@ -44,7 +45,7 @@ type ListMode = 'NONE' | 'EDIT' | 'DELETE' | 'SELECT';
 type ArenaMode = 'TOTAL' | 'BASIC' | 'REACTIVE';
 
 const Dashboard: React.FC<DashboardProps> = ({ 
-  profile, allProfiles, onAddProfile, onUpdateProfile, onDeleteProfile, onGroupProfiles, onRenameGroup, onUngroup, onMoveToGroup, onSelectProfile, onReset, onImportProfiles, onOpenCompatibility, onLogout 
+  profile, allProfiles, onAddProfile, onAddTeam, onUpdateProfile, onDeleteProfile, onGroupProfiles, onRenameGroup, onUngroup, onMoveToGroup, onSelectProfile, onReset, onImportProfiles, onOpenCompatibility, onLogout 
 }) => {
   const APP_ZONE = 'utc+5';
 
@@ -61,6 +62,11 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [newPName, setNewPName] = useState('');
   const [newPDate, setNewPDate] = useState('1990-01-01T12:00');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [addMode, setAddMode] = useState<'SINGLE' | 'TEAM'>('SINGLE');
+  const [teamNameImport, setTeamNameImport] = useState('');
+  const [teamText, setTeamText] = useState('');
+  const [importPreview, setImportPreview] = useState<{name: string, date: string}[]>([]);
+
   const [listMode, setListMode] = useState<ListMode>('NONE');
   const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
   const [profileToDelete, setProfileToDelete] = useState<Profile | null>(null);
@@ -79,6 +85,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [groupActionActive, setGroupActionActive] = useState<string | null>(null);
   const [showRenameDialog, setShowRenameDialog] = useState<string | null>(null);
 
+  const [expandedArenaGroups, setExpandedArenaGroups] = useState<Set<string>>(new Set());
   const [isDragging, setIsDragging] = useState(false);
   const [isDragOverGroup, setIsDragOverGroup] = useState<string | null>(null);
   const [isDragOverGeneral, setIsDragOverGeneral] = useState(false);
@@ -207,6 +214,34 @@ const Dashboard: React.FC<DashboardProps> = ({
     };
     reader.readAsText(file);
     if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const parseTeamText = (text: string) => {
+    const lines = text.split('\n');
+    const results: {name: string, date: string}[] = [];
+    
+    lines.forEach(line => {
+      const cleanLine = line.trim();
+      if (!cleanLine) return;
+
+      // Regex for "Name - DD.MM.YYYY" or "Name — DD.MM.YYYY"
+      // Groups: 1=Name, 2=Day, 3=Month, 4=Year
+      const match = cleanLine.match(/^(.*?)\s*[-—]\s*(\d{1,2})[\.\/\-](\d{1,2})[\.\/\-](\d{4})$/);
+      
+      if (match) {
+        const name = match[1].trim();
+        const d = match[2].padStart(2, '0');
+        const m = match[3].padStart(2, '0');
+        const y = match[4];
+        
+        const iso = `${y}-${m}-${d}T12:00`;
+        const dt = DateTime.fromISO(iso);
+        if (dt.isValid) {
+          results.push({ name, date: iso });
+        }
+      }
+    });
+    return results;
   };
 
   const handleExportYearlyCalendar = () => {
@@ -468,19 +503,24 @@ const Dashboard: React.FC<DashboardProps> = ({
       if (members.length === 0) return;
 
       let sumScore = 0;
-      members.forEach(m => {
+      const memberDetails = members.map(m => {
         const mBdate = DateTime.fromISO(m.birthDate).setZone(APP_ZONE, { keepLocalTime: true });
         const mDays = calculateDaysGone(mBdate, targetDate);
-        if (arenaMode === 'TOTAL') sumScore += calculateFullBalance(mDays);
-        else if (arenaMode === 'BASIC') sumScore += calculateBasicBalance(mDays);
-        else if (arenaMode === 'REACTIVE') sumScore += calculateReactiveBalance(mDays);
-      });
+        let mScore = 0;
+        if (arenaMode === 'TOTAL') mScore = calculateFullBalance(mDays);
+        else if (arenaMode === 'BASIC') mScore = calculateBasicBalance(mDays);
+        else if (arenaMode === 'REACTIVE') mScore = calculateReactiveBalance(mDays);
+        sumScore += mScore;
+        const mRisk = getRiskLevel(mDays, targetDate);
+        return { ...m, score: mScore, risk: mRisk };
+      }).sort((a, b) => b.score - a.score);
 
       data.push({
         id: `group-${gn}`,
         isGroup: true,
         name: gn,
         memberCount: members.length,
+        members: memberDetails,
         score: Math.round(sumScore / members.length)
       });
     });
@@ -622,7 +662,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                     >
                       <Swords className="w-3 h-3" />
                     </button>
-                    {(selectedIds.size + selectedGroupNames.size) === 2 && (
+                    {(selectedIds.size === 2 && selectedGroupNames.size === 0) && (
                       <button 
                         onClick={() => { setShowCompatDialog(true); logEvent('Open Compatibility', 'Features'); }} 
                         title={t('compatibility')} 
@@ -653,17 +693,98 @@ const Dashboard: React.FC<DashboardProps> = ({
 
         <AnimatePresence>
           {(showAddForm || editingProfileId) && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="bg-[#1b2531] p-4 mx-4 rounded-xl border border-white/10 space-y-3 overflow-hidden shadow-2xl">
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="bg-[#1b2531] p-4 mx-4 rounded-xl border border-white/10 space-y-4 overflow-hidden shadow-2xl">
               <div className="flex justify-between items-center">
                 <h3 className="text-[10px] font-black uppercase text-[#33b5e5]">{editingProfileId ? t('edit') : t('add')}</h3>
-                <button onClick={() => { setEditingProfileId(null); setShowAddForm(false); }} className="text-slate-500 hover:text-white"><X className="w-3 h-3" /></button>
+                <div className="flex items-center gap-2">
+                  {!editingProfileId && (
+                    <div className="flex bg-black/40 rounded-lg p-0.5 border border-white/5">
+                      <button onClick={() => setAddMode('SINGLE')} className={`px-2 py-1 rounded text-[9px] font-bold uppercase transition-all ${addMode === 'SINGLE' ? 'bg-[#33b5e5] text-black shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>{t('single_contact')}</button>
+                      <button onClick={() => setAddMode('TEAM')} className={`px-2 py-1 rounded text-[9px] font-bold uppercase transition-all ${addMode === 'TEAM' ? 'bg-[#33b5e5] text-black shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>{t('team_folder')}</button>
+                    </div>
+                  )}
+                  <button onClick={() => { setEditingProfileId(null); setShowAddForm(false); }} className="p-1 text-slate-500 hover:text-white transition-colors"><X className="w-4 h-4" /></button>
+                </div>
               </div>
-              <input type="text" placeholder={t('name_placeholder')} value={newPName} onChange={e => setNewPName(e.target.value)} className="w-full bg-black border border-white/10 p-2 rounded text-sm outline-none focus:border-[#33b5e5] text-white" />
-              <input type="datetime-local" value={newPDate} onChange={e => setNewPDate(e.target.value)} className="w-full bg-black border border-white/10 p-2 rounded text-sm outline-none focus:border-[#33b5e5] color-scheme-dark text-white" />
-              <button onClick={() => {
-                if (editingProfileId) { onUpdateProfile(editingProfileId, newPName, newPDate); setEditingProfileId(null); setListMode('NONE'); logEvent('Update Profile', 'Data'); }
-                else if(newPName) { onAddProfile(newPName, newPDate); setNewPName(''); setShowAddForm(false); logEvent('Add Profile', 'Data'); }
-              }} className="w-full bg-[#33b5e5] text-black font-black py-2 rounded text-xs uppercase shadow-lg active:scale-[0.98] transition-transform">{t('save')}</button>
+
+              {addMode === 'SINGLE' || editingProfileId ? (
+                <div className="space-y-3">
+                  <input type="text" placeholder={t('name_placeholder')} value={newPName} onChange={e => setNewPName(e.target.value)} className="w-full bg-black border border-white/10 p-2 rounded text-sm outline-none focus:border-[#33b5e5] text-white" />
+                  <input type="datetime-local" value={newPDate} onChange={e => setNewPDate(e.target.value)} className="w-full bg-black border border-white/10 p-2 rounded text-sm outline-none focus:border-[#33b5e5] color-scheme-dark text-white" />
+                  <button onClick={() => {
+                    if (editingProfileId) { onUpdateProfile(editingProfileId, newPName, newPDate); setEditingProfileId(null); setListMode('NONE'); logEvent('Update Profile', 'Data'); }
+                    else if(newPName) { onAddProfile(newPName, newPDate); setNewPName(''); setShowAddForm(false); logEvent('Add Profile', 'Data'); }
+                  }} className="w-full bg-[#33b5e5] text-black font-black py-2 rounded text-xs uppercase shadow-lg active:scale-[0.98] transition-transform">{t('save')}</button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex gap-2">
+                    <div className="flex-1 space-y-1">
+                      <label className="text-[8px] font-black uppercase text-slate-500 ml-1">{t('team_name_label')}</label>
+                      <input type="text" placeholder="Real Madrid..." value={teamNameImport} onChange={e => setTeamNameImport(e.target.value)} className="w-full bg-black border border-white/10 p-2 rounded text-sm outline-none focus:border-[#33b5e5] text-white" />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between items-end px-1">
+                      <label className="text-[8px] font-black uppercase text-slate-500">{t('team_folder')}</label>
+                      <button 
+                        onClick={async () => {
+                          try { const text = await navigator.clipboard.readText(); setTeamText(text); } catch (err) { /* ignore */ }
+                        }}
+                        className="text-[8px] font-bold text-[#33b5e5] uppercase hover:underline"
+                      >Paste</button>
+                    </div>
+                    <textarea 
+                      value={teamText}
+                      onChange={e => setTeamText(e.target.value)}
+                      placeholder={t('team_list_placeholder')}
+                      className="w-full bg-black border border-white/10 p-2 rounded text-xs outline-none focus:border-[#33b5e5] text-white min-h-[120px] font-mono leading-relaxed"
+                    />
+                  </div>
+
+                  {importPreview.length > 0 && (
+                    <div className="bg-black/40 rounded-lg p-2 border border-white/5 max-h-[100px] overflow-y-auto custom-scrollbar">
+                      <p className="text-[9px] font-black text-[#33b5e5] uppercase mb-1">{t('parsed_count').replace('{n}', importPreview.length.toString())}</p>
+                      <div className="space-y-1">
+                        {importPreview.map((p, i) => (
+                          <div key={i} className="flex justify-between text-[10px] text-slate-400 font-mono">
+                            <span>{p.name}</span>
+                            <span className="text-slate-600">{DateTime.fromISO(p.date).toFormat('dd.MM.yyyy')}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <button 
+                      onClick={() => {
+                        const results = parseTeamText(teamText);
+                        setImportPreview(results);
+                      }}
+                      className="bg-white/5 hover:bg-white/10 text-white font-black py-2 rounded text-xs uppercase transition-all"
+                    >
+                      {t('view_preview')}
+                    </button>
+                    <button 
+                      disabled={importPreview.length === 0}
+                      onClick={() => {
+                        if (importPreview.length > 0) {
+                          onAddTeam(teamNameImport || 'Imported Team', importPreview);
+                          setTeamText('');
+                          setTeamNameImport('');
+                          setImportPreview([]);
+                          setShowAddForm(false);
+                          logEvent('Import Team', 'Data');
+                        }
+                      }}
+                      className={`font-black py-2 rounded text-xs uppercase shadow-lg transition-all ${importPreview.length > 0 ? 'bg-[#33b5e5] text-black active:scale-[0.98]' : 'bg-white/5 text-slate-600 cursor-not-allowed'}`}
+                    >
+                      {t('import_all')}
+                    </button>
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -688,9 +809,11 @@ const Dashboard: React.FC<DashboardProps> = ({
             const isGroupChecked = selectedGroupNames.has(groupName);
             
             const handleGroupLongPress = () => {
+              if (listMode === 'SELECT') return;
               groupLongPressTimer.current = setTimeout(() => {
-                setGroupActionActive(groupName);
-                logEvent('Long Press Group', 'Organization');
+                setListMode('SELECT');
+                setSelectedGroupNames(new Set([groupName]));
+                logEvent('Long Press Select Group', 'Organization');
               }, 600);
             };
 
@@ -811,7 +934,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           const isToday = offset === 0;
           
           // Solar Impact Logic
-          const isSolarActive = solarKIndex >= 5;
+          const isSolarActive = solarKIndex >= 4;
           const balanceVal = calculateFullBalance(d);
           const isHammer = isSolarActive && isToday && balanceVal > 45;
           const isMagnet = isSolarActive && isToday && balanceVal <= 45;
@@ -870,7 +993,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       <div className="pt-2">
-        <SolarActivityChart title={t('solar_monitor_title')} onCurrentIndexChange={setSolarKIndex} />
+        <SolarActivityChart title={t('solar_monitor_title')} lang={lang} onCurrentIndexChange={setSolarKIndex} />
       </div>
 
       <div className="pb-12">
@@ -1094,11 +1217,11 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   return (
     <div className="flex flex-col h-screen bg-[#050505] text-white select-none overflow-hidden font-['Roboto']">
-      <header className="bg-[#1b2531] border-b-2 border-black p-3 flex items-center gap-4 shadow-lg z-[9999]">
-        <div className="w-10 h-10 flex items-center justify-center shrink-0">{getBalanceEmoji(balance)}</div>
+      <header className="bg-[#1b2531] border-b-2 border-black p-3 md:p-6 lg:p-8 flex items-center gap-4 md:gap-8 shadow-lg z-[9999]">
+        <div className="w-10 h-10 md:w-16 md:h-16 lg:w-20 lg:h-20 flex items-center justify-center shrink-0">{getBalanceEmoji(balance)}</div>
         <div className="flex-1 min-w-0">
-           <div className="text-xl font-black tracking-tighter uppercase leading-none truncate">{profile.name}</div>
-           <div className="flex items-center gap-2 mt-1 text-[11px] font-bold uppercase" style={{ color: getBalanceColor(balance) }}>
+           <div className="text-xl md:text-3xl lg:text-4xl font-black tracking-tighter uppercase leading-none truncate">{profile.name}</div>
+           <div className="flex items-center gap-2 mt-1 text-[11px] md:text-base lg:text-lg font-bold uppercase" style={{ color: getBalanceColor(balance) }}>
               <span>{getBalanceLabel(balance)}</span>
               <span className="text-white/20">•</span>
               <div className="flex items-center">
@@ -1106,9 +1229,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                 {currentRiskLvl >= 25 && (
                   <div className="flex items-center gap-0.5 ml-1.5">
                     {[...Array(currentRiskLvl >= 75 ? 3 : currentRiskLvl >= 50 ? 2 : 1)].map((_, idx) => (
-                      <div key={idx} className="relative w-3 h-3 flex items-center justify-center">
-                        <div className="absolute w-1.5 h-1.5 rounded-full bg-red-600/80 blur-[1.5px] animate-pulse-red" />
-                        <span className="text-[9px] leading-none text-white relative z-10 drop-shadow-sm">⚡</span>
+                      <div key={idx} className="relative w-3 h-3 md:w-5 md:h-5 flex items-center justify-center">
+                        <div className="absolute w-1.5 h-1.5 md:w-2.5 md:h-2.5 rounded-full bg-red-600/80 blur-[1.5px] md:blur-[3px] animate-pulse-red" />
+                        <span className="text-[9px] md:text-sm leading-none text-white relative z-10 drop-shadow-sm">⚡</span>
                       </div>
                     ))}
                   </div>
@@ -1116,27 +1239,27 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
            </div>
         </div>
-        <div className="flex items-center gap-1 shrink-0 relative">
-          <button onClick={() => setIsLangMenuOpen(!isLangMenuOpen)} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"><Globe className="w-5 h-5 text-[#33b5e5]" /></button>
+        <div className="flex items-center gap-1 md:gap-3 shrink-0 relative">
+          <button onClick={() => setIsLangMenuOpen(!isLangMenuOpen)} className="w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"><Globe className="w-5 h-5 md:w-7 md:h-7 text-[#33b5e5]" /></button>
           <AnimatePresence>
             {isLangMenuOpen && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute top-12 right-0 bg-[#1b2531] border border-white/20 rounded-xl shadow-2xl z-[10000] overflow-hidden w-40 backdrop-blur-md">
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute top-full mt-2 right-0 bg-[#1b2531] border border-white/20 rounded-xl shadow-2xl z-[10000] overflow-hidden w-40 md:w-56 backdrop-blur-md">
                 {GLOBAL_LANGUAGES.map(l => (
-                  <button key={l.code} onClick={() => { setLang(l.code); setIsLangMenuOpen(false); logEvent('Change Language', 'Settings', l.code); }} className={`w-full px-4 py-3 flex items-center gap-3 hover:bg-white/10 transition-colors text-xs font-bold uppercase ${lang === l.code ? 'text-[#33b5e5]' : 'text-slate-300'}`}><span className="text-lg">{l.flag}</span>{l.name}</button>
+                  <button key={l.code} onClick={() => { setLang(l.code); setIsLangMenuOpen(false); logEvent('Change Language', 'Settings', l.code); }} className={`w-full px-4 py-3 md:py-4 flex items-center gap-3 hover:bg-white/10 transition-colors text-xs md:text-sm font-bold uppercase ${lang === l.code ? 'text-[#33b5e5]' : 'text-slate-300'}`}><span className="text-lg md:text-xl">{l.flag}</span>{l.name}</button>
                 ))}
               </motion.div>
             )}
           </AnimatePresence>
-          <button onClick={() => { setIsHelpOpen(true); logEvent('Open Help', 'Navigation'); }} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"><HelpCircle className="w-5 h-5 text-[#33b5e5]" /></button>
-          <button onClick={() => setShowLogoutConfirm(true)} className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors" title="Выход"><Power className="w-5 h-5 text-red-500" /></button>
+          <button onClick={() => { setIsHelpOpen(true); logEvent('Open Help', 'Navigation'); }} className="w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"><HelpCircle className="w-5 h-5 md:w-7 md:h-7 text-[#33b5e5]" /></button>
+          <button onClick={() => setShowLogoutConfirm(true)} className="w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors" title="Выход"><Power className="w-5 h-5 md:w-7 md:h-7 text-red-500" /></button>
         </div>
       </header>
 
       <nav className="bg-[#1b2531] flex border-b border-black z-40 shadow-md">
         {(['PROFILES', 'BALANCE', 'ACTIVITIES', 'CALENDAR', 'MAPS'] as Tab[]).map(t_tab => (
-          <button key={t_tab} onClick={() => { setActiveTab(t_tab); if(t_tab !== 'PROFILES') setListMode('NONE'); }} className={`flex-1 py-4 text-[9px] font-black tracking-widest transition-all relative ${activeTab === t_tab ? 'text-white' : 'text-slate-500'}`}>
+          <button key={t_tab} onClick={() => { setActiveTab(t_tab); if(t_tab !== 'PROFILES') setListMode('NONE'); }} className={`flex-1 py-4 md:py-6 lg:py-8 text-[9px] md:text-sm lg:text-base font-black tracking-widest transition-all relative ${activeTab === t_tab ? 'text-white' : 'text-slate-500'}`}>
             {t(t_tab.toLowerCase()).toUpperCase()}
-            {activeTab === t_tab && <motion.div layoutId="tabLine" className="absolute bottom-0 left-0 w-full h-[3px] bg-[#33b5e5] shadow-[0_0_8px_#33b5e5]" />}
+            {activeTab === t_tab && <motion.div layoutId="tabLine" className="absolute bottom-0 left-0 w-full h-[3px] md:h-[5px] bg-[#33b5e5] shadow-[0_0_8px_#33b5e5]" />}
           </button>
         ))}
       </nav>
@@ -1149,15 +1272,15 @@ const Dashboard: React.FC<DashboardProps> = ({
          {activeTab === 'MAPS' && renderMaps()}
       </main>
 
-      <footer className="bg-[#1b2531] p-4 flex items-center justify-between border-t-2 border-black z-40 shadow-[0_-5px_25px_rgba(0,0,0,0.6)]">
-         <button onClick={() => stepDate(false)} className="w-12 h-12 flex items-center justify-center bg-black/40 rounded border border-white/5 text-[#33b5e5] active:scale-95 transition-transform"><ChevronLeft className="w-6 h-6" /></button>
+      <footer className="bg-[#1b2531] p-4 md:p-8 lg:p-10 flex items-center justify-between border-t-2 border-black z-40 shadow-[0_-5px_25px_rgba(0,0,0,0.6)]">
+         <button onClick={() => stepDate(false)} className="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center bg-black/40 rounded border border-white/5 text-[#33b5e5] active:scale-95 transition-transform"><ChevronLeft className="w-6 h-6 md:w-10 md:h-10" /></button>
          <div onClick={resetToToday} className="flex flex-col items-center cursor-pointer hover:opacity-80 active:scale-95 transition-all group" title="Вернуться к сегодняшнему дню">
-            <span className="text-2xl font-black tracking-tighter text-white uppercase tabular-nums group-hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
+            <span className="text-2xl md:text-4xl lg:text-5xl font-black tracking-tighter text-white uppercase tabular-nums group-hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
               {activeTab === 'CALENDAR' ? targetDate.toFormat('LLLL yyyy', { locale: lang }) : targetDate.toFormat('dd LLL. yyyy', { locale: lang })}
             </span>
-            <span className="text-[10px] font-bold text-[#33b5e5] tabular-nums group-hover:text-white transition-colors">{targetDate.toFormat('HH:mm')}</span>
+            <span className="text-[10px] md:text-sm lg:text-base font-bold text-[#33b5e5] tabular-nums group-hover:text-white transition-colors">{targetDate.toFormat('HH:mm')}</span>
          </div>
-         <button onClick={() => stepDate(true)} className="w-12 h-12 flex items-center justify-center bg-black/40 rounded border border-white/5 text-[#33b5e5] active:scale-95 transition-transform"><ChevronRight className="w-6 h-6" /></button>
+         <button onClick={() => stepDate(true)} className="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center bg-black/40 rounded border border-white/5 text-[#33b5e5] active:scale-95 transition-transform"><ChevronRight className="w-6 h-6 md:w-10 md:h-10" /></button>
       </footer>
 
       <AnimatePresence>
@@ -1461,6 +1584,13 @@ const Dashboard: React.FC<DashboardProps> = ({
                     idx={idx} 
                     t={t} 
                     onRemove={(e) => setArenaEntityToRemove(e)} 
+                    isExpanded={expandedArenaGroups.has(entity.id)}
+                    onToggleExpand={() => {
+                      const newSet = new Set(expandedArenaGroups);
+                      if (newSet.has(entity.id)) newSet.delete(entity.id);
+                      else newSet.add(entity.id);
+                      setExpandedArenaGroups(newSet);
+                    }}
                   />
                 ))}
              </div>
@@ -1525,9 +1655,11 @@ interface ArenaItemProps {
   idx: number;
   t: any;
   onRemove: (p: any) => void;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
 }
 
-const ArenaItem: React.FC<ArenaItemProps> = ({ p, idx, t, onRemove }) => {
+const ArenaItem: React.FC<ArenaItemProps> = ({ p, idx, t, onRemove, isExpanded, onToggleExpand }) => {
   const x = useMotionValue(0);
   const opacity = useTransform(x, [-150, 0, 150], [0, 1, 0]);
   const bgOpacity = useTransform(x, [-100, 0, 100], [1, 0, 1]); 
@@ -1553,46 +1685,89 @@ const ArenaItem: React.FC<ArenaItemProps> = ({ p, idx, t, onRemove }) => {
             onRemove(p);
           }
         }}
+        onClick={() => p.isGroup && onToggleExpand()}
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: idx * 0.05 }}
-        className={`flex items-center p-4 rounded-2xl border cursor-grab active:cursor-grabbing ${
+        className={`flex flex-col rounded-2xl border transition-all cursor-pointer relative overflow-hidden shadow-xl ${
           isTop3 ? 'bg-white/10 border-fuchsia-500/30' : 'bg-[#0a0a0a] border-white/5'
-        } relative overflow-hidden shadow-xl`}
+        }`}
       >
-        {isTop3 && (
-          <div className="absolute top-0 left-0 w-1.5 h-full" style={{ backgroundColor: medalColor }} />
-        )}
-        <div className="w-10 text-xl font-black italic text-slate-600 tabular-nums shrink-0">
-          {idx + 1}.
+        <div className="p-4 flex items-center">
+          {isTop3 && (
+            <div className="absolute top-0 left-0 w-1.5 h-full" style={{ backgroundColor: medalColor }} />
+          )}
+          <div className="w-10 text-xl font-black italic text-slate-600 tabular-nums shrink-0">
+            {idx + 1}.
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <div className="text-lg font-black uppercase text-white truncate">{p.name}</div>
+              {p.isGroup && <Folder className={`w-3 h-3 text-[#33b5e5] inline-block mr-1 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />}
+            </div>
+            {p.isGroup ? (
+              <div className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1 flex items-center gap-2">
+                TEAM • {p.memberCount} {t('members_count')}
+                {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              </div>
+            ) : (
+              <div className="flex gap-2 mt-1">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.MOTOR }} title="Motor" />
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.PHYSICAL }} title="Physical" />
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.SENSORY }} title="Sensory" />
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.ANALYTICAL }} title="Analytical" />
+              </div>
+            )}
+          </div>
+          <div className="text-right">
+            <div className="text-3xl font-black tabular-nums tracking-tighter" style={{ color: getBalanceColor(p.score) }}>
+              {p.score}%
+            </div>
+            <div className="text-[9px] font-bold uppercase text-slate-500 tracking-widest">{t('balance')}</div>
+          </div>
+          {idx === 0 && (
+            <div className="absolute -right-4 -top-4 opacity-10 text-8xl text-fuchsia-500 pointer-events-none">
+                <Crown className="w-4 h-4 text-yellow-500 ml-1" />
+            </div>
+          )}
         </div>
-        <div className="flex-1 min-w-0">
-           <div className="flex items-center gap-2">
-             <div className="text-lg font-black uppercase text-white truncate">{p.name}</div>
-             {p.isGroup && <Folder className="w-3 h-3 text-[#33b5e5] inline-block mr-1" />}
-           </div>
-           {p.isGroup ? (
-             <div className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1">
-               TEAM • {p.memberCount} {t('members_count')}
-             </div>
-           ) : (
-             <div className="flex gap-2 mt-1">
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.MOTOR }} title="Motor" />
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.PHYSICAL }} title="Physical" />
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.SENSORY }} title="Sensory" />
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.ANALYTICAL }} title="Analytical" />
-             </div>
-           )}
-        </div>
-        <div className="text-right">
-           <div className="text-3xl font-black tabular-nums tracking-tighter" style={{ color: getBalanceColor(p.score) }}>
-             {p.score}%
-           </div>
-           <div className="text-[9px] font-bold uppercase text-slate-500 tracking-widest">{t('balance')}</div>
-        </div>
-        {idx === 0 && (
-          <div className="absolute -right-4 -top-4 opacity-10 text-8xl text-fuchsia-500">
-             <Crown className="w-4 h-4 text-yellow-500 ml-1" />
+
+        {p.isGroup && isExpanded && (
+          <div className="px-4 pb-4 space-y-2 border-t border-white/5 pt-3 bg-black/20">
+            {p.members.map((m: any) => (
+              <div key={m.id} className="flex items-center justify-between group/member">
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 flex items-center justify-center shrink-0">
+                    {getBalanceEmoji(m.score)}
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-black uppercase text-slate-300 truncate max-w-[150px]">{m.name}</div>
+                    <div className="text-[8px] text-slate-600 font-bold">{DateTime.fromISO(m.birthDate).toFormat('dd.MM.yyyy')}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  {m.risk >= 25 && (
+                    <div className="flex items-center gap-0.5">
+                       {[...Array(m.risk >= 75 ? 3 : m.risk >= 50 ? 2 : 1)].map((_, idx) => (
+                         <div key={idx} className="relative w-4 h-4 flex items-center justify-center">
+                           <div className="absolute w-2.5 h-2.5 rounded-full bg-red-600/60 blur-[2px] animate-pulse-red" />
+                           <span className="text-xs leading-none text-white relative z-10 drop-shadow-md">⚡</span>
+                         </div>
+                       ))}
+                    </div>
+                  )}
+                  <div className="flex flex-col items-end">
+                    <div className="text-[14px] font-black tabular-nums" style={{ color: getBalanceColor(m.score) }}>{m.score}%</div>
+                    <div className="flex gap-1">
+                      <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: COLORS.MOTOR }} />
+                      <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: COLORS.PHYSICAL }} />
+                      <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: COLORS.SENSORY }} />
+                      <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: COLORS.ANALYTICAL }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </motion.div>
@@ -1715,8 +1890,7 @@ const CosmicEnergyChart = ({ targetDate, lang }: { targetDate: DateTime, lang: s
         const startOfTarget = targetDate.startOf('year').minus({ years: 6 });
         for (let i = 0; i < 48; i++) {
             const current = startOfTarget.plus({ months: i * 3 });
-            const quarterNum = Math.floor((current.month - 1) / 3) + 1;
-            points.push(createPoint(current.plus({ months: 1, days: 15 }), `Q${quarterNum} '${current.toFormat('yy')}`, now >= current && now < current.plus({ months: 3 })));
+            points.push(createPoint(current.plus({ months: 1, days: 15 }), current.toFormat('yyyy'), now >= current && now < current.plus({ months: 3 })));
         }
     }
 
@@ -1762,16 +1936,20 @@ const CosmicEnergyChart = ({ targetDate, lang }: { targetDate: DateTime, lang: s
            ))}
          </div>
          {data.map((d, i) => {
-           let showLabel = false;
-           if (mode === 'day' && i % 4 === 0) showLabel = true;
-           if (mode === 'month' && i % 5 === 0) showLabel = true;
-           if (mode === 'quarter') showLabel = true;
-           if (mode === '12years' && i % 4 === 0) showLabel = true;
+            let showLabel = false;
+            let isYearStart = false;
+            if (mode === 'day' && i % 4 === 0) showLabel = true;
+            if (mode === 'month' && i % 5 === 0) showLabel = true;
+            if (mode === 'quarter') showLabel = true;
+            if (mode === '12years' && i % 4 === 0) {
+              showLabel = true;
+              isYearStart = true;
+            }
            
            const scale = isDay ? 1 : 2;
 
            return (
-           <div key={i} className={`relative flex flex-col justify-end gap-[1px] w-full group h-full ${mode === 'quarter' ? 'w-8' : 'min-w-[2px]'} ${d.isNow ? 'z-20' : 'z-10'}`}>
+           <div key={i} className={`relative flex flex-col justify-end gap-[1px] w-full group h-full ${mode === 'quarter' ? 'w-8' : 'min-w-[2px]'} ${d.isNow ? 'z-20' : 'z-10'} ${isYearStart ? 'border-l border-white/20 ml-1 pl-1' : ''}`}>
              <div 
                style={{ height: `${d.sol * scale}%`, backgroundColor: '#ffffff' }} 
                className={`w-full transition-all group-hover:opacity-100 border-t border-black/30 ${d.isNow ? 'opacity-100 animate-pulse ring-1 ring-white/50 shadow-[0_0_8px_rgba(255,255,255,0.4)]' : 'opacity-80'}`} 

@@ -8,12 +8,42 @@ Chart.register(...registerables);
 
 interface SolarActivityChartProps {
   title: string;
+  lang?: string;
   onCurrentIndexChange?: (value: number) => void;
 }
 
-const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurrentIndexChange }) => {
+const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, lang = 'en', onCurrentIndexChange }) => {
   const chartRef = useRef<HTMLCanvasElement>(null);
   const chartInstance = useRef<Chart | null>(null);
+  const requestRef = useRef<number | null>(null);
+  
+  const labelsRef = useRef<string[]>([]);
+  const valuesRef = useRef<number[]>([]);
+  const isMockRef = useRef<boolean>(true);
+
+  const [hasDangerValues, setHasDangerValues] = useState(false);
+
+  useEffect(() => {
+    // If any value is 9, we need to continuously redraw for the shimmer effect
+    if (hasDangerValues) {
+       const frame = () => {
+          chartInstance.current?.draw();
+          requestRef.current = requestAnimationFrame(frame);
+       };
+       requestRef.current = requestAnimationFrame(frame);
+    } else {
+      if (requestRef.current) {
+        cancelAnimationFrame(requestRef.current);
+        requestRef.current = null;
+      }
+    }
+    return () => {
+       if (requestRef.current) {
+         cancelAnimationFrame(requestRef.current);
+         requestRef.current = null;
+       }
+    }
+  }, [hasDangerValues]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [timer, setTimer] = useState(0);
@@ -40,13 +70,15 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
 
        const ctx = chartRef.current.getContext('2d');
        if (!ctx) return;
+       setHasDangerValues(values.some(v => v > 7));
 
        // Colors
        const barColors = values.map((v: number) => {
-          if (v >= 7) return '#9933cc'; 
-          if (v >= 5) return '#cc0000'; 
-          if (v >= 4) return '#ffd600'; 
-          return '#33b5e5';             
+          if (v > 8) return '#9933cc'; 
+          if (v > 6) return '#9933cc'; 
+          if (v > 4) return '#ff1744'; 
+          if (v > 3) return '#ffd600'; 
+          return '#44aa00';             
         });
 
        chartInstance.current = new Chart(ctx, {
@@ -62,6 +94,92 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
             }]
           },
           plugins: [
+            {
+              id: 'daySeparators',
+              afterDraw(chart) {
+                const { ctx, chartArea: { top, bottom }, scales: { x } } = chart;
+                const labels = (chart.data.labels || []) as string[];
+                ctx.save();
+                
+                labels.forEach((label, i) => {
+                   let dt = DateTime.fromSQL(label, { zone: 'utc' });
+                   if (!dt.isValid) dt = DateTime.fromISO(label, { zone: 'utc' });
+                   dt = dt.setZone('utc+5');
+                   
+                   let isDayStart = false;
+                   if (i === 0) {
+                     isDayStart = true;
+                   } else {
+                     let prevLabel = labels[i-1];
+                     let prevDt = DateTime.fromSQL(prevLabel, { zone: 'utc' });
+                     if (!prevDt.isValid) prevDt = DateTime.fromISO(prevLabel, { zone: 'utc' });
+                     prevDt = prevDt.setZone('utc+5');
+                     if (dt.day !== prevDt.day) isDayStart = true;
+                   }
+
+                   if (isDayStart) {
+                      const xPos = x.getPixelForValue(i);
+                      
+                      // 1. Draw vertical line
+                      ctx.beginPath();
+                      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                      ctx.lineWidth = 1;
+                      ctx.moveTo(xPos, top);
+                      ctx.lineTo(xPos, bottom);
+                      ctx.stroke();
+
+                      // 2. Draw label
+                      ctx.fillStyle = '#fff';
+                      const fontSize = Math.max(11, Math.min(15, Math.floor(chart.width / 45)));
+                      ctx.font = `bold ${fontSize}px Roboto`;
+                      ctx.textAlign = 'left';
+                      ctx.textBaseline = 'top';
+                      
+                      const month = dt.toFormat('LLL', { locale: lang }).toLowerCase().replace('.', '');
+                      const capitalizedMonth = month.charAt(0).toUpperCase() + month.slice(1);
+                      const text = `${capitalizedMonth}.${dt.day}`;
+                      
+                      ctx.fillText(text, xPos + 2, bottom + 4);
+                   }
+                });
+                ctx.restore();
+              }
+            },
+            {
+               id: 'dangerPeakEffect',
+               afterDatasetsDraw(chart) {
+                   const { ctx } = chart;
+                   const meta = chart.getDatasetMeta(0);
+                   const time = Date.now() / 1000;
+                   
+                   meta.data.forEach((bar, index) => {
+                       const val = (chart.data.datasets[0].data[index] as number);
+                       if (val > 8) {
+                           ctx.save();
+                           const { x, y, base } = bar.getProps(['x', 'y', 'base'], true);
+                           const width = (bar as any).width || 4;
+                           
+                           // 1. Pulsing Outer Glow
+                           const pulse = Math.sin(time * 10) * 0.5 + 0.5;
+                           ctx.shadowColor = '#fff';
+                           ctx.shadowBlur = 5 + pulse * 10;
+                           
+                           // 2. Shimmering Overlay
+                           const gradient = ctx.createLinearGradient(x - width, y, x + width, base);
+                           const offset = (time * 1.5) % 3 - 1; // Faster shimmer
+                           
+                           gradient.addColorStop(Math.max(0, offset), 'rgba(255,255,255,0)');
+                           gradient.addColorStop(Math.min(1, Math.max(0, offset + 0.2)), `rgba(255,255,255,${0.3 + pulse * 0.4})`);
+                           gradient.addColorStop(Math.min(1, Math.max(0, offset + 0.4)), 'rgba(255,255,255,0)');
+                           
+                           ctx.fillStyle = gradient;
+                           ctx.fillRect(x - width/2, y, width, base - y);
+                           
+                           ctx.restore();
+                       }
+                   });
+               }
+            },
             {
               id: 'nowMarker',
               afterDatasetsDraw(chart) {
@@ -108,7 +226,7 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
             maintainAspectRatio: false,
             animation: { duration: isMock ? 0 : 500 },
             layout: {
-              padding: { top: 20, bottom: 0, left: 0, right: 10 }
+              padding: { top: 20, bottom: 25, left: 10, right: 10 }
             },
             plugins: {
               legend: { display: false },
@@ -148,36 +266,32 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
               },
               x: {
                 grid: { 
-                  display: true,
-                  color: (context) => {
-                     const label = labels[context.index];
-                     if (!label) return 'transparent';
-                     const dt = DateTime.fromSQL(label, { zone: 'utc' }).setZone('utc+5');
-                     if (dt.hour === 0 && dt.minute === 0) {
-                        return 'rgba(255,255,255,0.2)';
-                     }
-                     return 'transparent';
-                  },
-                  drawTicks: false
+                    display: false 
                 },
                 ticks: {
-                  autoSkip: false,
-                  maxRotation: 0,
-                  color: '#888',
-                  font: { size: 10, weight: 'bold' },
-                  callback: function(val, index) {
-                    const label = this.getLabelForValue(val as number);
-                    const dt = DateTime.fromSQL(label, { zone: 'utc' }).setZone('utc+5');
-                    if (dt.hour === 0 && dt.minute === 0) {
-                        return dt.toFormat('dd LLL', { locale: 'en' });
-                    }
-                    return '';
-                  }
+                    display: false
                 }
               }
             }
           }
        });
+  }, [lang, onCurrentIndexChange]);
+
+  // Re-initialize chart when lang changes using cached data
+  useEffect(() => {
+    if (labelsRef.current.length > 0) {
+      initChart(labelsRef.current, valuesRef.current, isMockRef.current);
+    }
+  }, [lang, initChart]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (chartInstance.current) {
+        chartInstance.current.destroy();
+        chartInstance.current = null;
+      }
+    };
   }, []);
 
   useEffect(() => {
@@ -193,12 +307,20 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
         mockLabels.push(dt.toFormat('yyyy-MM-dd HH:00:00'));
         mockValues.push(0); // Empty values
     }
+    
+    labelsRef.current = mockLabels;
+    valuesRef.current = mockValues;
+    isMockRef.current = true;
     initChart(mockLabels, mockValues, true);
 
     const fetchData = async () => {
       try {
         const data = await solarDataService.getSolarData();
         if (isActive) {
+          labelsRef.current = data.labels;
+          valuesRef.current = data.values;
+          isMockRef.current = false;
+          
           if (onCurrentIndexChange && data.values.length > 0) {
             onCurrentIndexChange(data.values[data.values.length - 1]);
           }
@@ -219,10 +341,6 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, onCurren
 
     return () => {
       isActive = false;
-      if (chartInstance.current) {
-        chartInstance.current.destroy();
-        chartInstance.current = null;
-      }
     };
   }, [initChart, onCurrentIndexChange]);
 

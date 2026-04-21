@@ -2,8 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Profile } from './types';
 import Dashboard from './components/Dashboard';
 import CompatibilityChecker from './components/CompatibilityChecker';
+import SportProphet from './components/SportProphet';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PenTool, Download, Calendar, Plus } from 'lucide-react';
+import { PenTool, Download, Calendar, Plus, Swords } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { DateTime, Info } from 'luxon';
@@ -24,6 +25,9 @@ const App: React.FC = () => {
   });
 
   const [isAuthorized, setIsAuthorized] = useState(() => profiles.length > 0);
+  const [currentApp, setCurrentApp] = useState<'RITMXOID' | 'SPORT'>(() => {
+    return (window.location.search.includes('app=sport') || window.location.pathname.includes('sportprophet')) ? 'SPORT' : 'RITMXOID';
+  });
   const [showCompatibility, setShowCompatibility] = useState(false);
   const [compatDate1, setCompatDate1] = useState('');
   const [compatDate2, setCompatDate2] = useState('');
@@ -294,6 +298,18 @@ const App: React.FC = () => {
     setProfiles([...profiles, newProfile]);
   };
 
+  const handleAddTeam = (teamName: string, members: {name: string, date: string}[]) => {
+    const now = Date.now();
+    const newProfiles: Profile[] = members.map((m, idx) => ({
+      id: (now + idx).toString(),
+      name: m.name,
+      birthDate: m.date,
+      isMaster: false,
+      teamName: teamName
+    }));
+    setProfiles([...profiles, ...newProfiles]);
+  };
+
   const handleUpdateProfile = (id: string, name: string, date: string) => {
     setProfiles(profiles.map(p => p.id === id ? { ...p, name, birthDate: date } : p));
   };
@@ -323,6 +339,13 @@ const App: React.FC = () => {
     setProfiles(imported);
     if (imported.length > 0) setActiveProfileId(imported[0].id);
   };
+
+  if (currentApp === 'SPORT') {
+    return <SportProphet onBack={() => {
+        window.history.replaceState({}, '', window.location.pathname);
+        setCurrentApp('RITMXOID');
+    }} />;
+  }
 
   if (showCompatibility) {
     return (
@@ -360,7 +383,7 @@ const App: React.FC = () => {
             <div className="space-y-1">
               <div className="relative inline-block">
                   <h1 className="text-4xl font-black text-[#33b5e5] tracking-tighter uppercase drop-shadow-[0_0_10px_rgba(51,181,229,0.3)]">RITMXOID</h1>
-                  <span className="absolute -top-2 -right-10 text-[9px] font-bold text-[#33b5e5] opacity-50 tracking-widest">v.3.5.10</span>
+                  <span className="absolute -top-2 -right-10 text-[9px] font-bold text-[#33b5e5] opacity-50 tracking-widest">v.3.5.11</span>
               </div>
               <p className="text-slate-400 uppercase tracking-[0.2em] text-[10px] font-black opacity-80">Rhythmic Analytics Core</p>
             </div>
@@ -408,9 +431,26 @@ const App: React.FC = () => {
                 <button
                   onClick={() => setShowCompatibility(true)}
                   title="Check Compatibility"
-                  className="absolute right-12 top-1/2 -translate-y-1/2 flex items-center justify-center text-[#33b5e5] hover:scale-110 active:scale-95 transition-transform"
+                  className="absolute right-12 top-1/2 -translate-y-1/2 flex items-center justify-center text-[#33b5e5] hover:scale-110 active:scale-95 transition-all group"
                 >
-                  <Plus className="w-5 h-5 drop-shadow-[0_0_8px_rgba(51,181,229,0.4)]" />
+                  <motion.div
+                    animate={{ 
+                      scale: [1, 1.15, 1],
+                      color: ['#33b5e5', '#ff0055', '#33b5e5'],
+                      filter: [
+                        'drop-shadow(0 0 5px rgba(51,181,229,0.3))',
+                        'drop-shadow(0 0 15px rgba(255,0,85,0.7))',
+                        'drop-shadow(0 0 5px rgba(51,181,229,0.3))'
+                      ]
+                    }}
+                    transition={{ 
+                      duration: 2.5, 
+                      repeat: Infinity, 
+                      ease: "easeInOut" 
+                    }}
+                  >
+                    <Plus className="w-5 h-5 transition-colors group-hover:text-white" />
+                  </motion.div>
                 </button>
                 <button
                   onClick={handleQuickPdfExport}
@@ -435,6 +475,17 @@ const App: React.FC = () => {
             className="w-full bg-[#00bfff] py-5 rounded-2xl font-black text-black hover:bg-white transition-all shadow-[0_0_20px_rgba(0,191,255,0.3)] uppercase tracking-widest text-sm active:scale-[0.98]"
           >
             SYNCHRONIZATION
+          </button>
+
+          <button 
+            onClick={() => {
+                window.history.replaceState({}, '', '?app=sport');
+                setCurrentApp('SPORT');
+            }}
+            className="w-full bg-fuchsia-600/20 border border-fuchsia-500/30 py-4 rounded-2xl font-black text-fuchsia-400 hover:bg-fuchsia-600 hover:text-white transition-all uppercase tracking-[0.2em] text-[10px] active:scale-[0.98] mt-2 flex items-center justify-center gap-2"
+          >
+            <Swords className="w-4 h-4" />
+            Switch to SportPROphet
           </button>
 
           <p className="text-center text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed mt-6">
@@ -470,6 +521,7 @@ const App: React.FC = () => {
       onUngroup={handleUngroup}
       onMoveToGroup={handleMoveToGroup}
       onSelectProfile={setActiveProfileId}
+      onAddTeam={handleAddTeam}
       onImportProfiles={handleImportProfiles}
       onOpenCompatibility={(date1, date2, lang) => {
         if (date1) setCompatDate1(date1);
