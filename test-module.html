@@ -1,8 +1,14 @@
 <!DOCTYPE html>
 <html>
+<head>
+    <title>Test Module</title>
+</head>
 <body>
-  <script type="module">
-    document.body.innerHTML += "<h2>Module executed</h2>";
-  </script>
+    <div id="out">Failed</div>
+    <style> #out { background: red; } </style>
+    <script type="module">
+        document.getElementById('out').innerText = 'Success Module';
+        document.getElementById('out').style.background = 'green';
+    </script>
 </body>
 </html>

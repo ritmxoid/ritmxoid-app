@@ -1,5 +1,6 @@
 import fs from 'fs';
 import { execSync } from 'child_process';
+import path from 'path';
 
 const download = async (url) => {
   const res = await fetch(url, {
@@ -62,48 +63,103 @@ async function build() {
   // 3. Remove Google Analytics and any other external scripts
   console.log('Removing Google Analytics and external script tags...');
   html = html.replace(/<script\s+src="https:\/\/www\.googletagmanager\.com\/gtag\/js\?id=[^>]*><\/script>/gi, '');
-  // Using [^<]* ensures we don't accidentally match across different tags and delete half the document
   html = html.replace(/<script>[^<]*window\.dataLayer\s*=[^<]*dataLayer\.push[^<]*<\/script>/gi, '<!-- Analytics Removed -->');
   
-  // 4. Inline Roboto Fonts
-  console.log('Inlining Roboto fonts and other Google Fonts...');
+  // 4. Inlining local assets (CSS, Fonts, Images) that vite-plugin-singlefile might miss
+  console.log('Performing Super Inlining of local assets...');
+  
+  // Resolve paths relative to dist
+  const distDir = path.resolve('dist');
+  
+  // Regex to find all url() in the HTML (which contains inlined CSS)
+  const urlRegex = /url\((['"]?)([^'"\)]+)\1\)/g;
+  let match;
+  const assetsToInline = [];
+  while ((match = urlRegex.exec(html)) !== null) {
+    const assetPath = match[2];
+    if (!assetPath.startsWith('data:') && !assetPath.startsWith('http')) {
+      assetsToInline.push(assetPath);
+    }
+  }
+  
+  const uniqueAssets = [...new Set(assetsToInline)];
+  console.log(`Found ${uniqueAssets.length} local assets in CSS to inline.`);
+  
+  for (const assetPath of uniqueAssets) {
+    try {
+      // Try to find the file in dist/assets or dist
+      let fullPath = path.join(distDir, assetPath);
+      if (!fs.existsSync(fullPath)) {
+        // Sometimes paths are like assets/file.woff2 but they are relative to CSS
+        fullPath = path.join(distDir, 'assets', path.basename(assetPath));
+      }
+      
+      if (fs.existsSync(fullPath)) {
+        console.log(`  Inlining local asset: ${assetPath}`);
+        const data = fs.readFileSync(fullPath);
+        const base64 = data.toString('base64');
+        const ext = path.extname(fullPath).toLowerCase();
+        let mimeType = 'application/octet-stream';
+        if (ext === '.woff2') mimeType = 'font/woff2';
+        if (ext === '.woff') mimeType = 'font/woff';
+        if (ext === '.ttf') mimeType = 'font/ttf';
+        if (ext === '.svg') mimeType = 'image/svg+xml';
+        if (ext === '.png') mimeType = 'image/png';
+        if (ext === '.jpg' || ext === '.jpeg') mimeType = 'image/jpeg';
+        
+        const dataUrl = `data:${mimeType};base64,${base64}`;
+        // Escape for regex use
+        const escapedPath = assetPath.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        html = html.replace(new RegExp(escapedPath, 'g'), dataUrl);
+      }
+    } catch (err) {
+      console.warn(`  Failed to inline asset ${assetPath}:`, err.message);
+    }
+  }
+
+  // 4.5. Inline Roboto Fonts from Google
+  console.log('Inlining remaining Google Fonts...');
   try {
-    // Collect all unique font imports from index.css or the built HTML dynamically
     const fontRegex = /@import\s*(?:url\()?['"]?(https:\/\/fonts\.googleapis\.com\/[^\s'")]+)['"]?\)?\s*;?/g;
     const fontMatches = [];
-    let match;
-    while ((match = fontRegex.exec(html)) !== null) {
-      fontMatches.push({ fullMatch: match[0], url: match[1] });
-    }
-
-    if (fontMatches.length === 0) {
-      console.log('No Google Fonts imports found in HTML.');
+    let fMatch;
+    while ((fMatch = fontRegex.exec(html)) !== null) {
+      fontMatches.push({ fullMatch: fMatch[0], url: fMatch[1] });
     }
 
     for (const { fullMatch, url } of fontMatches) {
-      console.log(`Processing: ${url}`);
-      let fontCss = '';
-      try {
-        fontCss = await processFonts(url);
-      } catch(err) {
-        console.error('Failed to process font:', url, err.message);
-        // Continue without blocking
-      }
-      
-      // Replace the exact matching @import with the base64 CSS
+      console.log(`Processing Google Font: ${url}`);
+      const fontCss = await processFonts(url);
       html = html.replace(fullMatch, fontCss + '\n');
-      console.log(`Successfully replaced @import for ${url}`);
     }
   } catch (e) {
-    console.error('Failed to inline fonts, but continuing...', e.message);
+    console.warn('Failed to inline Google fonts:', e.message);
   }
 
   // 5. Clean up Vite attributes that break file:// execution
   console.log('Cleaning up script and style attributes for local execution...');
-  // Force removal of type="module" to prevent file:// CORS restrictions
-  html = html.replace(/<script type="module"[^>]*>/g, '<script type="module">');
-  html = html.replace(/<style rel="stylesheet"[^>]*>/g, '<style>');
-  html = html.replace(/<link rel="stylesheet" crossorigin(.*?)>/g, '<link rel="stylesheet"$1>');
+  
+  // Safely remove crossorigin and integrity only from HTML tags, not from JS code!
+  html = html.replace(/<(script|link|style)([^>]*)>/gi, (match, tag, attrs) => {
+    let cleanAttrs = attrs.replace(/\s+crossorigin(?:=['"]?[^'">\s]*['"]?)?/gi, '');
+    cleanAttrs = cleanAttrs.replace(/\s+integrity=['"]?[^'">\s]*['"]?/gi, '');
+    // Remove rel="stylesheet" from <style> tags (vite-singlefile bug)
+    if (tag.toLowerCase() === 'style') {
+      cleanAttrs = cleanAttrs.replace(/\s+rel=['"]?stylesheet['"]?/gi, '');
+    }
+    return `<${tag}${cleanAttrs}>`;
+  });
+  
+  // Ensure all styles are really inlined
+  html = html.replace(/<link rel="stylesheet" href="([^"]+)">/g, (match, href) => {
+    const fullPath = path.join(distDir, href);
+    if (fs.existsSync(fullPath)) {
+      console.log(`  Forcing inline of late CSS: ${href}`);
+      const css = fs.readFileSync(fullPath, 'utf-8');
+      return `<style>${css}</style>`;
+    }
+    return match;
+  });
   
   // Inject an on-screen error handler so the user doesn't just see a white page
   const errorHandler = `
@@ -168,7 +224,5 @@ async function build() {
 
   console.log(`\nAll files are ready in the "${outputDir}" directory.`);
 }
-
-import path from 'path';
 
 build().catch(console.error);

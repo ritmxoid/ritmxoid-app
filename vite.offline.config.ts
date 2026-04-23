@@ -18,11 +18,17 @@ export default defineConfig(({ mode }) => {
         }
       },
       build: {
-        target: 'es2020',
+        target: 'esnext',
         assetsInlineLimit: 100000000,
         chunkSizeWarningLimit: 100000000,
         cssCodeSplit: false,
         reportCompressedSize: false,
+        minify: false,
+        rollupOptions: {
+            output: {
+                manualChunks: undefined,
+            }
+        }
       }
     };
 });
