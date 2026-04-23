@@ -198,12 +198,12 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white font-['Roboto'] overflow-hidden flex flex-col">
+    <div className="min-h-screen bg-black text-white overflow-hidden flex flex-col">
       {/* Header - Logo Only */}
       <div className="p-6 bg-[#1b2531]/50 backdrop-blur-xl border-b border-white/10 flex justify-center">
         <div className="flex flex-col items-center gap-1">
-          <h1 className="text-4xl font-black italic tracking-tighter text-[#33b5e5] uppercase">SportPROphet</h1>
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.4em] opacity-80">Rhythmic Team Analytics</p>
+          <h1 className="text-4xl font-normal italic tracking-tighter text-[#33b5e5] uppercase">SportPROphet</h1>
+          <p className="text-[10px] font-normal text-slate-500 uppercase tracking-[0.4em] opacity-80">Rhythmic Team Analytics</p>
         </div>
       </div>
 
@@ -214,7 +214,7 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
             <div className="absolute top-0 right-0 w-48 h-48 bg-[#33b5e5]/10 rounded-full blur-[80px] pointer-events-none" />
             
             <div className="flex justify-between items-start mb-4 relative z-10">
-                <h2 className="text-sm font-black uppercase tracking-widest text-[#33b5e5] flex items-center gap-2">
+                <h2 className="text-sm font-normal uppercase tracking-widest text-[#33b5e5] flex items-center gap-2">
                     <ClipboardList className="w-4 h-4" />
                     {t('select_team').toUpperCase()}
                 </h2>
@@ -225,7 +225,7 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
                         className="flex items-center gap-2 bg-black/40 border border-white/10 px-3 py-1.5 rounded-xl hover:bg-black/60 transition-colors"
                     >
                         <Globe className="w-3.5 h-3.5 text-[#33b5e5]" />
-                        <span className="text-[10px] font-black uppercase text-white">{lang}</span>
+                        <span className="text-[10px] font-normal uppercase text-white">{lang}</span>
                     </button>
 
                     <AnimatePresence>
@@ -272,7 +272,7 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
                 <button 
                     onClick={handleAddTeam}
                     disabled={!teamText.trim()}
-                    className="w-full bg-[#33b5e5] hover:bg-white text-black font-black py-4 rounded-2xl text-xs uppercase tracking-[0.2em] transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-20 disabled:grayscale"
+                    className="w-full bg-[#33b5e5] hover:bg-white text-black font-normal py-4 rounded-2xl text-xs uppercase tracking-[0.2em] transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-20 disabled:grayscale"
                 >
                     <Plus className="w-4 h-4" /> {t('add_team_btn')}
                 </button>
@@ -302,8 +302,8 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
                                 <Folder className="w-5 h-5" />
                             </div>
                             <div>
-                                <h3 className="font-black uppercase tracking-tighter text-white">{gn}</h3>
-                                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{members.length} {t('members_count')}</p>
+                                <h3 className="font-normal uppercase tracking-tighter text-white">{gn}</h3>
+                                <p className="text-[9px] font-normal text-slate-500 uppercase tracking-widest">{members.length} {t('members_count')}</p>
                             </div>
                         </div>
                         <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
@@ -328,8 +328,8 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
                                 <Users className="w-5 h-5 text-slate-500" />
                             </div>
                             <div>
-                                <h3 className="font-black uppercase tracking-tighter text-white">{p.name}</h3>
-                                <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{DateTime.fromISO(p.birthDate).toFormat('dd.MM.yyyy')}</p>
+                                <h3 className="font-normal uppercase tracking-tighter text-white">{p.name}</h3>
+                                <p className="text-[9px] font-normal text-slate-500 uppercase tracking-widest">{DateTime.fromISO(p.birthDate).toFormat('dd.MM.yyyy')}</p>
                             </div>
                         </div>
                         <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${
@@ -355,7 +355,7 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
         <section className="max-w-xl mx-auto pb-10">
             <div className="bg-[#1b2531]/80 backdrop-blur-xl p-6 rounded-[2.5rem] border border-white/10 shadow-2xl space-y-6">
                 <div className="flex flex-col items-center">
-                  <label className="text-[10px] font-black text-[#33b5e5] uppercase mb-2 tracking-[0.3em] flex items-center gap-2">
+                  <label className="text-[10px] font-normal text-[#33b5e5] uppercase mb-2 tracking-[0.3em] flex items-center gap-2">
                     <Calendar className="w-3 h-3" />
                     {t('calendar').toUpperCase()}
                   </label>
@@ -370,7 +370,7 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
                 <button 
                     onClick={() => profiles.length > 0 && setShowArena(true)}
                     disabled={selectedIds.size === 0 && selectedGroups.size === 0}
-                    className={`w-full py-6 rounded-[2rem] font-black uppercase text-base tracking-[0.3em] transition-all flex items-center justify-center gap-4 ${
+                    className={`w-full py-6 rounded-[2rem] font-normal uppercase text-base tracking-[0.3em] transition-all flex items-center justify-center gap-4 ${
                       (selectedIds.size > 0 || selectedGroups.size > 0) 
                       ? 'bg-fuchsia-600 hover:bg-fuchsia-500 shadow-[0_0_30px_rgba(255,0,255,0.4)] text-white scale-105' 
                       : 'bg-white/5 text-slate-700 cursor-not-allowed border border-white/5'
@@ -405,8 +405,8 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
                 <div className="flex items-center gap-4">
                   <Swords className="w-12 h-12 text-fuchsia-500" />
                   <div>
-                    <h2 className="text-4xl font-black uppercase italic tracking-tighter text-white leading-none">{t('arena').toUpperCase()}</h2>
-                    <p className="text-[10px] font-bold text-fuchsia-500/70 uppercase tracking-[0.3em] mt-1">{targetDt.toFormat('dd.MM.yyyy HH:mm')}</p>
+                    <h2 className="text-4xl font-normal uppercase italic tracking-tighter text-white leading-none">{t('arena').toUpperCase()}</h2>
+                    <p className="text-[10px] font-normal text-fuchsia-500/70 uppercase tracking-[0.3em] mt-1">{targetDt.toFormat('dd.MM.yyyy HH:mm')}</p>
                   </div>
                 </div>
                 <button 
@@ -422,7 +422,7 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
                   <button 
                     key={mode} 
                     onClick={() => setArenaMode(mode)}
-                    className={`flex-1 py-4 text-[11px] font-black uppercase tracking-tighter rounded-xl transition-all ${
+                    className={`flex-1 py-4 text-[11px] font-normal uppercase tracking-tighter rounded-xl transition-all ${
                       arenaMode === mode ? 'bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(255,0,255,0.4)]' : 'text-slate-500 hover:text-white'
                     }`}
                   >
@@ -461,20 +461,20 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
                                 {isTop3 && (
                                     <div className="absolute top-0 left-0 w-2 h-full" style={{ backgroundColor: medalColor }} />
                                 )}
-                                <div className="w-14 text-2xl font-black italic text-slate-700 shrink-0 tabular-nums">
+                                <div className="w-14 text-2xl font-normal italic text-slate-700 shrink-0 tabular-nums">
                                     {idx + 1}.
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-3">
-                                        <div className="text-2xl font-black uppercase text-white truncate tracking-tighter">{p.name}</div>
-                                        {isGroup && <div className="p-1 px-2 text-[9px] font-black bg-[#33b5e5] text-black rounded-lg">TEAM</div>}
+                                        <div className="text-2xl font-normal uppercase text-white truncate tracking-tighter">{p.name}</div>
+                                        {isGroup && <div className="p-1 px-2 text-[9px] font-normal bg-[#33b5e5] text-black rounded-lg">TEAM</div>}
                                     </div>
                                     <div className="flex items-center gap-3 mt-1">
-                                        <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">
+                                        <div className="text-[10px] text-slate-500 font-normal uppercase tracking-widest">
                                             {isGroup ? `${p.members.length} PLAYERS` : DateTime.fromISO(p.birthDate).toFormat('dd.MM.yyyy')}
                                         </div>
                                         {isGroup && (
-                                            <div className="flex items-center text-fuchsia-500 text-[10px] font-black uppercase animate-pulse">
+                                            <div className="flex items-center text-fuchsia-500 text-[10px] font-normal uppercase animate-pulse">
                                                 {isExpanded ? <ChevronUp className="w-3 h-3 mr-1" /> : <ChevronDown className="w-3 h-3 mr-1" />}
                                                 {isExpanded ? 'Hide' : 'Show Details'}
                                             </div>
@@ -482,10 +482,10 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <div className="text-4xl font-black tabular-nums tracking-tighter" style={{ color: getBalanceColor(p.score) }}>
+                                    <div className="text-4xl font-normal tabular-nums tracking-tighter" style={{ color: getBalanceColor(p.score) }}>
                                         {p.score}%
                                     </div>
-                                    <div className="text-[10px] font-black uppercase text-slate-600 tracking-[0.2em]">{t('balance')}</div>
+                                    <div className="text-[10px] font-normal uppercase text-slate-600 tracking-[0.2em]">{t('balance')}</div>
                                 </div>
                                 {idx === 0 && (
                                     <div className="absolute -right-4 -top-6 opacity-10 text-9xl text-yellow-500 pointer-events-none rotate-12">
@@ -510,8 +510,8 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
                                                         {getBalanceEmoji(m.score)}
                                                     </div>
                                                     <div>
-                                                        <div className="text-sm font-black uppercase text-white truncate max-w-[150px]">{m.name}</div>
-                                                        <div className="text-[9px] text-slate-600 font-black uppercase tracking-widest">{DateTime.fromISO(m.birthDate).toFormat('dd.MM.yyyy')}</div>
+                                                        <div className="text-sm font-normal uppercase text-white truncate max-w-[150px]">{m.name}</div>
+                                                        <div className="text-[9px] text-slate-600 font-normal uppercase tracking-widest">{DateTime.fromISO(m.birthDate).toFormat('dd.MM.yyyy')}</div>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-6">
@@ -553,7 +553,7 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
              <div className="fixed bottom-8 left-1/2 -translate-x-1/2 w-full max-w-xs sm:max-w-md px-4">
                 <button 
                     onClick={() => setShowArena(false)} 
-                    className="w-full bg-white/5 hover:bg-white/10 text-white font-black py-5 rounded-[2rem] uppercase tracking-widest text-sm transition-all border border-white/10 shadow-2xl active:scale-95"
+                    className="w-full bg-white/5 hover:bg-white/10 text-white font-normal py-5 rounded-[2rem] uppercase tracking-widest text-sm transition-all border border-white/10 shadow-2xl active:scale-95"
                 >
                     {t('exit_arena').toUpperCase()}
                 </button>

@@ -45,20 +45,28 @@ class SolarDataService {
   }
 
   private async fetchNewData(): Promise<SolarData> {
+    // If we know we are offline, don't even try to avoid blocking the UI
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+      throw new Error('System is offline');
+    }
+
     const targetUrl = 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json';
     const endpoints = [
       `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
       `https://corsproxy.io/?${targetUrl}`, 
-      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
-      `https://thingproxy.freeboard.io/fetch/${targetUrl}`
+      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`
     ];
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s global timeout
 
     for (const url of endpoints) {
       try {
         const response = await fetch(url, {
           method: 'GET',
           cache: 'no-store',
-          headers: { 'Accept': 'application/json' }
+          headers: { 'Accept': 'application/json' },
+          signal: controller.signal
         });
 
         if (response.ok) {

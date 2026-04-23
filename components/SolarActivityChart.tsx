@@ -131,7 +131,7 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, lang = '
                       // 2. Draw label
                       ctx.fillStyle = '#fff';
                       const fontSize = Math.max(11, Math.min(15, Math.floor(chart.width / 45)));
-                      ctx.font = `bold ${fontSize}px Roboto`;
+                      ctx.font = `${fontSize}px "Arial Narrow", Arial, sans-serif`;
                       ctx.textAlign = 'left';
                       ctx.textBaseline = 'top';
                       
@@ -212,7 +212,7 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, lang = '
                 // Text
                 ctx.shadowBlur = 0;
                 ctx.fillStyle = '#fff';
-                ctx.font = 'bold 8px Roboto';
+                ctx.font = 'bold 8px "Arial Narrow", Arial, sans-serif';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'bottom';
                 ctx.fillText('NOW', 0, -8);
@@ -349,7 +349,7 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, lang = '
       {/* Title - Lifted z-index to be above loading overlay */}
       <div className="absolute top-2 left-3 flex items-center gap-2 z-30 pointer-events-none">
         <div className={`w-1.5 h-1.5 rounded-full ${error ? 'bg-red-500' : 'bg-[#33b5e5] shadow-[0_0_5px_#33b5e5]'}`} />
-        <span className={`text-[9px] font-black uppercase tracking-widest ${error ? 'text-red-500' : 'text-[#33b5e5]'}`}>
+        <span className={`text-[9px] font-bold uppercase tracking-widest ${error ? 'text-red-500' : 'text-[#33b5e5]'}`}>
             {title}
         </span>
       </div>

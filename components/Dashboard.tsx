@@ -272,10 +272,9 @@ const Dashboard: React.FC<DashboardProps> = ({
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>RITMXOID CALENDAR ${year} - ${profile.name}</title>
       <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap');
         * { box-sizing: border-box; }
         body { 
-          font-family: 'Roboto', sans-serif; 
+          font-family: "Arial Narrow", Arial, "Helvetica Condensed", Helvetica, sans-serif; 
           background: #fff; 
           color: #000; 
           margin: 0; 
@@ -292,8 +291,8 @@ const Dashboard: React.FC<DashboardProps> = ({
           padding-bottom: 4px;
           flex-shrink: 0;
         }
-        .header h1 { margin: 0; text-transform: uppercase; font-size: 20px; font-weight: 900; letter-spacing: -1px; color: ${accentColor}; line-height: 1.1; }
-        .header h2 { margin: 0; font-size: 14px; font-weight: 700; color: #444; text-transform: uppercase; }
+        .header h1 { margin: 0; text-transform: uppercase; font-size: 20px; font-weight: 400; letter-spacing: -1px; color: ${accentColor}; line-height: 1.1; }
+        .header h2 { margin: 0; font-size: 14px; font-weight: 400; color: #444; text-transform: uppercase; }
         .header svg { height: 30px; width: 30px; margin-bottom: 2px; }
         
         /* Сетка 3 колонки на 4 ряда */
@@ -307,16 +306,16 @@ const Dashboard: React.FC<DashboardProps> = ({
         }
         
         .month-box { border: 1px solid ${accentColor}; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
-        .month-name { text-align: center; font-weight: 900; text-transform: uppercase; font-size: 10px; padding: 2px; background: ${accentColor}; color: #fff; }
+        .month-name { text-align: center; font-weight: 400; text-transform: uppercase; font-size: 10px; padding: 2px; background: ${accentColor}; color: #fff; }
         
         .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); flex: 1; background: #eee; gap: 1px; }
-        .day-header { text-align: center; font-size: 9px; font-weight: 900; color: ${accentColor}; padding: 1px 0; background: #f8f8f8; text-transform: uppercase; border-bottom: 1px solid #ddd; }
+        .day-header { text-align: center; font-size: 9px; font-weight: 400; color: ${accentColor}; padding: 1px 0; background: #f8f8f8; text-transform: uppercase; border-bottom: 1px solid #ddd; }
         
         .day-cell { position: relative; background: #fff; display: flex; align-items: stretch; justify-content: stretch; overflow: hidden; }
-        .day-num { position: absolute; top: 1px; left: 1px; font-size: 12px; font-weight: 900; color: #333; line-height: 1; z-index: 5; }
+        .day-num { position: absolute; top: 1px; left: 1px; font-size: 12px; font-weight: 400; color: #333; line-height: 1; z-index: 5; }
         
         .risk-container { position: absolute; top: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 0; z-index: 4; width: 10px; }
-        .risk-mark { font-size: 8px; color: #ff0000; font-weight: 900; text-shadow: 1px 1px 0px #fff; line-height: 0.7; }
+        .risk-mark { font-size: 8px; color: #ff0000; font-weight: 400; text-shadow: 1px 1px 0px #fff; line-height: 0.7; }
         
         .footer {
           margin-top: 8px;
@@ -334,11 +333,11 @@ const Dashboard: React.FC<DashboardProps> = ({
           flex-direction: column;
           gap: 3px;
         }
-        .legend-title { font-weight: 900; text-transform: uppercase; color: #555; margin-bottom: 2px; font-size: 9px; }
+        .legend-title { font-weight: 400; text-transform: uppercase; color: #555; margin-bottom: 2px; font-size: 9px; }
         .legend-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
         .legend-item { display: flex; align-items: center; gap: 3px; }
         .swatch { width: 10px; height: 10px; border-radius: 2px; border: 1px solid rgba(0,0,0,0.1); }
-        .risk-icon-demo { color: #ff0000; font-weight: 900; }
+        .risk-icon-demo { color: #ff0000; font-weight: 400; }
 
         @media print {
           @page { size: A4 portrait; margin: 5mm; }
@@ -613,7 +612,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
         <div className="flex-1 min-w-0 pointer-events-none">
           <div className="flex items-center gap-2">
-            <span className="font-black uppercase tracking-tighter text-white truncate max-w-[150px]">{p.name}</span>
+            <span className="font-normal uppercase tracking-tighter text-white truncate max-w-[150px]">{p.name}</span>
             {p.isMaster && <span className="text-[9px] bg-[#33b5e5] text-black px-1 font-bold rounded">MASTER</span>}
           </div>
           <div className="text-[10px] text-slate-500 font-bold uppercase">{DateTime.fromISO(p.birthDate).toFormat('dd.MM.yyyy')}</div>
@@ -630,7 +629,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   ))}
                </div>
              )}
-             <div className="text-2xl font-black tabular-nums" style={{ color: getBalanceColor(p.currentBalance) }}>
+             <div className="text-2xl font-normal tabular-nums" style={{ color: getBalanceColor(p.currentBalance) }}>
                {p.currentBalance}%
              </div>
           </div>
@@ -1023,11 +1022,11 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <div className="flex-1">
                   {activePeriod ? (
                     <div className="flex flex-col">
-                      <div className="text-3xl font-black tracking-tighter text-white uppercase tabular-nums">{activePeriod.start.toFormat('HH:mm')} - {activePeriod.end.toFormat('HH:mm')}</div>
+                      <div className="text-3xl font-bold tracking-tighter text-white uppercase tabular-nums">{activePeriod.start.toFormat('HH:mm')} - {activePeriod.end.toFormat('HH:mm')}</div>
                       <div className="h-[3px] bg-[#33b5e5] w-32 mt-1 shadow-[0_0_8px_#33b5e5]" />
                     </div>
                   ) : (
-                    <div className="text-2xl font-black tracking-tighter text-slate-800 uppercase italic">{t('inactive')}</div>
+                    <div className="text-2xl font-bold tracking-tighter text-slate-800 uppercase italic">{t('inactive')}</div>
                   )}
                 </div>
               </div>
@@ -1039,7 +1038,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                         <div className="w-8 flex justify-center text-[#33b5e5] text-sm shrink-0">{p.isActive ? '►' : ''}</div>
                         <div className="flex-1 flex justify-between items-center tabular-nums overflow-hidden">
                           <div className="text-slate-500 text-[10px] w-14 shrink-0 uppercase font-bold">{p.start.toFormat('dd LLL.', { locale: lang })}</div>
-                          <div className="text-[19px] text-white font-black px-2 flex-1 text-center whitespace-nowrap tracking-tighter">{p.start.toFormat('HH:mm')} — {p.end.toFormat('HH:mm')}</div>
+                          <div className="text-[19px] text-white font-bold px-2 flex-1 text-center whitespace-nowrap tracking-tighter">{p.start.toFormat('HH:mm')} — {p.end.toFormat('HH:mm')}</div>
                           <div className="text-slate-500 text-[10px] w-14 shrink-0 text-right uppercase font-bold">{p.end.toFormat('dd LLL.', { locale: lang })}</div>
                         </div>
                       </div>
@@ -1114,7 +1113,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
         <div className="grid grid-cols-7 gap-[3px] bg-white/5 p-[2px] border border-white/10 flex-shrink-0 rounded-sm">
           {t('days_abbr').map((h: string, idx: number) => (
-            <div key={idx} className="text-[11px] font-black text-slate-400 py-3 text-center bg-black/70 uppercase border-b border-white/5">{h}</div>
+            <div key={idx} className="text-[11px] font-bold text-slate-400 py-3 text-center bg-black/70 uppercase border-b border-white/5">{h}</div>
           ))}
           {days.map((d, i) => {
             const isCurrentMonth = d.month === targetDate.month;
@@ -1127,7 +1126,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             return (
               <div key={i} className={`aspect-square relative flex flex-col items-center justify-center border border-white/10 transition-all duration-300 ${isCurrentMonth ? 'shadow-[inset_0_0_12px_rgba(255,255,255,0.05)]' : ''}`} style={{ backgroundColor: isCurrentMonth ? `${bgColor}99` : 'transparent', opacity: isCurrentMonth ? 1 : 0.15 }}>
                 {isToday && <div className="absolute inset-0 border-2 border-[#33b5e5] z-10 shadow-[0_0_15px_#33b5e5,inset_0_0_10px_#33b5e5]" />}
-                <span className={`text-[10px] sm:text-xs md:text-lg lg:text-xl xl:text-3xl font-black absolute top-0.5 left-1 sm:top-1 sm:left-1.5 lg:top-2 lg:left-2.5 ${isCurrentMonth ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]' : 'text-slate-800'}`}>{d.day}</span>
+                <span className={`text-[10px] sm:text-xs md:text-lg lg:text-xl xl:text-3xl font-bold absolute top-0.5 left-1 sm:top-1 sm:left-1.5 lg:top-2 lg:left-2.5 ${isCurrentMonth ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]' : 'text-slate-800'}`}>{d.day}</span>
                 
                 {isCurrentMonth && astroEvts.length > 0 && (
                   <div className="absolute bottom-0.5 left-1 sm:bottom-1 sm:left-1.5 lg:bottom-2 lg:left-2.5 flex gap-0.5 md:gap-1.5 z-10">
@@ -1220,11 +1219,11 @@ const Dashboard: React.FC<DashboardProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#050505] text-white select-none overflow-hidden font-['Roboto']">
+    <div className="flex flex-col h-screen bg-[#050505] text-white select-none overflow-hidden">
       <header className="bg-[#1b2531] border-b-2 border-black p-3 md:p-6 lg:p-8 flex items-center gap-4 md:gap-8 shadow-lg z-[9999]">
         <div className="w-10 h-10 md:w-16 md:h-16 lg:w-20 lg:h-20 flex items-center justify-center shrink-0">{getBalanceEmoji(balance)}</div>
         <div className="flex-1 min-w-0">
-           <div className="text-xl md:text-3xl lg:text-4xl font-black tracking-tighter uppercase leading-none truncate">{profile.name}</div>
+           <div className="text-xl md:text-3xl lg:text-4xl font-bold tracking-tighter uppercase leading-none truncate">{profile.name}</div>
            <div className="flex items-center gap-2 mt-1 text-[11px] md:text-base lg:text-lg font-bold uppercase" style={{ color: getBalanceColor(balance) }}>
               <span>{getBalanceLabel(balance)}</span>
               <span className="text-white/20">•</span>
@@ -1261,7 +1260,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       <nav className="bg-[#1b2531] flex border-b border-black z-40 shadow-md">
         {(['PROFILES', 'BALANCE', 'ACTIVITIES', 'CALENDAR', 'MAPS'] as Tab[]).map(t_tab => (
-          <button key={t_tab} onClick={() => { setActiveTab(t_tab); if(t_tab !== 'PROFILES') setListMode('NONE'); }} className={`flex-1 py-4 md:py-6 lg:py-8 text-[9px] md:text-sm lg:text-base font-black tracking-widest transition-all relative ${activeTab === t_tab ? 'text-white' : 'text-slate-500'}`}>
+          <button key={t_tab} onClick={() => { setActiveTab(t_tab); if(t_tab !== 'PROFILES') setListMode('NONE'); }} className={`flex-1 py-4 md:py-6 lg:py-8 text-[9px] md:text-sm lg:text-base font-bold tracking-widest transition-all relative ${activeTab === t_tab ? 'text-white' : 'text-slate-500'}`}>
             {t(t_tab.toLowerCase()).toUpperCase()}
             {activeTab === t_tab && <motion.div layoutId="tabLine" className="absolute bottom-0 left-0 w-full h-[3px] md:h-[5px] bg-[#33b5e5] shadow-[0_0_8px_#33b5e5]" />}
           </button>
@@ -1279,7 +1278,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       <footer className="bg-[#1b2531] p-4 md:p-8 lg:p-10 flex items-center justify-between border-t-2 border-black z-40 shadow-[0_-5px_25px_rgba(0,0,0,0.6)]">
          <button onClick={() => stepDate(false)} className="w-12 h-12 md:w-16 md:h-16 flex items-center justify-center bg-black/40 rounded border border-white/5 text-[#33b5e5] active:scale-95 transition-transform"><ChevronLeft className="w-6 h-6 md:w-10 md:h-10" /></button>
          <div onClick={resetToToday} className="flex flex-col items-center cursor-pointer hover:opacity-80 active:scale-95 transition-all group" title="Вернуться к сегодняшнему дню">
-            <span className="text-2xl md:text-4xl lg:text-5xl font-black tracking-tighter text-white uppercase tabular-nums group-hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
+            <span className="text-2xl md:text-4xl lg:text-5xl font-bold tracking-tighter text-white uppercase tabular-nums group-hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]">
               {activeTab === 'CALENDAR' ? targetDate.toFormat('LLLL yyyy', { locale: lang }) : targetDate.toFormat('dd LLL. yyyy', { locale: lang })}
             </span>
             <span className="text-[10px] md:text-sm lg:text-base font-bold text-[#33b5e5] tabular-nums group-hover:text-white transition-colors">{targetDate.toFormat('HH:mm')}</span>
@@ -1293,12 +1292,12 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div className="bg-[#1b2531] border border-white/20 p-8 rounded-[2rem] w-full max-w-sm space-y-6 shadow-2xl">
               <div className="text-center space-y-2">
                 <FolderPlus className="w-10 h-10 text-[#33b5e5]" />
-                <h2 className="text-2xl font-black uppercase tracking-tighter">{t('group')}</h2>
+                <h2 className="text-2xl font-bold uppercase tracking-tighter">{t('group')}</h2>
               </div>
               <input autoFocus type="text" placeholder={t('group_placeholder')} value={tempGroupName} onChange={e => setTempGroupName(e.target.value)} className="w-full bg-black border border-white/10 p-4 rounded-2xl text-sm outline-none focus:border-[#33b5e5] text-white" />
               <div className="flex gap-3">
-                <button onClick={() => { onGroupProfiles(Array.from(selectedIds), tempGroupName); setSelectedIds(new Set()); setSelectedGroupNames(new Set()); setListMode('NONE'); setShowGroupDialog(false); setTempGroupName(''); logEvent('Create Group', 'Organization'); }} className="flex-1 bg-[#33b5e5] text-black font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform">{t('save')}</button>
-                <button onClick={() => { setShowGroupDialog(false); setTempGroupName(''); }} className="flex-1 bg-white/5 text-slate-300 font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform border border-white/10">{t('no')}</button>
+                <button onClick={() => { onGroupProfiles(Array.from(selectedIds), tempGroupName); setSelectedIds(new Set()); setSelectedGroupNames(new Set()); setListMode('NONE'); setShowGroupDialog(false); setTempGroupName(''); logEvent('Create Group', 'Organization'); }} className="flex-1 bg-[#33b5e5] text-black font-bold py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform">{t('save')}</button>
+                <button onClick={() => { setShowGroupDialog(false); setTempGroupName(''); }} className="flex-1 bg-white/5 text-slate-300 font-bold py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform border border-white/10">{t('no')}</button>
               </div>
             </div>
           </motion.div>
@@ -1609,7 +1608,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[1300] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#1b2531] border border-white/20 p-8 rounded-[2rem] w-full max-sm text-center space-y-6 shadow-2xl">
               <div className="text-4xl text-fuchsia-500 mb-2">{arenaEntityToRemove.isGroup ? <FolderMinus className="w-10 h-10 mx-auto" /> : <UserMinus className="w-10 h-10 mx-auto" />}</div>
-              <h2 className="text-2xl font-black uppercase tracking-tighter">{t('remove_arena')}</h2>
+              <h2 className="text-2xl font-bold uppercase tracking-tighter">{t('remove_arena')}</h2>
               <p className="text-slate-400 text-sm font-bold uppercase">{arenaEntityToRemove.name}</p>
               <div className="flex gap-3 pt-4">
                 <button onClick={() => { 
@@ -1628,8 +1627,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                         setShowArenaDialog(false);
                         setListMode('NONE');
                   }
-                }} className="flex-1 bg-fuchsia-600 text-white font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform shadow-lg">{t('yes')}</button>
-                <button onClick={() => setArenaEntityToRemove(null)} className="flex-1 bg-white/5 text-slate-300 font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform border border-white/10">{t('no')}</button>
+                }} className="flex-1 bg-fuchsia-600 text-white font-bold py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform shadow-lg">{t('yes')}</button>
+                <button onClick={() => setArenaEntityToRemove(null)} className="flex-1 bg-white/5 text-slate-300 font-bold py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform border border-white/10">{t('no')}</button>
               </div>
             </motion.div>
           </motion.div>

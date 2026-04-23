@@ -25,9 +25,9 @@ export default defineConfig(({ mode }) => {
         reportCompressedSize: false,
         minify: false,
         rollupOptions: {
-            output: {
-                manualChunks: undefined,
-            }
+          output: {
+            manualChunks: undefined,
+          }
         }
       }
     };

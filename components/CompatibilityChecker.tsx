@@ -113,7 +113,7 @@ const CompatibilityChecker: React.FC<Props> = ({ initialDate, initialDate2 = '',
             <div>
               <h3 className="text-white font-bold uppercase tracking-widest text-sm">{title}</h3>
               <span 
-                className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full mt-1 inline-block" 
+                className="text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full mt-1 inline-block" 
                 style={{ backgroundColor: `${color}22`, color: color }}
               >
                 {text}
@@ -144,7 +144,7 @@ const CompatibilityChecker: React.FC<Props> = ({ initialDate, initialDate2 = '',
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] p-4 font-['Roboto'] text-white">
+    <div className="min-h-screen bg-[#050505] p-4 font-['Arial_Narrow',_Arial,_sans-serif] text-white">
       <div className="max-w-md mx-auto pt-8">
         <div className="flex justify-between items-center mb-8">
           <button 

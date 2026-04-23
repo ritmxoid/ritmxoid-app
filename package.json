@@ -6,13 +6,18 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:offline": "vite build --config vite.offline.config.ts",
     "preview": "vite preview",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.2.0",
     "@google/genai": "^1.37.0",
+    "@types/express": "^5.0.6",
     "chart.js": "^4.4.1",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "fflate": "^0.8.2",
     "framer-motion": "^12.26.2",
     "html2canvas": "^1.4.1",
     "jsdom": "^29.0.2",
@@ -21,7 +26,8 @@
     "luxon": "^3.7.2",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
-    "tailwindcss": "^4.2.2"
+    "tailwindcss": "^4.2.2",
+    "tsx": "^4.21.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.2.2",

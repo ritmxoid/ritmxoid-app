@@ -15,13 +15,24 @@ import { solarDataService } from './services/solarDataService';
 
 const App: React.FC = () => {
   const [profiles, setProfiles] = useState<Profile[]>(() => {
-    const saved = localStorage.getItem('ritmxoid_db_profiles');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('ritmxoid_db_profiles');
+      if (!saved) return [];
+      const parsed = JSON.parse(saved);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      console.error('Failed to parse profiles from localStorage', e);
+      return [];
+    }
   });
 
   const [activeProfileId, setActiveProfileId] = useState<string | null>(() => {
-    const saved = localStorage.getItem('ritmxoid_active_id');
-    return saved || (profiles.length > 0 ? profiles[0].id : null);
+    try {
+      const saved = localStorage.getItem('ritmxoid_active_id');
+      return saved || (profiles.length > 0 ? profiles[0].id : null);
+    } catch (e) {
+      return null;
+    }
   });
 
   const [isAuthorized, setIsAuthorized] = useState(() => profiles.length > 0);
@@ -109,10 +120,9 @@ const App: React.FC = () => {
     
     let html = `
       <style>
-        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap');
         * { box-sizing: border-box; }
         .calendar-wrapper { 
-          font-family: 'Roboto', sans-serif; 
+          font-family: 'Arial Narrow', Arial, sans-serif; 
           background: #fff; 
           color: #000; 
           margin: 0; 
@@ -122,25 +132,25 @@ const App: React.FC = () => {
           flex-direction: column;
         }
         .header { text-align: center; margin-bottom: 8px; border-bottom: 3px solid #8a2be2; padding-bottom: 4px; flex-shrink: 0; }
-        .header h1 { margin: 0; text-transform: uppercase; font-size: 20px; font-weight: 900; letter-spacing: -1px; color: #8a2be2; line-height: 1.1; }
-        .header h2 { margin: 0; font-size: 14px; font-weight: 700; color: #444; text-transform: uppercase; }
+        .header h1 { margin: 0; text-transform: uppercase; font-size: 20px; font-weight: 400; letter-spacing: -1px; color: #8a2be2; line-height: 1.1; }
+        .header h2 { margin: 0; font-size: 14px; font-weight: 400; color: #444; text-transform: uppercase; }
         .header img.logo { height: 30px; width: 30px; margin: 0 auto 2px auto; display: block; }
         .year-grid { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(4, 1fr); gap: 5px; flex: 1; min-height: 0; }
         .month-box { border: 1px solid #8a2be2; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
-        .month-name { display: block; text-align: center; font-weight: 900; text-transform: uppercase; font-size: 15px; background: #8a2be2; color: #fff; margin: 0; padding: 2px 0 8px 0; line-height: 1; }
+        .month-name { display: block; text-align: center; font-weight: 400; text-transform: uppercase; font-size: 15px; background: #8a2be2; color: #fff; margin: 0; padding: 2px 0 8px 0; line-height: 1; }
         .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); flex: 1; background: #eee; gap: 1px; }
-        .day-header { text-align: center; font-size: 9px; font-weight: 900; color: #8a2be2; padding: 1px 0; background: #f8f8f8; text-transform: uppercase; border-bottom: 1px solid #ddd; }
+        .day-header { text-align: center; font-size: 9px; font-weight: 400; color: #8a2be2; padding: 1px 0; background: #f8f8f8; text-transform: uppercase; border-bottom: 1px solid #ddd; }
         .day-cell { position: relative; background: #fff; display: flex; align-items: stretch; justify-content: stretch; overflow: hidden; }
-        .day-num { position: absolute; top: 1px; left: 1px; font-size: 12px; font-weight: 900; color: #333; line-height: 1; z-index: 5; }
+        .day-num { position: absolute; top: 1px; left: 1px; font-size: 12px; font-weight: 400; color: #333; line-height: 1; z-index: 5; }
         .risk-container { position: absolute; top: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 0; z-index: 4; width: 10px; }
-        .risk-mark { font-size: 8px; color: #ff0000; font-weight: 900; text-shadow: 1px 1px 0px #fff; line-height: 0.7; }
+        .risk-mark { font-size: 8px; color: #ff0000; font-weight: 400; text-shadow: 1px 1px 0px #fff; line-height: 0.7; }
         .footer { margin-top: 8px; padding-top: 6px; border-top: 1px solid #ddd; display: flex; justify-content: space-between; align-items: flex-start; flex-shrink: 0; font-size: 10px; }
         .legend-section { display: flex; flex-direction: column; gap: 3px; }
-        .legend-title { font-weight: 900; text-transform: uppercase; color: #555; margin-bottom: 2px; font-size: 9px; }
+        .legend-title { font-weight: 400; text-transform: uppercase; color: #555; margin-bottom: 2px; font-size: 9px; }
         .legend-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
         .legend-item { display: flex; align-items: center; gap: 3px; }
         .swatch { width: 10px; height: 10px; border-radius: 2px; border: 1px solid rgba(0,0,0,0.1); }
-        .risk-icon-demo { color: #ff0000; font-weight: 900; }
+        .risk-icon-demo { color: #ff0000; font-weight: 400; }
       </style>
       <div class="calendar-wrapper">
         <div class="header">
@@ -367,7 +377,7 @@ const App: React.FC = () => {
 
   if (!isAuthorized) {
     return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 relative overflow-hidden font-['Roboto']">
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4 relative overflow-hidden">
         <div className="absolute inset-0 z-0 opacity-30">
             <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-purple-900/40 rounded-full blur-[120px] animate-pulse" />
             <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-900/30 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
@@ -385,16 +395,16 @@ const App: React.FC = () => {
             </div>
             <div className="space-y-1">
               <div className="relative inline-block">
-                  <h1 className="text-4xl font-black text-[#33b5e5] tracking-tighter uppercase drop-shadow-[0_0_10px_rgba(51,181,229,0.3)]">RITMXOID</h1>
-                  <span className="absolute -top-2 -right-10 text-[9px] font-bold text-[#33b5e5] opacity-50 tracking-widest">v.3.5.11</span>
+                  <h1 className="text-4xl font-normal text-[#33b5e5] tracking-tighter uppercase drop-shadow-[0_0_10px_rgba(51,181,229,0.3)]">RITMXOID</h1>
+                  <span className="absolute -top-2 -right-10 text-[9px] font-normal text-[#33b5e5] opacity-50 tracking-widest">v.3.5.11</span>
               </div>
-              <p className="text-slate-400 uppercase tracking-[0.2em] text-[10px] font-black opacity-80">Rhythmic Analytics Core</p>
+              <p className="text-slate-400 uppercase tracking-[0.2em] text-[10px] font-normal opacity-80">Rhythmic Analytics Core</p>
             </div>
           </div>
 
           <div className="space-y-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Username</label>
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Username</label>
               <div className="relative group">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-[#33b5e5] transition-colors hidden sm:block">
                   <PenTool className="w-4 h-4" />
@@ -420,7 +430,7 @@ const App: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Birth Date</label>
+              <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Birth Date</label>
               <div className="relative group">
                 <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-[#33b5e5] transition-colors pointer-events-none hidden sm:block">
                   <Calendar className="w-4 h-4" />
@@ -475,7 +485,7 @@ const App: React.FC = () => {
 
           <button 
             onClick={handleAuthorize}
-            className="w-full bg-[#00bfff] py-5 rounded-2xl font-black text-black hover:bg-white transition-all shadow-[0_0_20px_rgba(0,191,255,0.3)] uppercase tracking-widest text-sm active:scale-[0.98]"
+            className="w-full bg-[#00bfff] py-5 rounded-2xl font-normal text-black hover:bg-white transition-all shadow-[0_0_20px_rgba(0,191,255,0.3)] uppercase tracking-widest text-sm active:scale-[0.98]"
           >
             SYNCHRONIZATION
           </button>
@@ -485,16 +495,17 @@ const App: React.FC = () => {
                 window.history.replaceState({}, '', '?app=sport');
                 setCurrentApp('SPORT');
             }}
-            className="w-full bg-fuchsia-600/20 border border-fuchsia-500/30 py-4 rounded-2xl font-black text-fuchsia-400 hover:bg-fuchsia-600 hover:text-white transition-all uppercase tracking-[0.2em] text-[10px] active:scale-[0.98] mt-2 flex items-center justify-center gap-2"
+            className="w-full bg-fuchsia-600/20 border border-fuchsia-500/30 py-4 rounded-2xl font-normal text-fuchsia-400 hover:bg-fuchsia-600 hover:text-white transition-all uppercase tracking-[0.2em] text-[10px] active:scale-[0.98] mt-2 flex items-center justify-center gap-2"
           >
             <Swords className="w-4 h-4" />
             Switch to SportPROphet
           </button>
 
-          <p className="text-center text-[9px] text-slate-500 font-bold uppercase tracking-widest leading-relaxed mt-6">
+          <p className="text-center text-[9px] text-slate-500 font-normal uppercase tracking-widest leading-relaxed mt-6">
             All data is stored locally in your browser, but it is highly recommended to save the contact file on your device.
           </p>
         </motion.div>
+
 
         <input type="file" ref={fileInputRef} onChange={onFileChange} className="hidden" accept=".txt,.json" />
         <style dangerouslySetInnerHTML={{ __html: `
