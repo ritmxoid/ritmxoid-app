@@ -612,10 +612,10 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
         <div className="flex-1 min-w-0 pointer-events-none">
           <div className="flex items-center gap-2">
-            <span className="font-normal uppercase tracking-tighter text-white truncate max-w-[150px]">{p.name}</span>
+            <span className="text-lg font-bold uppercase tracking-wider text-white truncate max-w-[180px] md:max-w-none md:whitespace-nowrap">{p.name}</span>
             {p.isMaster && <span className="text-[9px] bg-[#33b5e5] text-black px-1 font-bold rounded">MASTER</span>}
           </div>
-          <div className="text-[10px] text-slate-500 font-bold uppercase">{DateTime.fromISO(p.birthDate).toFormat('dd.MM.yyyy')}</div>
+          <div className="text-xs text-slate-500 font-bold uppercase mt-0.5">{DateTime.fromISO(p.birthDate).toFormat('dd.MM.yyyy')}</div>
         </div>
         <div className="text-right shrink-0 pointer-events-none">
           <div className="flex items-center justify-end">
@@ -633,7 +633,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                {p.currentBalance}%
              </div>
           </div>
-          <div className="text-[8px] font-bold uppercase text-slate-600">{t('balance')}</div>
+          <div className="text-[10px] font-bold uppercase text-slate-600 mt-1">{t('balance')}</div>
         </div>
         {isSelectMode && (
           <div className="absolute top-2 left-2">
@@ -747,7 +747,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
                   {importPreview.length > 0 && (
                     <div className="bg-black/40 rounded-lg p-2 border border-white/5 max-h-[100px] overflow-y-auto custom-scrollbar">
-                      <p className="text-[9px] font-black text-[#33b5e5] uppercase mb-1">{t('parsed_count').replace('{n}', importPreview.length.toString())}</p>
+                      <p className="text-[11px] font-black text-[#33b5e5] uppercase mb-1">{t('parsed_count').replace('{n}', importPreview.length.toString())}</p>
                       <div className="space-y-1">
                         {importPreview.map((p, i) => (
                           <div key={i} className="flex justify-between text-[10px] text-slate-400 font-mono">
@@ -856,8 +856,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                  >
                     <div className={`flex items-center gap-2 ${isDragging ? 'pointer-events-none' : ''}`}>
                       {isExpanded ? <FolderOpen className="w-3 h-3 text-[#33b5e5]" /> : <Folder className="w-3 h-3 text-[#33b5e5]" />}
-                      <span className="text-[11px] font-black uppercase text-slate-300">{groupName}</span>
-                      <span className="text-[9px] bg-white/5 px-1.5 rounded-full text-slate-500 font-bold">{groupProfiles.length}</span>
+                      <span className="text-sm font-black uppercase text-slate-300 tracking-wider">{groupName}</span>
+                      <span className="text-xs bg-white/10 px-2 py-0.5 rounded-full text-slate-400 font-black">{groupProfiles.length}</span>
                     </div>
                     
                     <div className="flex items-center gap-3">
@@ -920,7 +920,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   const renderBalance = () => (
     <div className="p-4 space-y-4 h-full overflow-y-auto custom-scrollbar">
-      <div className="text-sm font-bold text-white uppercase tracking-tighter">{t('passed')} <span className="ml-2 font-normal text-slate-400">{timePassedString}</span></div>
+      <div className="text-sm font-bold text-white uppercase tracking-wider">{t('passed')} <span className="ml-2 font-normal text-slate-400 tracking-normal">{timePassedString}</span></div>
       
       <div className="relative h-60 w-full border-b border-l border-white/20 flex items-end justify-between px-1 gap-[2px] overflow-hidden bg-black shadow-inner">
         <div className="absolute inset-0 grid grid-rows-4 pointer-events-none">
@@ -1223,7 +1223,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       <header className="bg-[#1b2531] border-b-2 border-black p-3 md:p-6 lg:p-8 flex items-center gap-4 md:gap-8 shadow-lg z-[9999]">
         <div className="w-10 h-10 md:w-16 md:h-16 lg:w-20 lg:h-20 flex items-center justify-center shrink-0">{getBalanceEmoji(balance)}</div>
         <div className="flex-1 min-w-0">
-           <div className="text-xl md:text-3xl lg:text-4xl font-bold tracking-tighter uppercase leading-none truncate">{profile.name}</div>
+           <div className="text-xl md:text-3xl lg:text-4xl font-bold tracking-wider uppercase leading-none truncate md:whitespace-nowrap md:overflow-visible">{profile.name}</div>
            <div className="flex items-center gap-2 mt-1 text-[11px] md:text-base lg:text-lg font-bold uppercase" style={{ color: getBalanceColor(balance) }}>
               <span>{getBalanceLabel(balance)}</span>
               <span className="text-white/20">•</span>
@@ -1331,8 +1331,8 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-10 pr-2 pb-12">
               <section className="space-y-4">
-                <h3 className="text-[#ffd600] font-black uppercase text-sm border-b border-white/10 pb-1">{t('help_core_title')}</h3>
-                <p className="text-slate-300 text-sm leading-relaxed">{t('help_core_desc')}</p>
+                <h3 className="text-[#ffd600] font-black uppercase text-lg border-b border-white/10 pb-1">{t('help_core_title')}</h3>
+                <p className="text-slate-300 text-lg leading-relaxed font-medium">{t('help_core_desc')}</p>
                 <div className="grid gap-3">
                   <HelpCard color={COLORS.MOTOR} title={t('toggle_dvig')} desc={t('help_motor_desc')} />
                   <HelpCard color={COLORS.PHYSICAL} title={t('toggle_phys')} desc={t('help_phys_desc')} />
@@ -1342,7 +1342,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               </section>
 
               <section className="space-y-4">
-                <h3 className="text-[#ffd600] font-black uppercase text-sm border-b border-white/10 pb-1">{t('help_levels_title')}</h3>
+                <h3 className="text-[#ffd600] font-black uppercase text-lg border-b border-white/10 pb-1">{t('help_levels_title')}</h3>
                 <div className="space-y-2">
                    {[
                      { icon: <CriticalLevelIcon />, color: '#44aa00', label: 'legend_crit', descKey: 'help_crit_full' },
@@ -1354,8 +1354,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                     <div key={lvl.label} className="bg-white/5 p-4 rounded-xl border-l-4 flex gap-4" style={{ borderColor: lvl.color }}>
                       <div className="w-12 h-12 shrink-0">{lvl.icon}</div>
                       <div>
-                        <div className="text-[10px] font-black mb-1 uppercase" style={{ color: lvl.color }}>{t(lvl.label)}</div>
-                        <p className="text-xs text-slate-300 leading-snug">{t(lvl.descKey)}</p>
+                        <div className="text-[14px] font-black mb-1 uppercase" style={{ color: lvl.color }}>{t(lvl.label)}</div>
+                        <p className="text-base text-slate-300 leading-snug">{t(lvl.descKey)}</p>
                       </div>
                     </div>
                    ))}
@@ -1363,81 +1363,92 @@ const Dashboard: React.FC<DashboardProps> = ({
               </section>
 
               <section className="space-y-4">
-                <h3 className="text-[#ffd600] font-black uppercase text-sm border-b border-white/10 pb-1">{t('help_risk_title')}</h3>
-                <div className="bg-[#cc0000]/10 border border-[#cc0000]/30 p-5 rounded-xl flex gap-4 items-start relative overflow-hidden">
-                  <span className="text-3xl relative z-10">⚡</span>
-                  <p className="text-xs text-slate-200 italic leading-relaxed relative z-10">{t('help_risk_desc')}</p>
-                </div>
-              </section>
-
-              <section className="space-y-4">
-                <h3 className="text-[#ffd600] font-black uppercase text-sm border-b border-white/10 pb-1">{t('help_arena_title')}</h3>
+                <h3 className="text-[#ffd600] font-black uppercase text-lg border-b border-white/10 pb-1">{t('help_risk_title')}</h3>
                 <div className="space-y-3">
-                   <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-xs text-slate-300 italic">{t('help_arena_total_desc')}</div>
-                   <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-xs text-slate-300 italic">{t('help_arena_basic_desc')}</div>
-                   <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-xs text-slate-300 italic">{t('help_arena_reactive_desc')}</div>
+                  {[
+                    { icon: '⚡', label: 'risk_low', desc: 'risk_low_desc' },
+                    { icon: '⚡⚡', label: 'risk_medium', desc: 'risk_medium_desc' },
+                    { icon: '⚡⚡⚡', label: 'risk_high', desc: 'risk_high_desc' }
+                  ].map(rk => (
+                    <div key={rk.label} className="bg-[#cc0000]/10 border border-[#cc0000]/30 p-5 rounded-xl flex gap-5 items-center relative overflow-hidden">
+                      <span className="text-3xl relative z-10 min-w-[3rem] text-center">{rk.icon}</span>
+                      <div className="relative z-10">
+                        <p className="text-base text-slate-100 font-black uppercase tracking-wider">{t(rk.label)}</p>
+                        <p className="text-sm text-slate-400 mt-1 italic leading-tight">{t(rk.desc)}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </section>
 
               <section className="space-y-4">
-                <h3 className="text-[#ffd600] font-black uppercase text-sm border-b border-white/10 pb-1">{t('help_balance_title')}</h3>
-                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-xs text-slate-300 leading-relaxed">
+                <h3 className="text-[#ffd600] font-black uppercase text-lg border-b border-white/10 pb-1">{t('help_arena_title')}</h3>
+                <div className="space-y-3">
+                   <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 italic">{t('help_arena_total_desc')}</div>
+                   <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 italic">{t('help_arena_basic_desc')}</div>
+                   <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 italic">{t('help_arena_reactive_desc')}</div>
+                </div>
+              </section>
+
+              <section className="space-y-4">
+                <h3 className="text-[#ffd600] font-black uppercase text-lg border-b border-white/10 pb-1">{t('help_balance_title')}</h3>
+                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 leading-relaxed font-medium">
                    {t('help_balance_desc')}
                 </div>
               </section>
 
               <section className="space-y-4">
-                <h3 className="text-[#ffd600] font-black uppercase text-sm border-b border-white/10 pb-1">{t('help_activities_title')}</h3>
-                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-xs text-slate-300 leading-relaxed italic">
+                <h3 className="text-[#ffd600] font-black uppercase text-lg border-b border-white/10 pb-1">{t('help_activities_title')}</h3>
+                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 leading-relaxed italic">
                    {t('help_activities_desc')}
                 </div>
               </section>
 
               <section className="space-y-4">
-                <h3 className="text-[#ffd600] font-black uppercase text-sm border-b border-white/10 pb-1">{t('help_maps_title')}</h3>
-                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-xs text-slate-300 space-y-2">
+                <h3 className="text-[#ffd600] font-black uppercase text-lg border-b border-white/10 pb-1">{t('help_maps_title')}</h3>
+                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 space-y-2">
                    <p className="italic">{t('help_maps_desc')}</p>
                    <div className="grid grid-cols-2 gap-2 mt-2">
                       {['Micro 3.5 (0.32s)', 'Micro 3 (2.25s)', 'Micro 2 (31s)', 'Micro 1 (7m)', 'Zero (1.7h)', 'Macro 1 (24h)', 'Macro 2 (14d)', 'Macro 3 (196d)', 'Macro 3.5 (1372d)'].map(m => (
-                        <div key={m} className="text-[9px] bg-black/50 p-1 text-center border border-white/5 rounded">{m}</div>
+                        <div key={m} className="text-[12px] bg-black/50 p-1.5 text-center border border-white/5 rounded font-mono">{m}</div>
                       ))}
                    </div>
                 </div>
               </section>
 
               <section className="space-y-4">
-                <h3 className="text-[#ffd600] font-black uppercase text-sm border-b border-white/10 pb-1">{t('help_compat_title')}</h3>
+                <h3 className="text-[#ffd600] font-black uppercase text-lg border-b border-white/10 pb-1">{t('help_compat_title')}</h3>
                 <div className="bg-white/5 p-4 rounded-xl border border-white/10 space-y-3">
-                   <p className="text-xs text-slate-300"><span className="text-cyan-400 font-bold uppercase">{t('resonant')}:</span> {t('help_compat_resonant_desc')}</p>
-                   <p className="text-xs text-slate-300"><span className="text-yellow-400 font-bold uppercase">{t('optimal_compat')}:</span> {t('help_compat_optimal_desc')}</p>
-                   <p className="text-xs text-slate-300"><span className="text-red-500 font-bold uppercase">{t('polar')}:</span> {t('help_compat_polar_desc')}</p>
+                   <p className="text-base text-slate-300"><span className="text-cyan-400 font-bold uppercase tracking-wider text-[13px]">{t('resonant')}:</span> {t('help_compat_resonant_desc')}</p>
+                   <p className="text-base text-slate-300"><span className="text-yellow-400 font-bold uppercase tracking-wider text-[13px]">{t('optimal_compat')}:</span> {t('help_compat_optimal_desc')}</p>
+                   <p className="text-base text-slate-300"><span className="text-red-500 font-bold uppercase tracking-wider text-[13px]">{t('polar')}:</span> {t('help_compat_polar_desc')}</p>
                 </div>
               </section>
 
               <section className="space-y-4">
-                <h3 className="text-[#ffd600] font-black uppercase text-sm border-b border-white/10 pb-1">{t('help_calendar_year_title')}</h3>
-                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-xs text-slate-300 leading-relaxed italic">
+                <h3 className="text-[#ffd600] font-black uppercase text-lg border-b border-white/10 pb-1">{t('help_calendar_year_title')}</h3>
+                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 leading-relaxed italic">
                    {t('help_calendar_year_desc')}
                 </div>
               </section>
 
               <section className="space-y-4">
-                <h3 className="text-[#ffd600] font-black uppercase text-sm border-b border-white/10 pb-1">{t('help_solar_title')}</h3>
-                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-xs text-slate-300 leading-relaxed italic">
+                <h3 className="text-[#ffd600] font-black uppercase text-lg border-b border-white/10 pb-1">{t('help_solar_title')}</h3>
+                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 leading-relaxed italic">
                    {t('help_solar_desc')}
                 </div>
               </section>
 
               <section className="space-y-4">
-                <h3 className="text-[#ffd600] font-black uppercase text-sm border-b border-white/10 pb-1">{t('help_cosmic_energy_title')}</h3>
-                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-xs text-slate-300 leading-relaxed italic">
+                <h3 className="text-[#ffd600] font-black uppercase text-lg border-b border-white/10 pb-1">{t('help_cosmic_energy_title')}</h3>
+                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 leading-relaxed italic">
                    {t('help_cosmic_energy_desc')}
                 </div>
               </section>
 
               <section className="space-y-4">
-                <h3 className="text-[#ffd600] font-black uppercase text-sm border-b border-white/10 pb-1">{t('help_astro_events_title')}</h3>
-                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-xs text-slate-300 leading-relaxed italic">
+                <h3 className="text-[#ffd600] font-black uppercase text-lg border-b border-white/10 pb-1">{t('help_astro_events_title')}</h3>
+                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 leading-relaxed italic">
                    {t('help_astro_events_desc')}
                 </div>
               </section>
@@ -1705,7 +1716,7 @@ const ArenaItem: React.FC<ArenaItemProps> = ({ p, idx, t, onRemove, isExpanded, 
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <div className="text-lg font-black uppercase text-white truncate">{p.name}</div>
+              <div className="text-lg font-black uppercase text-white truncate md:whitespace-nowrap md:max-w-none tracking-wider">{p.name}</div>
               {p.isGroup && <Folder className={`w-3 h-3 text-[#33b5e5] inline-block mr-1 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />}
             </div>
             {p.isGroup ? (
@@ -1726,7 +1737,7 @@ const ArenaItem: React.FC<ArenaItemProps> = ({ p, idx, t, onRemove, isExpanded, 
             <div className="text-3xl font-black tabular-nums tracking-tighter" style={{ color: getBalanceColor(p.score) }}>
               {p.score}%
             </div>
-            <div className="text-[9px] font-bold uppercase text-slate-500 tracking-widest">{t('balance')}</div>
+            <div className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">{t('balance')}</div>
           </div>
           {idx === 0 && (
             <div className="absolute -right-4 -top-4 opacity-10 text-8xl text-fuchsia-500 pointer-events-none">
@@ -1744,7 +1755,7 @@ const ArenaItem: React.FC<ArenaItemProps> = ({ p, idx, t, onRemove, isExpanded, 
                     {getBalanceEmoji(m.score)}
                   </div>
                   <div>
-                    <div className="text-[11px] font-black uppercase text-slate-300 truncate max-w-[150px]">{m.name}</div>
+                    <div className="text-[11px] font-black uppercase text-slate-300 truncate max-w-[180px] md:max-w-none md:whitespace-nowrap tracking-wider">{m.name}</div>
                     <div className="text-[8px] text-slate-600 font-bold">{DateTime.fromISO(m.birthDate).toFormat('dd.MM.yyyy')}</div>
                   </div>
                 </div>
@@ -1779,9 +1790,9 @@ const ArenaItem: React.FC<ArenaItemProps> = ({ p, idx, t, onRemove, isExpanded, 
 };
 
 const HelpCard = ({ color, title, desc }: { color: string, title: string, desc: string }) => (
-  <div className="bg-white/5 border border-white/10 p-3 rounded-xl flex flex-col gap-1" style={{ borderLeftColor: color, borderLeftWidth: '4px' }}>
-    <span className="text-[10px] font-black tracking-widest uppercase" style={{ color }}>{title}</span>
-    <p className="text-[11px] text-slate-400 leading-snug">{desc}</p>
+  <div className="bg-white/5 border border-white/10 p-4 rounded-xl flex flex-col gap-1" style={{ borderLeftColor: color, borderLeftWidth: '4px' }}>
+    <span className="text-[12px] font-black tracking-widest uppercase" style={{ color }}>{title}</span>
+    <p className="text-sm text-slate-400 leading-snug">{desc}</p>
   </div>
 );
 
@@ -1919,7 +1930,7 @@ const CosmicEnergyChart = ({ targetDate, lang }: { targetDate: DateTime, lang: s
   const activeLegend = isDay ? legend : legend.filter(l => l.key !== 'sun');
 
   return (
-    <div className="mt-6 bg-[#111] border border-white/10 rounded-xl p-3 flex flex-col gap-3 relative z-10 box-border w-full">
+    <div className="mt-3 bg-[#111] border border-white/10 rounded-xl p-3 flex flex-col gap-3 relative z-10 box-border w-full">
        <div className="flex justify-between items-center flex-wrap gap-2">
          <h3 className="text-sm font-black text-white tracking-widest uppercase">{envLabel}</h3>
          <div className="flex bg-black rounded p-0.5 border border-white/10">

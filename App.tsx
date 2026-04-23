@@ -393,16 +393,16 @@ const App: React.FC = () => {
                 <path fill="#7A3DD9" d="M3589.2 1739c-26.58,128.77 131.79,313.59 286.95,376.47 361.88,146.64 756.06,-235.22 578.82,-629.58 -75.53,-168.05 -289.81,-292.02 -398.74,-262 -30.85,72.31 -21.81,321.3 -284.48,452.37 -65.77,32.82 -119.66,37.82 -182.55,62.74z"/>
               </svg>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-0 text-left">
               <div className="relative inline-block">
-                  <h1 className="text-4xl font-normal text-[#33b5e5] tracking-tighter uppercase drop-shadow-[0_0_10px_rgba(51,181,229,0.3)]">RITMXOID</h1>
-                  <span className="absolute -top-2 -right-10 text-[9px] font-normal text-[#33b5e5] opacity-50 tracking-widest">v.3.5.11</span>
+                  <h1 className="text-5xl font-black text-[#33b5e5] tracking-tighter uppercase drop-shadow-[0_0_15px_rgba(51,181,229,0.4)]" style={{ fontFamily: 'Calibri, Candara, Segoe, "Segoe UI", Optima, Arial, sans-serif' }}>RITMXOID</h1>
+                  <span className="absolute -top-3 right-0 text-[11px] font-black text-[#33b5e5] opacity-40">v.3.5.12</span>
               </div>
-              <p className="text-slate-400 uppercase tracking-[0.2em] text-[10px] font-normal opacity-80">Rhythmic Analytics Core</p>
+              <p className="text-slate-400 uppercase tracking-[0.02em] text-[10.5px] font-black opacity-70 block -mt-1" style={{ fontFamily: 'Calibri, Candara, Segoe, "Segoe UI", Optima, Arial, sans-serif' }}>biorhythmic analytics core.</p>
             </div>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-6 mb-4">
             <div className="space-y-2">
               <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Username</label>
               <div className="relative group">
@@ -500,7 +500,6 @@ const App: React.FC = () => {
             <Swords className="w-4 h-4" />
             Switch to SportPROphet
           </button>
-
           <p className="text-center text-[9px] text-slate-500 font-normal uppercase tracking-widest leading-relaxed mt-6">
             All data is stored locally in your browser, but it is highly recommended to save the contact file on your device.
           </p>

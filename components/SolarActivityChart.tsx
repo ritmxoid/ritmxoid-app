@@ -47,6 +47,7 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, lang = '
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [timer, setTimer] = useState(0);
+  const [lastUpdate, setLastUpdate] = useState<string | null>(null);
 
   // Timer logic
   useEffect(() => {
@@ -135,9 +136,12 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, lang = '
                       ctx.textAlign = 'left';
                       ctx.textBaseline = 'top';
                       
-                      const month = dt.toFormat('LLL', { locale: lang }).toLowerCase().replace('.', '');
-                      const capitalizedMonth = month.charAt(0).toUpperCase() + month.slice(1);
-                      const text = `${capitalizedMonth}.${dt.day}`;
+                      const monthString = dt.toFormat('LLL', { locale: lang }).toLowerCase().replace('.', '');
+                      const capitalizedMonth = monthString.charAt(0).toUpperCase() + monthString.slice(1);
+                      
+                      // Smart label hiding: only show date number if at edges to prevent clipping/clutter
+                      const isAtEdges = xPos < 35 || xPos > chart.width - 45;
+                      const text = isAtEdges ? `${dt.day}` : `${capitalizedMonth}.${dt.day}`;
                       
                       ctx.fillText(text, xPos + 2, bottom + 4);
                    }
@@ -324,6 +328,11 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, lang = '
           if (onCurrentIndexChange && data.values.length > 0) {
             onCurrentIndexChange(data.values[data.values.length - 1]);
           }
+          
+          // Set last update time
+          const dt = DateTime.fromMillis(data.timestamp).setZone('utc+5');
+          setLastUpdate(dt.toFormat('HH:mm'));
+
           initChart(data.labels, data.values, false);
           setLoading(false);
           setError(false);
@@ -338,9 +347,11 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, lang = '
     };
 
     fetchData();
+    const interval = setInterval(fetchData, 60 * 60 * 1000); // Refresh every hour
 
     return () => {
       isActive = false;
+      clearInterval(interval);
     };
   }, [initChart, onCurrentIndexChange]);
 
@@ -348,9 +359,9 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, lang = '
     <div className="w-full h-60 bg-black/40 rounded-xl border border-white/5 p-2 relative flex flex-col">
       {/* Title - Lifted z-index to be above loading overlay */}
       <div className="absolute top-2 left-3 flex items-center gap-2 z-30 pointer-events-none">
-        <div className={`w-1.5 h-1.5 rounded-full ${error ? 'bg-red-500' : 'bg-[#33b5e5] shadow-[0_0_5px_#33b5e5]'}`} />
-        <span className={`text-[9px] font-bold uppercase tracking-widest ${error ? 'text-red-500' : 'text-[#33b5e5]'}`}>
-            {title}
+        <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_5px_rgba(255,255,255,0.5)]" />
+        <span className="text-[10px] font-bold uppercase tracking-widest text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]">
+          {title}
         </span>
       </div>
 

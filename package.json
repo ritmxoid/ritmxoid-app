@@ -6,7 +6,6 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:offline": "vite build --config vite.offline.config.ts",
     "preview": "vite preview",
     "lint": "tsc --noEmit"
   },

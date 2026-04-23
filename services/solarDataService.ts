@@ -7,30 +7,36 @@ export interface SolarData {
 }
 
 const CACHE_KEY = 'ritmxoid_solar_cache';
+const CACHE_TTL = 3 * 60 * 60 * 1000; // 3 hours
 
 class SolarDataService {
   private cachedData: SolarData | null = null;
   private fetchPromise: Promise<SolarData> | null = null;
 
   async getSolarData(): Promise<SolarData> {
+    const now = Date.now();
+
     // 1. Check memory cache
-    if (this.cachedData) {
+    if (this.cachedData && (now - this.cachedData.timestamp) < CACHE_TTL) {
       return this.cachedData;
     }
 
-    // 2. Check sessionStorage (persists across refreshes, but not across closing/reopening browser)
+    // 2. Check sessionStorage
     const saved = sessionStorage.getItem(CACHE_KEY);
     if (saved) {
       try {
         const parsed = JSON.parse(saved) as SolarData;
-        this.cachedData = parsed;
-        return parsed;
+        // Check if cached data is still fresh
+        if (now - parsed.timestamp < CACHE_TTL) {
+          this.cachedData = parsed;
+          return parsed;
+        }
       } catch (e) {
         console.error('Failed to parse solar cache', e);
       }
     }
 
-    // 3. Fetch if not cached
+    // 3. Fetch if not cached or expired
     if (this.fetchPromise) return this.fetchPromise;
 
     this.fetchPromise = this.fetchNewData();
@@ -45,29 +51,33 @@ class SolarDataService {
   }
 
   private async fetchNewData(): Promise<SolarData> {
-    // If we know we are offline, don't even try to avoid blocking the UI
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
-      throw new Error('System is offline');
-    }
-
     const targetUrl = 'https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json';
+    
+    // We try to fetch even if navigator says offline, 
+    // because some environments report it incorrectly for local files.
+    // But we use a shorter timeout if we think we are offline.
+    const isReportedOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+
     const endpoints = [
       `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`,
       `https://corsproxy.io/?${targetUrl}`, 
-      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`
+      `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`,
+      targetUrl // Try direct fetch as well, some local environments might allow it
     ];
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 6000); // 6s global timeout
 
     for (const url of endpoints) {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), isReportedOffline ? 3000 : 8000);
+
         const response = await fetch(url, {
           method: 'GET',
           cache: 'no-store',
           headers: { 'Accept': 'application/json' },
           signal: controller.signal
         });
+
+        clearTimeout(timeoutId);
 
         if (response.ok) {
           const json = await response.json();
