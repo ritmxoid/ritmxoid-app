@@ -8,15 +8,15 @@ import superIcon from '../public/icons/super.svg';
 import { 
   calculateDaysGone, calculateFullBalance, calculateBasicBalance, calculateReactiveBalance, calculateSpecificRhythms, getRiskLevel, 
   COLORS, ACTIVITY_CONFIG, getActivitiesPack, MAP_NAMES, calculateMapAngles, calculateSecondsGone,
-  getBalanceColor, calculateMoonAngle, calculateSunAngle, calculateEarthAngle
+  getBalanceColor, calculateMoonAngle, calculateSunAngle, calculateEarthAngle, getAstroEvents
 } from '../core/engine';
-import { TRANSLATIONS as GLOBAL_TRANSLATIONS, LANGUAGES as GLOBAL_LANGUAGES, getT } from '../core/i18n';
+import { TRANSLATIONS as GLOBAL_TRANSLATIONS, LANGUAGES as GLOBAL_LANGUAGES, getT, getInitialLanguage } from '../core/i18n';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { 
   Check, Swords, Users, FolderPlus, X, Upload, Download, PenTool, Trash2, 
   ChevronUp, ChevronDown, CalendarCheck, Globe, HelpCircle, Power, 
   AlertTriangle, Wand2, Folder, FolderOpen, ChevronLeft, ChevronRight,
-  FolderMinus, UserMinus, Crown
+  FolderMinus, UserMinus, UserPlus, Crown
 } from 'lucide-react';
 import { Profile } from '../types';
 import { logEvent, logPageView } from '../core/analytics';
@@ -37,7 +37,10 @@ interface DashboardProps {
   onReset: () => void;
   onImportProfiles: (profiles: Profile[]) => void;
   onOpenCompatibility?: (date1?: string, date2?: string, lang?: string) => void;
+  onOpenSport?: () => void;
   onLogout: () => void;
+  lang: string;
+  onLanguageChange: (lang: string) => void;
 }
 
 type Tab = 'PROFILES' | 'BALANCE' | 'ACTIVITIES' | 'CALENDAR' | 'MAPS';
@@ -45,7 +48,8 @@ type ListMode = 'NONE' | 'EDIT' | 'DELETE' | 'SELECT';
 type ArenaMode = 'TOTAL' | 'BASIC' | 'REACTIVE';
 
 const Dashboard: React.FC<DashboardProps> = ({ 
-  profile, allProfiles, onAddProfile, onAddTeam, onUpdateProfile, onDeleteProfile, onGroupProfiles, onRenameGroup, onUngroup, onMoveToGroup, onSelectProfile, onReset, onImportProfiles, onOpenCompatibility, onLogout 
+  profile, allProfiles, onAddProfile, onAddTeam, onUpdateProfile, onDeleteProfile, onGroupProfiles, onRenameGroup, onUngroup, onMoveToGroup, onSelectProfile, onReset, onImportProfiles, onOpenCompatibility, onOpenSport, onLogout,
+  lang, onLanguageChange
 }) => {
   const APP_ZONE = 'utc+5';
 
@@ -55,7 +59,6 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [visibleRhythms, setVisibleRhythms] = useState({ motor: true, physical: true, sensory: true, analytical: true });
   const [selectedMapIdx, setSelectedMapIdx] = useState(3);
   const [expandedActivity, setExpandedActivity] = useState<string | null>(null);
-  const [lang, setLang] = useState(() => localStorage.getItem('ritmxoid_lang') || 'ru');
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
   const [isHelpOpen, setIsHelpOpen] = useState(false);
   
@@ -278,22 +281,26 @@ const Dashboard: React.FC<DashboardProps> = ({
           background: #fff; 
           color: #000; 
           margin: 0; 
-          padding: 8px; 
+          padding: 8px 16px; 
           height: 100vh; 
           display: flex;
           flex-direction: column;
         }
         
         .header { 
-          text-align: center; 
+          display: flex; 
+          align-items: center; 
+          justify-content: space-between; 
           margin-bottom: 8px; 
           border-bottom: 3px solid ${accentColor}; 
-          padding-bottom: 4px;
+          padding-bottom: 8px;
           flex-shrink: 0;
         }
-        .header h1 { margin: 0; text-transform: uppercase; font-size: 20px; font-weight: 400; letter-spacing: -1px; color: ${accentColor}; line-height: 1.1; }
-        .header h2 { margin: 0; font-size: 14px; font-weight: 400; color: #444; text-transform: uppercase; }
-        .header svg { height: 30px; width: 30px; margin-bottom: 2px; }
+        .header-left { display: flex; align-items: center; gap: 10px; }
+        .header h1 { margin: 0; text-transform: uppercase; font-size: 30px; font-weight: bold; letter-spacing: -1px; color: ${accentColor}; line-height: 1; }
+        .header h2 { margin: 0; font-size: 16px; font-weight: bold; color: #444; text-transform: uppercase; line-height: 1; }
+        .header svg { height: 30px; width: 30px; margin: 0; display: block; }
+        .header-right { font-size: 12px; font-weight: bold; color: #888; }
         
         /* Сетка 3 колонки на 4 ряда */
         .year-grid { 
@@ -306,16 +313,18 @@ const Dashboard: React.FC<DashboardProps> = ({
         }
         
         .month-box { border: 1px solid ${accentColor}; display: flex; flex-direction: column; background: #fff; overflow: hidden; }
-        .month-name { text-align: center; font-weight: 400; text-transform: uppercase; font-size: 10px; padding: 2px; background: ${accentColor}; color: #fff; }
+        .month-name { text-align: center; font-weight: bold; text-transform: uppercase; font-size: 10px; padding: 2px; background: ${accentColor}; color: #fff; }
         
-        .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); flex: 1; background: #eee; gap: 1px; }
-        .day-header { text-align: center; font-size: 9px; font-weight: 400; color: ${accentColor}; padding: 1px 0; background: #f8f8f8; text-transform: uppercase; border-bottom: 1px solid #ddd; }
+        .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-template-rows: max-content; grid-auto-rows: 1fr; flex: 1; background: #eee; gap: 1px; }
+        .day-header { text-align: center; font-size: 9px; font-weight: bold; color: ${accentColor}; padding: 1px 0; background: #f8f8f8; text-transform: uppercase; border-bottom: 1px solid #ddd; }
         
-        .day-cell { position: relative; background: #fff; display: flex; align-items: stretch; justify-content: stretch; overflow: hidden; }
-        .day-num { position: absolute; top: 1px; left: 1px; font-size: 12px; font-weight: 400; color: #333; line-height: 1; z-index: 5; }
+        .day-cell { position: relative; background: #fff; overflow: hidden; }
+        .top-left-content { position: absolute; top: 1px; left: 1px; display: flex; flex-direction: column; align-items: flex-start; z-index: 5; gap: 3px; }
+        .day-num { font-size: 11px; font-weight: bold; color: #333; line-height: 0.8; margin: 0; padding: 0; display: block; }
+        .astro-icons { display: flex; gap: 1px; font-size: 9px; line-height: 1; margin: 0; padding: 0; }
         
-        .risk-container { position: absolute; top: 0; right: 0; display: flex; flex-direction: column; align-items: center; gap: 0; z-index: 4; width: 10px; }
-        .risk-mark { font-size: 8px; color: #ff0000; font-weight: 400; text-shadow: 1px 1px 0px #fff; line-height: 0.7; }
+        .risk-container { position: absolute; top: 1px; right: 1px; display: flex; flex-direction: column; align-items: center; gap: 0; z-index: 4; width: 10px; }
+        .risk-mark { font-size: 8px; color: #ff0000; font-weight: 400; text-shadow: 1px 1px 0px #fff; line-height: 0.8; }
         
         .footer {
           margin-top: 8px;
@@ -347,15 +356,18 @@ const Dashboard: React.FC<DashboardProps> = ({
     </head>
     <body>
       <div class="header">
-        <svg viewBox="2500 600 2100 2200" xmlns="http://www.w3.org/2000/svg">
-          <polygon fill="#FDFDFD" points="2587.46,2701.55 4560.18,2701.55 4560.18,694.95 2587.46,694.95 "/>
-          <path fill="#2893E3" d="M3071.24 1227.95c77.21,36.66 394.14,6.44 500.67,413.85 27.98,106.99 246.44,-45.6 286.14,-82.73 30.35,-28.37 69.21,-85.54 94.32,-134.48 184.52,-359.58 -201.17,-799.39 -607.75,-616.03 -146.05,65.87 -292.78,240.77 -273.38,419.39z"/>
-          <path fill="#FF8F19" d="M4050.99 2202.38c-54.99,-24.24 -316.95,-15.04 -452.91,-265.9 -37.76,-69.68 -36.83,-119.55 -64.11,-181.11 -88.32,-17.74 -196,55.58 -243.26,91.71 -131.25,100.38 -201.88,308.81 -147.79,484.98 25.28,82.35 83.15,172.49 129.24,209.5 224.37,180.21 532.87,158.28 698.49,-82.49 40.24,-58.51 92.8,-162.9 80.34,-256.69z"/>
-          <path fill="#A41213" d="M3071.01 2203.53c37.86,-207.93 84.4,-350.26 273.9,-446.34 73.38,-37.21 108.56,-38.88 184.13,-60.35 17.16,-131.38 -120.38,-317.05 -284.86,-380.11 -510.52,-195.72 -877.19,497.76 -426.68,807.9 54.12,37.26 171.94,96.91 253.51,78.9z"/>
-          <path fill="#7A3DD9" d="M3589.2 1739c-26.58,128.77 131.79,313.59 286.95,376.47 361.88,146.64 756.06,-235.22 578.82,-629.58 -75.53,-168.05 -289.81,-292.02 -398.74,-262 -30.85,72.31 -21.81,321.3 -284.48,452.37 -65.77,32.82 -119.66,37.82 -182.55,62.74z"/>
-        </svg>
-        <h1>RITMXOID ${year}</h1>
-        <h2>${profile.name.toUpperCase()}</h2>
+        <div class="header-left">
+          <svg viewBox="2500 600 2100 2200" xmlns="http://www.w3.org/2000/svg">
+            <polygon fill="#FDFDFD" points="2587.46,2701.55 4560.18,2701.55 4560.18,694.95 2587.46,694.95 "/>
+            <path fill="#2893E3" d="M3071.24 1227.95c77.21,36.66 394.14,6.44 500.67,413.85 27.98,106.99 246.44,-45.6 286.14,-82.73 30.35,-28.37 69.21,-85.54 94.32,-134.48 184.52,-359.58 -201.17,-799.39 -607.75,-616.03 -146.05,65.87 -292.78,240.77 -273.38,419.39z"/>
+            <path fill="#FF8F19" d="M4050.99 2202.38c-54.99,-24.24 -316.95,-15.04 -452.91,-265.9 -37.76,-69.68 -36.83,-119.55 -64.11,-181.11 -88.32,-17.74 -196,55.58 -243.26,91.71 -131.25,100.38 -201.88,308.81 -147.79,484.98 25.28,82.35 83.15,172.49 129.24,209.5 224.37,180.21 532.87,158.28 698.49,-82.49 40.24,-58.51 92.8,-162.9 80.34,-256.69z"/>
+            <path fill="#A41213" d="M3071.01 2203.53c37.86,-207.93 84.4,-350.26 273.9,-446.34 73.38,-37.21 108.56,-38.88 184.13,-60.35 17.16,-131.38 -120.38,-317.05 -284.86,-380.11 -510.52,-195.72 -877.19,497.76 -426.68,807.9 54.12,37.26 171.94,96.91 253.51,78.9z"/>
+            <path fill="#7A3DD9" d="M3589.2 1739c-26.58,128.77 131.79,313.59 286.95,376.47 361.88,146.64 756.06,-235.22 578.82,-629.58 -75.53,-168.05 -289.81,-292.02 -398.74,-262 -30.85,72.31 -21.81,321.3 -284.48,452.37 -65.77,32.82 -119.66,37.82 -182.55,62.74z"/>
+          </svg>
+          <h1>RITMXOID ${year}</h1>
+          <h2>${profile.name.toUpperCase()}</h2>
+        </div>
+        <div class="header-right">www.ritmxoid.com</div>
       </div>
       <div class="year-grid">
     `;
@@ -385,6 +397,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         const bal = calculateFullBalance(dg);
         const risk = getRiskLevel(dg, currentDate);
         const color = getBalanceColor(bal);
+        const astroEvts = getAstroEvents(currentDate);
         
         let riskHtml = '';
         if (risk >= 25) {
@@ -394,9 +407,19 @@ const Dashboard: React.FC<DashboardProps> = ({
           riskHtml += `</div>`;
         }
 
+        let astroHtml = '';
+        if (astroEvts.length > 0) {
+          astroHtml = `<div class="astro-icons">`;
+          astroEvts.forEach(e => astroHtml += `<span>${e.icon}</span>`);
+          astroHtml += `</div>`;
+        }
+
         htmlContent += `
           <div class="day-cell" style="background-color: ${color}66;">
-            <span class="day-num">${d}</span>
+            <div class="top-left-content">
+              <span class="day-num">${d}</span>
+              ${astroHtml}
+            </div>
             ${riskHtml}
           </div>
         `;
@@ -420,11 +443,14 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
          </div>
          <div class="legend-section" style="align-items: flex-end;">
-            <div class="legend-title">${t('help_risk_title')}</div>
+            <div class="legend-title">${t('help_risk_title')} & ${t('help_astro_events_title')}</div>
             <div class="legend-row">
                <div class="legend-item"><span class="risk-icon-demo">⚡</span> 1</div>
                <div class="legend-item"><span class="risk-icon-demo">⚡⚡</span> 2</div>
                <div class="legend-item"><span class="risk-icon-demo">⚡⚡⚡</span> 3</div>
+               <div class="legend-item"><span class="risk-icon-demo">☀️/❄️</span> ${t('solstice')}</div>
+               <div class="legend-item"><span class="risk-icon-demo">🌱/🍂</span> ${t('equinox')}</div>
+               <div class="legend-item"><span class="risk-icon-demo">🌑🌓🌕🌗</span> ${t('moon_phases')}</div>
             </div>
          </div>
       </div>
@@ -498,8 +524,15 @@ const Dashboard: React.FC<DashboardProps> = ({
   }, [totalEffectiveSelected, allProfiles, targetDate]);
 
   const arenaData = useMemo(() => {
-    if (!showArenaDialog) return [];
-    const data: any[] = [];
+    if (!showArenaDialog) return { items: [], minScore: 0, maxScore: 0 };
+    const items: any[] = [];
+    let minS = Infinity;
+    let maxS = -Infinity;
+
+    const processScore = (s: number) => {
+      if (s < minS) minS = s;
+      if (s > maxS) maxS = s;
+    };
 
     selectedGroupNames.forEach(gn => {
       const members = allProfiles.filter(p => p.teamName === gn);
@@ -515,16 +548,20 @@ const Dashboard: React.FC<DashboardProps> = ({
         else if (arenaMode === 'REACTIVE') mScore = calculateReactiveBalance(mDays);
         sumScore += mScore;
         const mRisk = getRiskLevel(mDays, targetDate);
+        processScore(mScore);
         return { ...m, score: mScore, risk: mRisk };
       }).sort((a, b) => b.score - a.score);
 
-      data.push({
+      const groupAvg = Math.round(sumScore / members.length);
+      processScore(groupAvg);
+
+      items.push({
         id: `group-${gn}`,
         isGroup: true,
         name: gn,
         memberCount: members.length,
         members: memberDetails,
-        score: Math.round(sumScore / members.length)
+        score: groupAvg
       });
     });
 
@@ -539,10 +576,16 @@ const Dashboard: React.FC<DashboardProps> = ({
       else if (arenaMode === 'BASIC') score = calculateBasicBalance(pDays);
       else if (arenaMode === 'REACTIVE') score = calculateReactiveBalance(pDays);
       
-      data.push({ ...p, score, isGroup: false });
+      processScore(score);
+      items.push({ ...p, score, isGroup: false });
     });
 
-    return data.sort((a, b) => b.score - a.score);
+    if (items.length === 0) return { items: [], minScore: 0, maxScore: 0 };
+    return { 
+      items: items.sort((a, b) => b.score - a.score),
+      minScore: minS === Infinity ? 0 : minS,
+      maxScore: maxS === -Infinity ? 0 : maxS
+    };
   }, [showArenaDialog, selectedGroupNames, selectedIds, allProfiles, arenaMode, targetDate]);
 
   const renderProfileItem = (p: any) => {
@@ -612,7 +655,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
         <div className="flex-1 min-w-0 pointer-events-none">
           <div className="flex items-center gap-2">
-            <span className="text-lg font-bold uppercase tracking-wider text-white truncate max-w-[180px] md:max-w-none md:whitespace-nowrap">{p.name}</span>
+            <span className="text-lg font-bold uppercase tracking-wider text-white truncate md:whitespace-normal">{p.name}</span>
             {p.isMaster && <span className="text-[9px] bg-[#33b5e5] text-black px-1 font-bold rounded">MASTER</span>}
           </div>
           <div className="text-xs text-slate-500 font-bold uppercase mt-0.5">{DateTime.fromISO(p.birthDate).toFormat('dd.MM.yyyy')}</div>
@@ -671,7 +714,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                         title={t('compatibility')} 
                         className="w-8 h-8 flex items-center justify-center bg-[#33b5e5] text-black border border-[#33b5e5] rounded-lg transition-all active:scale-95 shadow-[0_0_8px_#33b5e5]"
                       >
-                        <Users className="w-3 h-3" />
+                        <UserPlus className="w-3 h-3" />
                       </button>
                     )}
                   </>
@@ -919,88 +962,104 @@ const Dashboard: React.FC<DashboardProps> = ({
   );
 
   const renderBalance = () => (
-    <div className="p-4 space-y-4 h-full overflow-y-auto custom-scrollbar">
-      <div className="text-sm font-bold text-white uppercase tracking-wider">{t('passed')} <span className="ml-2 font-normal text-slate-400 tracking-normal">{timePassedString}</span></div>
-      
-      <div className="relative h-60 w-full border-b border-l border-white/20 flex items-end justify-between px-1 gap-[2px] overflow-hidden bg-black shadow-inner">
-        <div className="absolute inset-0 grid grid-rows-4 pointer-events-none">
-          {[90, 70, 50, 30].map(v => (
-            <div key={v} className="border-t border-white/5 w-full flex items-start">
-              <span className="text-[9px] text-slate-600 ml-1 mt-[-6px] font-bold">{v}</span>
-            </div>
+    <div className="flex flex-col h-full overflow-y-auto custom-scrollbar">
+      <div className="p-4 flex flex-col gap-4">
+        <div className="text-sm font-bold text-white uppercase tracking-wider">{t('passed')} <span className="ml-2 font-normal text-slate-400 tracking-normal">{timePassedString}</span></div>
+        
+        <div className="relative h-60 w-full border-b border-l border-white/20 flex items-end justify-between px-1 gap-[2px] overflow-hidden bg-black shadow-inner">
+          <div className="absolute inset-0 grid grid-rows-4 pointer-events-none">
+            {[90, 70, 50, 30].map(v => (
+              <div key={v} className="border-t border-white/5 w-full flex items-start">
+                <span className="text-[9px] text-slate-600 ml-1 mt-[-6px] font-bold">{v}</span>
+              </div>
+            ))}
+          </div>
+          {[...Array(selectedDaysMode)].map((_, i) => {
+            const offset = i - Math.floor(selectedDaysMode / 2);
+            const d = daysGone + offset;
+            const r = calculateSpecificRhythms(d);
+            const isToday = offset === 0;
+            
+            // Solar Impact Logic
+            const isSolarActive = solarKIndex >= 4;
+            const balanceVal = calculateFullBalance(d);
+            const isHammer = isSolarActive && isToday && balanceVal > 45;
+            const isMagnet = isSolarActive && isToday && balanceVal <= 45;
+
+            return (
+              <motion.div 
+                key={i} 
+                className={`flex-1 flex flex-col justify-end h-full min-w-[3px] relative ${isToday ? 'bg-white/10 z-10 shadow-[0_0_10px_rgba(51,181,229,0.3)]' : 'opacity-60'}`}
+                style={{ originY: 1 }}
+                animate={isHammer ? { scaleY: [1, 0.8, 1] } : isMagnet ? { scaleY: [1, 1.2, 1] } : { scaleY: 1 }}
+                transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut" }}
+              >
+                {isToday && (
+                  <div className={`absolute inset-0 border-x border-t border-[#33b5e5] ${isSolarActive ? 'opacity-80' : 'opacity-100'}`} />
+                )}
+                
+                {/* Crazy Solar Sun */}
+                {(isHammer || isMagnet) && (
+                  <motion.div
+                    className="absolute left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-gradient-to-br from-red-500 to-orange-600 shadow-[0_0_15px_rgba(255,0,0,0.8)] z-50 border border-white/20"
+                    style={{ top: -30 }}
+                    animate={
+                      isHammer 
+                        ? { y: [0, 25, 0], scale: [1, 1.2, 1] } // Hammering down
+                        : { y: [0, -10, 0], scale: [1, 1.3, 1], boxShadow: ["0 0 15px rgba(255,0,0,0.8)", "0 0 30px rgba(255,0,0,1)", "0 0 15px rgba(255,0,0,0.8)"] } // Magnet pulse
+                    }
+                    transition={{ duration: 0.8, repeat: Infinity, ease: isHammer ? "circIn" : "easeInOut" }}
+                  >
+                    <div className="absolute inset-0 bg-white/20 rounded-full animate-pulse" />
+                  </motion.div>
+                )}
+
+                {visibleRhythms.motor && <div style={{ height: `${r.motor/4}%`, backgroundColor: COLORS.MOTOR }} className="w-full border-t border-black/30" />}
+                {visibleRhythms.physical && <div style={{ height: `${r.physical/4}%`, backgroundColor: COLORS.PHYSICAL }} className="w-full border-t border-black/30" />}
+                {visibleRhythms.sensory && <div style={{ height: `${r.sensory/4}%`, backgroundColor: COLORS.SENSORY }} className="w-full border-t border-black/30" />}
+                {visibleRhythms.analytical && <div style={{ height: `${r.analytical/4}%`, backgroundColor: COLORS.ANALYTICAL }} className="w-full border-t border-black/30" />}
+              </motion.div>
+            );
+          })}
+        </div>
+
+        <div className="flex justify-around py-3 bg-[#111] rounded border border-white/5">
+          {[14, 28, 42, 49].map(m => (
+            <label key={m} className="flex items-center gap-2 cursor-pointer">
+              <input type="radio" checked={selectedDaysMode === m} onChange={() => setSelectedDaysMode(m)} className="w-4 h-4 accent-[#33b5e5]" />
+              <span className={`text-[10px] font-black ${selectedDaysMode === m ? 'text-[#33b5e5]' : 'text-slate-600'}`}>{m}{t('days').toUpperCase()}</span>
+            </label>
           ))}
         </div>
-        {[...Array(selectedDaysMode)].map((_, i) => {
-          const offset = i - Math.floor(selectedDaysMode / 2);
-          const d = daysGone + offset;
-          const r = calculateSpecificRhythms(d);
-          const isToday = offset === 0;
-          
-          // Solar Impact Logic
-          const isSolarActive = solarKIndex >= 4;
-          const balanceVal = calculateFullBalance(d);
-          const isHammer = isSolarActive && isToday && balanceVal > 45;
-          const isMagnet = isSolarActive && isToday && balanceVal <= 45;
 
-          return (
-            <motion.div 
-              key={i} 
-              className={`flex-1 flex flex-col justify-end h-full min-w-[3px] relative ${isToday ? 'bg-white/10 z-10 shadow-[0_0_10px_rgba(51,181,229,0.3)]' : 'opacity-60'}`}
-              style={{ originY: 1 }}
-              animate={isHammer ? { scaleY: [1, 0.8, 1] } : isMagnet ? { scaleY: [1, 1.2, 1] } : { scaleY: 1 }}
-              transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut" }}
-            >
-              {isToday && (
-                <div className={`absolute inset-0 border-x border-t border-[#33b5e5] ${isSolarActive ? 'opacity-80' : 'opacity-100'}`} />
-              )}
-              
-              {/* Crazy Solar Sun */}
-              {(isHammer || isMagnet) && (
-                <motion.div
-                  className="absolute left-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-gradient-to-br from-red-500 to-orange-600 shadow-[0_0_15px_rgba(255,0,0,0.8)] z-50 border border-white/20"
-                  style={{ top: -30 }}
-                  animate={
-                    isHammer 
-                      ? { y: [0, 25, 0], scale: [1, 1.2, 1] } // Hammering down
-                      : { y: [0, -10, 0], scale: [1, 1.3, 1], boxShadow: ["0 0 15px rgba(255,0,0,0.8)", "0 0 30px rgba(255,0,0,1)", "0 0 15px rgba(255,0,0,0.8)"] } // Magnet pulse
-                  }
-                  transition={{ duration: 0.8, repeat: Infinity, ease: isHammer ? "circIn" : "easeInOut" }}
-                >
-                  <div className="absolute inset-0 bg-white/20 rounded-full animate-pulse" />
-                </motion.div>
-              )}
-
-              {visibleRhythms.motor && <div style={{ height: `${r.motor/4}%`, backgroundColor: COLORS.MOTOR }} className="w-full border-t border-black/30" />}
-              {visibleRhythms.physical && <div style={{ height: `${r.physical/4}%`, backgroundColor: COLORS.PHYSICAL }} className="w-full border-t border-black/30" />}
-              {visibleRhythms.sensory && <div style={{ height: `${r.sensory/4}%`, backgroundColor: COLORS.SENSORY }} className="w-full border-t border-black/30" />}
-              {visibleRhythms.analytical && <div style={{ height: `${r.analytical/4}%`, backgroundColor: COLORS.ANALYTICAL }} className="w-full border-t border-black/30" />}
-            </motion.div>
-          );
-        })}
+        <div className="grid grid-cols-2 gap-2">
+          <ToggleButton label={t('toggle_dvig')} active={visibleRhythms.motor} color={COLORS.MOTOR} onClick={() => setVisibleRhythms(v => ({...v, motor: !v.motor}))} />
+          <ToggleButton label={t('toggle_phys')} active={visibleRhythms.physical} color={COLORS.PHYSICAL} onClick={() => setVisibleRhythms(v => ({...v, physical: !v.physical}))} />
+          <ToggleButton label={t('toggle_sens')} active={visibleRhythms.sensory} color={COLORS.SENSORY} onClick={() => setVisibleRhythms(v => ({...v, sensory: !v.sensory}))} />
+          <ToggleButton label={t('toggle_anlt')} active={visibleRhythms.analytical} color={COLORS.ANALYTICAL} onClick={() => setVisibleRhythms(v => ({...v, analytical: !v.analytical}))} />
+        </div>
       </div>
 
-      <div className="flex justify-around py-3 bg-[#111] rounded border border-white/5">
-        {[14, 28, 42, 49].map(m => (
-          <label key={m} className="flex items-center gap-2 cursor-pointer">
-            <input type="radio" checked={selectedDaysMode === m} onChange={() => setSelectedDaysMode(m)} className="w-4 h-4 accent-[#33b5e5]" />
-            <span className={`text-[10px] font-black ${selectedDaysMode === m ? 'text-[#33b5e5]' : 'text-slate-600'}`}>{m}{t('days').toUpperCase()}</span>
-          </label>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-2 gap-2">
-        <ToggleButton label={t('toggle_dvig')} active={visibleRhythms.motor} color={COLORS.MOTOR} onClick={() => setVisibleRhythms(v => ({...v, motor: !v.motor}))} />
-        <ToggleButton label={t('toggle_phys')} active={visibleRhythms.physical} color={COLORS.PHYSICAL} onClick={() => setVisibleRhythms(v => ({...v, physical: !v.physical}))} />
-        <ToggleButton label={t('toggle_sens')} active={visibleRhythms.sensory} color={COLORS.SENSORY} onClick={() => setVisibleRhythms(v => ({...v, sensory: !v.sensory}))} />
-        <ToggleButton label={t('toggle_anlt')} active={visibleRhythms.analytical} color={COLORS.ANALYTICAL} onClick={() => setVisibleRhythms(v => ({...v, analytical: !v.analytical}))} />
-      </div>
-
-      <div className="pt-2">
+      <div className="w-full flex flex-col px-4">
         <SolarActivityChart title={t('solar_monitor_title')} lang={lang} onCurrentIndexChange={setSolarKIndex} />
+        <CosmicEnergyChart targetDate={targetDate} lang={lang} />
       </div>
 
-      <div className="pb-12">
-        <CosmicEnergyChart targetDate={targetDate} lang={lang} />
+      <div className="p-4 pb-12">
+        <div className="grid grid-cols-2 gap-2">
+          <button 
+            onClick={() => onOpenCompatibility?.(profile.birthDate, undefined, lang)} 
+            className="w-full bg-[#1b2531]/50 border border-white/10 rounded-xl py-3 flex items-center justify-center gap-2 hover:bg-white/5 transition-all active:scale-95 text-[10px] font-bold text-[#33b5e5] uppercase tracking-widest"
+          >
+            {t('check_compat')}
+          </button>
+          <button 
+            onClick={() => onOpenSport?.()} 
+            className="w-full bg-[#1b2531]/50 border border-white/10 rounded-xl py-3 flex items-center justify-center gap-2 hover:bg-white/5 transition-all active:scale-95 text-[10px] font-bold text-[#ff3b30] uppercase tracking-widest"
+          >
+            {t('switch_sport')}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -1053,31 +1112,6 @@ const Dashboard: React.FC<DashboardProps> = ({
     </div>
   );
 
-  const getAstroEvents = (dt: DateTime) => {
-    const events = [];
-    
-    if (dt.month === 3 && dt.day === 20) events.push({ type: 'equinox', icon: '🌱' }); // Vernal Equinox
-    if (dt.month === 6 && dt.day === 21) events.push({ type: 'solstice', icon: '☀️' }); // Summer Solstice
-    if (dt.month === 9 && dt.day === 22) events.push({ type: 'equinox', icon: '🍂' }); // Autumnal Equinox
-    if (dt.month === 12 && dt.day === 21) events.push({ type: 'solstice', icon: '❄️' }); // Winter Solstice
-
-    const fullMoonRef = DateTime.fromObject({ year: 1996, month: 1, day: 6, hour: 16, minute: 15 }, { zone: 'utc' });
-    const lunarPeriodMillis = 29.530588 * 24 * 3600 * 1000;
-    
-    const diffMillisStart = dt.set({hour: 0}).toUTC().diff(fullMoonRef).as('milliseconds');
-    const diffMillisEnd = dt.set({hour: 23, minute: 59}).toUTC().diff(fullMoonRef).as('milliseconds');
-    
-    const angleStart = ((diffMillisStart % lunarPeriodMillis + lunarPeriodMillis) % lunarPeriodMillis * 360) / lunarPeriodMillis;
-    const angleEnd = ((diffMillisEnd % lunarPeriodMillis + lunarPeriodMillis) % lunarPeriodMillis * 360) / lunarPeriodMillis;
-
-    if (angleStart > 300 && angleEnd < 60) events.push({ type: 'moon', icon: '🌕' });
-    else if (angleStart <= 90 && angleEnd > 90) events.push({ type: 'moon', icon: '🌗' });
-    else if (angleStart <= 180 && angleEnd > 180) events.push({ type: 'moon', icon: '🌑' });
-    else if (angleStart <= 270 && angleEnd > 270) events.push({ type: 'moon', icon: '🌓' });
-    
-    return events;
-  };
-
   const renderCalendar = () => {
     const startOfMonth = targetDate.startOf('month');
     const firstDayOfWeek = startOfMonth.weekday; 
@@ -1126,15 +1160,16 @@ const Dashboard: React.FC<DashboardProps> = ({
             return (
               <div key={i} className={`aspect-square relative flex flex-col items-center justify-center border border-white/10 transition-all duration-300 ${isCurrentMonth ? 'shadow-[inset_0_0_12px_rgba(255,255,255,0.05)]' : ''}`} style={{ backgroundColor: isCurrentMonth ? `${bgColor}99` : 'transparent', opacity: isCurrentMonth ? 1 : 0.15 }}>
                 {isToday && <div className="absolute inset-0 border-2 border-[#33b5e5] z-10 shadow-[0_0_15px_#33b5e5,inset_0_0_10px_#33b5e5]" />}
-                <span className={`text-[10px] sm:text-xs md:text-lg lg:text-xl xl:text-3xl font-bold absolute top-0.5 left-1 sm:top-1 sm:left-1.5 lg:top-2 lg:left-2.5 ${isCurrentMonth ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]' : 'text-slate-800'}`}>{d.day}</span>
-                
-                {isCurrentMonth && astroEvts.length > 0 && (
-                  <div className="absolute bottom-0.5 left-1 sm:bottom-1 sm:left-1.5 lg:bottom-2 lg:left-2.5 flex gap-0.5 md:gap-1.5 z-10">
-                    {astroEvts.map((e, ei) => (
-                      <span key={ei} className="text-[10px] sm:text-xs md:text-lg lg:text-xl xl:text-3xl drop-shadow-[0_0_3px_rgba(255,255,255,0.5)]" title={e.type}>{e.icon}</span>
-                    ))}
-                  </div>
-                )}
+                <div className="absolute top-0.5 left-1 sm:top-1 sm:left-1.5 lg:top-2 lg:left-2.5 flex flex-col items-start gap-[3px] z-10">
+                  <span className={`text-[10px] sm:text-xs md:text-lg lg:text-xl xl:text-3xl font-bold ${isCurrentMonth ? 'text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]' : 'text-slate-800'}`}>{d.day}</span>
+                  {isCurrentMonth && astroEvts.length > 0 && (
+                    <div className="flex gap-0.5 md:gap-1.5">
+                      {astroEvts.map((e, ei) => (
+                        <span key={ei} className="text-[10px] sm:text-xs md:text-lg lg:text-xl xl:text-3xl drop-shadow-[0_0_3px_rgba(255,255,255,0.5)]" title={e.type}>{e.icon}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 {isCurrentMonth && riskLvl >= 25 && (
                   <div className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 lg:top-2 lg:right-2 flex flex-col gap-0 sm:gap-0.5 lg:gap-1">
@@ -1242,19 +1277,24 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
            </div>
         </div>
-        <div className="flex items-center gap-1 md:gap-3 shrink-0 relative">
-          <button onClick={() => setIsLangMenuOpen(!isLangMenuOpen)} className="w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"><Globe className="w-5 h-5 md:w-7 md:h-7 text-[#33b5e5]" /></button>
+        <div className="flex items-center gap-2 md:gap-3 shrink-0 relative">
+          <button 
+            onClick={() => setIsLangMenuOpen(!isLangMenuOpen)} 
+            className="w-8 h-8 md:w-11 md:h-11 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-all active:scale-95 text-[#33b5e5] text-[11px] md:text-[13px] font-bold"
+          >
+            {lang.charAt(0).toUpperCase() + lang.slice(1)}
+          </button>
           <AnimatePresence>
             {isLangMenuOpen && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute top-full mt-2 right-0 bg-[#1b2531] border border-white/20 rounded-xl shadow-2xl z-[10000] overflow-hidden w-40 md:w-56 backdrop-blur-md">
                 {GLOBAL_LANGUAGES.map(l => (
-                  <button key={l.code} onClick={() => { setLang(l.code); setIsLangMenuOpen(false); logEvent('Change Language', 'Settings', l.code); }} className={`w-full px-4 py-3 md:py-4 flex items-center gap-3 hover:bg-white/10 transition-colors text-xs md:text-sm font-bold uppercase ${lang === l.code ? 'text-[#33b5e5]' : 'text-slate-300'}`}><span className="text-lg md:text-xl">{l.flag}</span>{l.name}</button>
+                  <button key={l.code} onClick={() => { onLanguageChange(l.code); setIsLangMenuOpen(false); }} className={`w-full px-4 py-3 md:py-4 flex items-center gap-3 hover:bg-white/10 transition-colors text-xs md:text-sm font-bold uppercase ${lang === l.code ? 'text-[#33b5e5]' : 'text-slate-300'}`}><span className="text-lg md:text-xl">{l.flag}</span>{l.name}</button>
                 ))}
               </motion.div>
             )}
           </AnimatePresence>
-          <button onClick={() => { setIsHelpOpen(true); logEvent('Open Help', 'Navigation'); }} className="w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"><HelpCircle className="w-5 h-5 md:w-7 md:h-7 text-[#33b5e5]" /></button>
-          <button onClick={() => setShowLogoutConfirm(true)} className="w-10 h-10 md:w-14 md:h-14 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors" title="Выход"><Power className="w-5 h-5 md:w-7 md:h-7 text-red-500" /></button>
+          <button onClick={() => { setIsHelpOpen(true); logEvent('Open Help', 'Navigation'); }} className="w-8 h-8 md:w-11 md:h-11 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"><HelpCircle className="w-4 h-4 md:w-6 md:h-6 text-[#33b5e5]" /></button>
+          <button onClick={() => setShowLogoutConfirm(true)} className="w-8 h-8 md:w-11 md:h-11 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors" title="Выход"><Power className="w-4 h-4 md:w-6 md:h-6 text-red-500" /></button>
         </div>
       </header>
 
@@ -1591,7 +1631,7 @@ const Dashboard: React.FC<DashboardProps> = ({
              </div>
 
              <div className="flex-1 overflow-y-auto custom-scrollbar space-y-3">
-                {arenaData.map((entity, idx) => (
+                {arenaData.items.map((entity, idx) => (
                   <ArenaItem 
                     key={entity.id} 
                     p={entity} 
@@ -1599,6 +1639,9 @@ const Dashboard: React.FC<DashboardProps> = ({
                     t={t} 
                     onRemove={(e) => setArenaEntityToRemove(e)} 
                     isExpanded={expandedArenaGroups.has(entity.id)}
+                    minScore={arenaData.minScore}
+                    maxScore={arenaData.maxScore}
+                    totalCount={arenaData.items.length}
                     onToggleExpand={() => {
                       const newSet = new Set(expandedArenaGroups);
                       if (newSet.has(entity.id)) newSet.delete(entity.id);
@@ -1634,7 +1677,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   }
                   
                   setArenaEntityToRemove(null);
-                  if (arenaData.length <= 1) {
+                  if (arenaData.items.length <= 1) {
                         setShowArenaDialog(false);
                         setListMode('NONE');
                   }
@@ -1671,14 +1714,105 @@ interface ArenaItemProps {
   onRemove: (p: any) => void;
   isExpanded: boolean;
   onToggleExpand: () => void;
+  minScore: number;
+  maxScore: number;
+  totalCount: number;
 }
 
-const ArenaItem: React.FC<ArenaItemProps> = ({ p, idx, t, onRemove, isExpanded, onToggleExpand }) => {
+const MedalIcon = ({ score, min, max, rank, totalCount }: { score: number, min: number, max: number, rank?: number, totalCount?: number }) => {
+  const getMedalType = () => {
+    if (rank !== undefined && totalCount !== undefined) {
+      if (totalCount === 1) return 'gold';
+      if (totalCount === 2) return rank === 0 ? 'gold' : 'silver';
+      
+      const goldLimit = Math.ceil(totalCount / 3);
+      const silverLimit = Math.ceil((2 * totalCount) / 3);
+      
+      if (rank < goldLimit) return 'gold';
+      if (rank < silverLimit) return 'silver';
+      return 'bronze';
+    }
+
+    if (min === max) return 'gold';
+    const range = max - min;
+    const tier1 = min + range / 3;
+    const tier2 = min + (2 * range) / 3;
+    if (score >= tier2) return 'gold';
+    if (score >= tier1) return 'silver';
+    return 'bronze';
+  };
+
+  const type = getMedalType();
+  const styles = {
+    gold: { color: '#ffd700', bg: 'bg-[#ffd700]/20', border: 'border-[#ffd700]/40', label: 'I' },
+    silver: { color: '#c0c0c0', bg: 'bg-slate-400/20', border: 'border-slate-300/40', label: 'II' },
+    bronze: { color: '#cd7f32', bg: 'bg-[#cd7f32]/20', border: 'border-[#cd7f32]/40', label: 'III' }
+  };
+
+  const s = styles[type];
+
+  return (
+    <div className={`w-10 h-10 rounded-full ${s.bg} border-white/20 border-2 flex items-center justify-center relative shadow-lg group/medal`}>
+      <div className="absolute inset-0.5 rounded-full border border-white/10 pointer-events-none" />
+      <span className="text-sm font-bold relative z-10 select-none" style={{ color: s.color, fontFamily: 'serif' }}>{s.label}</span>
+      <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full pointer-events-none opacity-60 group-hover/medal:opacity-100 transition-opacity" style={{ color: s.color }}>
+        {/* Laurel Wreath - Left */}
+        <path d="M35 75 C 20 65, 20 35, 35 25" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
+        <g fill="currentColor">
+          <path d="M28 72 Q 22 70 20 65 Q 22 65 28 68 Z" />
+          <path d="M24 62 Q 18 60 16 55 Q 18 55 24 58 Z" />
+          <path d="M22 52 Q 16 50 14 45 Q 16 45 22 48 Z" />
+          <path d="M24 42 Q 18 40 16 35 Q 18 35 24 38 Z" />
+          <path d="M28 32 Q 22 30 20 25 Q 22 25 28 28 Z" />
+        </g>
+        {/* Laurel Wreath - Right */}
+        <path d="M65 75 C 80 65, 80 35, 65 25" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
+        <g fill="currentColor">
+          <path d="M72 72 Q 78 70 80 65 Q 78 65 72 68 Z" />
+          <path d="M76 62 Q 82 60 84 55 Q 82 55 76 58 Z" />
+          <path d="M78 52 Q 84 50 86 45 Q 84 45 78 48 Z" />
+          <path d="M76 42 Q 82 40 84 35 Q 82 35 76 38 Z" />
+          <path d="M72 32 Q 78 30 80 25 Q 78 25 72 28 Z" />
+        </g>
+      </svg>
+      {type === 'gold' && <Crown className="w-3.5 h-3.5 text-yellow-300 absolute -top-2.5 -right-1.5 rotate-12 drop-shadow-[0_0_8px_rgba(255,215,0,0.8)] z-20" />}
+    </div>
+  );
+};
+
+const ArenaItem: React.FC<ArenaItemProps> = ({ p, idx, t, onRemove, isExpanded, onToggleExpand, minScore, maxScore, totalCount }) => {
   const x = useMotionValue(0);
   const opacity = useTransform(x, [-150, 0, 150], [0, 1, 0]);
   const bgOpacity = useTransform(x, [-100, 0, 100], [1, 0, 1]); 
-  const isTop3 = idx < 3;
-  const medalColor = idx === 0 ? '#ffd700' : idx === 1 ? '#c0c0c0' : idx === 2 ? '#cd7f32' : 'transparent';
+  
+  const getMedalColor = (score: number, min: number, max: number, rank?: number, total?: number) => {
+    let type: 'gold' | 'silver' | 'bronze' = 'bronze';
+    if (rank !== undefined && total !== undefined) {
+      if (total === 1) type = 'gold';
+      else if (total === 2) type = rank === 0 ? 'gold' : 'silver';
+      else {
+        const goldLimit = Math.ceil(total / 3);
+        const silverLimit = Math.ceil((2 * total) / 3);
+        if (rank < goldLimit) type = 'gold';
+        else if (rank < silverLimit) type = 'silver';
+        else type = 'bronze';
+      }
+    } else {
+      if (min === max) type = 'gold';
+      else {
+        const range = max - min;
+        const tier1 = min + range / 3;
+        const tier2 = min + (2 * range) / 3;
+        if (score >= tier2) type = 'gold';
+        else if (score >= tier1) type = 'silver';
+        else type = 'bronze';
+      }
+    }
+    
+    return type === 'gold' ? '#ffd700' : type === 'silver' ? '#c0c0c0' : '#cd7f32';
+  };
+
+  const itemMedalColor = getMedalColor(p.score, minScore, maxScore, idx, totalCount);
 
   return (
     <div className="relative group">
@@ -1703,17 +1837,15 @@ const ArenaItem: React.FC<ArenaItemProps> = ({ p, idx, t, onRemove, isExpanded, 
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ delay: idx * 0.05 }}
-        className={`flex flex-col rounded-2xl border transition-all cursor-pointer relative overflow-hidden shadow-xl ${
-          isTop3 ? 'bg-white/10 border-fuchsia-500/30' : 'bg-[#0a0a0a] border-white/5'
-        }`}
+        className={`flex flex-col rounded-2xl border transition-all cursor-pointer relative overflow-hidden shadow-xl bg-[#0a0a0a] border-white/5 hover:border-white/10`}
       >
         <div className="p-4 flex items-center">
-          {isTop3 && (
-            <div className="absolute top-0 left-0 w-1.5 h-full" style={{ backgroundColor: medalColor }} />
-          )}
-          <div className="w-10 text-xl font-black italic text-slate-600 tabular-nums shrink-0">
-            {idx + 1}.
+          <div className="absolute top-0 left-0 w-1 h-full opacity-50" style={{ backgroundColor: itemMedalColor }} />
+          
+          <div className="mr-4 shrink-0">
+             <MedalIcon score={p.score} min={minScore} max={maxScore} rank={idx} totalCount={totalCount} />
           </div>
+
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <div className="text-lg font-black uppercase text-white truncate md:whitespace-nowrap md:max-w-none tracking-wider">{p.name}</div>
@@ -1726,10 +1858,9 @@ const ArenaItem: React.FC<ArenaItemProps> = ({ p, idx, t, onRemove, isExpanded, 
               </div>
             ) : (
               <div className="flex gap-2 mt-1">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.MOTOR }} title="Motor" />
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.PHYSICAL }} title="Physical" />
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.SENSORY }} title="Sensory" />
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS.ANALYTICAL }} title="Analytical" />
+                  {[COLORS.MOTOR, COLORS.PHYSICAL, COLORS.SENSORY, COLORS.ANALYTICAL].map((c, i) => (
+                    <div key={i} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: c }} />
+                  ))}
               </div>
             )}
           </div>
@@ -1737,29 +1868,27 @@ const ArenaItem: React.FC<ArenaItemProps> = ({ p, idx, t, onRemove, isExpanded, 
             <div className="text-3xl font-black tabular-nums tracking-tighter" style={{ color: getBalanceColor(p.score) }}>
               {p.score}%
             </div>
-            <div className="text-[10px] font-bold uppercase text-slate-500 tracking-wider">{t('balance')}</div>
+            <div className="text-[10px] font-bold uppercase text-slate-500 tracking-wider font-mono">{t('balance')}</div>
           </div>
-          {idx === 0 && (
-            <div className="absolute -right-4 -top-4 opacity-10 text-8xl text-fuchsia-500 pointer-events-none">
-                <Crown className="w-4 h-4 text-yellow-500 ml-1" />
-            </div>
-          )}
         </div>
 
         {p.isGroup && isExpanded && (
-          <div className="px-4 pb-4 space-y-2 border-t border-white/5 pt-3 bg-black/20">
-            {p.members.map((m: any) => (
-              <div key={m.id} className="flex items-center justify-between group/member">
-                <div className="flex items-center gap-3">
-                  <div className="w-6 h-6 flex items-center justify-center shrink-0">
-                    {getBalanceEmoji(m.score)}
+          <div className="px-4 pb-4 space-y-2 border-t border-white/5 pt-3 bg-black/40">
+            {p.members.map((m: any, mIdx: number) => {
+              const mMinScore = p.members.length > 0 ? Math.min(...p.members.map((member: any) => member.score)) : 0;
+              const mMaxScore = p.members.length > 0 ? Math.max(...p.members.map((member: any) => member.score)) : 0;
+              return (
+              <div key={m.id} className="flex items-center justify-between group/member bg-white/5 p-2 rounded-lg">
+                <div className="flex items-center gap-4">
+                  <div className="shrink-0 scale-75 origin-left">
+                    <MedalIcon score={m.score} min={mMinScore} max={mMaxScore} rank={mIdx} totalCount={p.members.length} />
                   </div>
                   <div>
-                    <div className="text-[11px] font-black uppercase text-slate-300 truncate max-w-[180px] md:max-w-none md:whitespace-nowrap tracking-wider">{m.name}</div>
-                    <div className="text-[8px] text-slate-600 font-bold">{DateTime.fromISO(m.birthDate).toFormat('dd.MM.yyyy')}</div>
+                    <div className="text-[11px] font-black uppercase text-slate-300 truncate max-w-[150px] md:max-w-none md:whitespace-nowrap tracking-wider">{m.name}</div>
+                    <div className="text-[8px] text-slate-600 font-black uppercase">{DateTime.fromISO(m.birthDate).toFormat('dd.MM.yyyy')}</div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   {m.risk >= 25 && (
                     <div className="flex items-center gap-0.5">
                        {[...Array(m.risk >= 75 ? 3 : m.risk >= 50 ? 2 : 1)].map((_, idx) => (
@@ -1772,16 +1901,16 @@ const ArenaItem: React.FC<ArenaItemProps> = ({ p, idx, t, onRemove, isExpanded, 
                   )}
                   <div className="flex flex-col items-end">
                     <div className="text-[14px] font-black tabular-nums" style={{ color: getBalanceColor(m.score) }}>{m.score}%</div>
-                    <div className="flex gap-1">
-                      <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: COLORS.MOTOR }} />
-                      <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: COLORS.PHYSICAL }} />
-                      <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: COLORS.SENSORY }} />
-                      <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: COLORS.ANALYTICAL }} />
+                    <div className="flex gap-1 mt-0.5">
+                      {[COLORS.MOTOR, COLORS.PHYSICAL, COLORS.SENSORY, COLORS.ANALYTICAL].map((c, i) => (
+                        <div key={i} className="w-1 h-1 rounded-full" style={{ backgroundColor: c }} />
+                      ))}
                     </div>
                   </div>
                 </div>
               </div>
-            ))}
+            );
+          })}
           </div>
         )}
       </motion.div>
@@ -1930,7 +2059,7 @@ const CosmicEnergyChart = ({ targetDate, lang }: { targetDate: DateTime, lang: s
   const activeLegend = isDay ? legend : legend.filter(l => l.key !== 'sun');
 
   return (
-    <div className="mt-3 bg-[#111] border border-white/10 rounded-xl p-3 flex flex-col gap-3 relative z-10 box-border w-full">
+    <div className="mt-4 py-4 flex flex-col gap-3 relative z-10 box-border w-full">
        <div className="flex justify-between items-center flex-wrap gap-2">
          <h3 className="text-sm font-black text-white tracking-widest uppercase">{envLabel}</h3>
          <div className="flex bg-black rounded p-0.5 border border-white/10">

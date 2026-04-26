@@ -15,9 +15,16 @@ interface Props {
 }
 
 const CompatibilityChecker: React.FC<Props> = ({ initialDate, initialDate2 = '', initialLang = 'en', onClose }) => {
-  const [lang, setLang] = useState(initialLang);
+  const [lang, setLang] = useState(() => {
+    if (initialLang && initialLang !== 'detect') return initialLang;
+    return localStorage.getItem('ritmxoid_lang') || getInitialLanguage();
+  });
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
   const t = getT(lang);
+
+  useEffect(() => {
+    localStorage.setItem('ritmxoid_lang', lang);
+  }, [lang]);
 
   const [date1, setDate1] = useState(initialDate);
   const [date2, setDate2] = useState(initialDate2);
@@ -196,7 +203,7 @@ const CompatibilityChecker: React.FC<Props> = ({ initialDate, initialDate2 = '',
               type="datetime-local" 
               value={date1} 
               onChange={e => setDate1(e.target.value)}
-              className="w-full bg-black border border-white/10 rounded-2xl px-4 py-4 focus:outline-none focus:border-[#33b5e5] transition-all text-white color-scheme-dark"
+              className="w-full bg-black border border-white/10 rounded-2xl px-4 py-4 focus:outline-none focus:border-[#33b5e5] transition-all text-white color-scheme-dark text-[20px] sm:text-2xl font-normal"
             />
           </div>
           <div>
@@ -205,7 +212,7 @@ const CompatibilityChecker: React.FC<Props> = ({ initialDate, initialDate2 = '',
               type="datetime-local" 
               value={date2} 
               onChange={e => setDate2(e.target.value)}
-              className="w-full bg-black border border-white/10 rounded-2xl px-4 py-4 focus:outline-none focus:border-[#33b5e5] transition-all text-white color-scheme-dark"
+              className="w-full bg-black border border-white/10 rounded-2xl px-4 py-4 focus:outline-none focus:border-[#33b5e5] transition-all text-white color-scheme-dark text-[20px] sm:text-2xl font-normal"
             />
           </div>
           <button 

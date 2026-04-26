@@ -187,6 +187,31 @@ export function getRiskLevel(daysGone: number, dte: DateTime): number {
   return lvl + md + dd;
 }
 
+export function getAstroEvents(dt: DateTime): { type: string, icon: string }[] {
+  const events: { type: string, icon: string }[] = [];
+  
+  if (dt.month === 3 && dt.day === 20) events.push({ type: 'equinox', icon: '🌱' }); // Vernal Equinox
+  if (dt.month === 6 && dt.day === 21) events.push({ type: 'solstice', icon: '☀️' }); // Summer Solstice
+  if (dt.month === 9 && dt.day === 22) events.push({ type: 'equinox', icon: '🍂' }); // Autumnal Equinox
+  if (dt.month === 12 && dt.day === 21) events.push({ type: 'solstice', icon: '❄️' }); // Winter Solstice
+
+  const fullMoonRef = DateTime.fromObject({ year: 1996, month: 1, day: 6, hour: 16, minute: 15 }, { zone: 'utc' });
+  const lunarPeriodMillis = 29.530588 * 24 * 3600 * 1000;
+  
+  const diffMillisStart = dt.set({hour: 0}).toUTC().diff(fullMoonRef).as('milliseconds');
+  const diffMillisEnd = dt.set({hour: 23, minute: 59}).toUTC().diff(fullMoonRef).as('milliseconds');
+  
+  const angleStart = ((diffMillisStart % lunarPeriodMillis + lunarPeriodMillis) % lunarPeriodMillis * 360) / lunarPeriodMillis;
+  const angleEnd = ((diffMillisEnd % lunarPeriodMillis + lunarPeriodMillis) % lunarPeriodMillis * 360) / lunarPeriodMillis;
+
+  if (angleStart > 300 && angleEnd < 60) events.push({ type: 'moon', icon: '🌕' });
+  else if (angleStart <= 90 && angleEnd > 90) events.push({ type: 'moon', icon: '🌗' });
+  else if (angleStart <= 180 && angleEnd > 180) events.push({ type: 'moon', icon: '🌑' });
+  else if (angleStart <= 270 && angleEnd > 270) events.push({ type: 'moon', icon: '🌓' });
+  
+  return events;
+}
+
 export interface ActivityPeriod {
   start: DateTime;
   end: DateTime;

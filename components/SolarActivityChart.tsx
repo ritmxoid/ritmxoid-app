@@ -230,7 +230,7 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, lang = '
             maintainAspectRatio: false,
             animation: { duration: isMock ? 0 : 500 },
             layout: {
-              padding: { top: 20, bottom: 25, left: 10, right: 10 }
+              padding: { top: 20, bottom: 25, left: 0, right: 0 }
             },
             plugins: {
               legend: { display: false },
@@ -356,7 +356,7 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, lang = '
   }, [initChart, onCurrentIndexChange]);
 
   return (
-    <div className="w-full h-60 bg-black/40 rounded-xl border border-white/5 p-2 relative flex flex-col">
+    <div className="w-full h-64 relative flex flex-col pt-4">
       {/* Title - Lifted z-index to be above loading overlay */}
       <div className="absolute top-2 left-3 flex items-center gap-2 z-30 pointer-events-none">
         <div className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_5px_rgba(255,255,255,0.5)]" />

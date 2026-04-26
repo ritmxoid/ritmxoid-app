@@ -34,6 +34,96 @@ const getBalanceEmoji = (val: number) => {
   return <CriticalLevelIcon />;
 };
 
+const MedalIcon = ({ score, min, max, rank, totalCount }: { score: number, min: number, max: number, rank?: number, totalCount?: number }) => {
+  const getMedalType = () => {
+    if (rank !== undefined && totalCount !== undefined) {
+      if (totalCount === 1) return 'gold';
+      if (totalCount === 2) return rank === 0 ? 'gold' : 'silver';
+      
+      const goldLimit = Math.ceil(totalCount / 3);
+      const silverLimit = Math.ceil((2 * totalCount) / 3);
+      
+      if (rank < goldLimit) return 'gold';
+      if (rank < silverLimit) return 'silver';
+      return 'bronze';
+    }
+
+    if (min === max) return 'gold';
+    const range = max - min;
+    const tier1 = min + range / 3;
+    const tier2 = min + (2 * range) / 3;
+    if (score >= tier2) return 'gold';
+    if (score >= tier1) return 'silver';
+    return 'bronze';
+  };
+
+  const type = getMedalType();
+  const styles = {
+    gold: { color: '#ffd700', bg: 'bg-[#ffd700]/20', border: 'border-[#ffd700]/40', label: 'I' },
+    silver: { color: '#c0c0c0', bg: 'bg-slate-400/20', border: 'border-slate-300/40', label: 'II' },
+    bronze: { color: '#cd7f32', bg: 'bg-[#cd7f32]/20', border: 'border-[#cd7f32]/40', label: 'III' }
+  };
+
+  const s = styles[type];
+
+  const getMedalColor = () => {
+    return type === 'gold' ? '#ffd700' : type === 'silver' ? '#c0c0c0' : '#cd7f32';
+  };
+
+  return (
+    <div className={`w-10 h-10 rounded-full ${s.bg} border-white/20 border-2 flex items-center justify-center relative shadow-lg group/medal shrink-0`}>
+      <div className="absolute inset-0.5 rounded-full border border-white/10 pointer-events-none" />
+      <span className="text-sm font-bold relative z-10 select-none" style={{ color: s.color, fontFamily: 'serif' }}>{s.label}</span>
+      <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full pointer-events-none opacity-60 group-hover/medal:opacity-100 transition-opacity" style={{ color: s.color }}>
+        <path d="M35 75 C 20 65, 20 35, 35 25" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
+        <g fill="currentColor">
+          <path d="M28 72 Q 22 70 20 65 Q 22 65 28 68 Z" />
+          <path d="M24 62 Q 18 60 16 55 Q 18 55 24 58 Z" />
+          <path d="M22 52 Q 16 50 14 45 Q 16 45 22 48 Z" />
+          <path d="M24 42 Q 18 40 16 35 Q 18 35 24 38 Z" />
+          <path d="M28 32 Q 22 30 20 25 Q 22 25 28 28 Z" />
+        </g>
+        <path d="M65 75 C 80 65, 80 35, 65 25" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" opacity="0.4" />
+        <g fill="currentColor">
+          <path d="M72 72 Q 78 70 80 65 Q 78 65 72 68 Z" />
+          <path d="M76 62 Q 82 60 84 55 Q 82 55 76 58 Z" />
+          <path d="M78 52 Q 84 50 86 45 Q 84 45 78 48 Z" />
+          <path d="M76 42 Q 82 40 84 35 Q 82 35 76 38 Z" />
+          <path d="M72 32 Q 78 30 80 25 Q 78 25 72 28 Z" />
+        </g>
+      </svg>
+      {type === 'gold' && <Crown className="w-3.5 h-3.5 text-yellow-300 absolute -top-2.5 -right-1.5 rotate-12 drop-shadow-[0_0_8px_rgba(255,215,0,0.8)] z-20" />}
+    </div>
+  );
+};
+
+export const getMedalColorValue = (score: number, min: number, max: number, rank?: number, totalCount?: number) => {
+    let type: 'gold' | 'silver' | 'bronze' = 'bronze';
+    if (rank !== undefined && totalCount !== undefined) {
+      if (totalCount === 1) type = 'gold';
+      else if (totalCount === 2) type = rank === 0 ? 'gold' : 'silver';
+      else {
+        const goldLimit = Math.ceil(totalCount / 3);
+        const silverLimit = Math.ceil((2 * totalCount) / 3);
+        if (rank < goldLimit) type = 'gold';
+        else if (rank < silverLimit) type = 'silver';
+        else type = 'bronze';
+      }
+    } else {
+      if (min === max) type = 'gold';
+      else {
+        const range = max - min;
+        const tier1 = min + range / 3;
+        const tier2 = min + (2 * range) / 3;
+        if (score >= tier2) type = 'gold';
+        else if (score >= tier1) type = 'silver';
+        else type = 'bronze';
+      }
+    }
+    
+    return type === 'gold' ? '#ffd700' : type === 'silver' ? '#c0c0c0' : '#cd7f32';
+};
+
 interface SportProphetProps {
   onBack: () => void;
 }
@@ -433,8 +523,10 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
 
              <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 max-w-5xl mx-auto w-full pb-10">
                 {arenaData.map((p, idx) => {
+                  const minScore = arenaData.length > 0 ? arenaData[arenaData.length - 1].score : 0;
+                  const maxScore = arenaData.length > 0 ? arenaData[0].score : 0;
+                  const itemMedalColor = getMedalColorValue(p.score, minScore, maxScore, idx, arenaData.length);
                   const isTop3 = idx < 3;
-                  const medalColor = idx === 0 ? '#ffd700' : idx === 1 ? '#c0c0c0' : idx === 2 ? '#cd7f32' : 'transparent';
                   const isGroup = p.isGroup;
                   const isExpanded = expandedGroups.has(p.id);
 
@@ -458,11 +550,10 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
                             }`}
                         >
                             <div className="p-6 flex items-center">
-                                {isTop3 && (
-                                    <div className="absolute top-0 left-0 w-2 h-full" style={{ backgroundColor: medalColor }} />
-                                )}
-                                <div className="w-14 text-2xl font-normal italic text-slate-700 shrink-0 tabular-nums">
-                                    {idx + 1}.
+                                <div className="absolute top-0 left-0 w-2 h-full opacity-70" style={{ backgroundColor: itemMedalColor }} />
+                                
+                                <div className="mr-6 shrink-0">
+                                   <MedalIcon score={p.score} min={minScore} max={maxScore} rank={idx} totalCount={arenaData.length} />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-3">
@@ -503,11 +594,14 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
                                         exit={{ height: 0, opacity: 0 }}
                                         className="px-6 pb-6 space-y-3 border-t border-white/5 pt-4 bg-black/40"
                                     >
-                                        {p.members.map((m: any, mIdx: number) => (
+                                        {p.members.map((m: any, mIdx: number) => {
+                                            const mMinScore = p.members.length > 0 ? Math.min(...p.members.map((member: any) => member.score)) : 0;
+                                            const mMaxScore = p.members.length > 0 ? Math.max(...p.members.map((member: any) => member.score)) : 0;
+                                            return (
                                             <div key={m.id} className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-10 h-10 shrink-0">
-                                                        {getBalanceEmoji(m.score)}
+                                                    <div className="shrink-0 scale-75 origin-left">
+                                                        <MedalIcon score={m.score} min={mMinScore} max={mMaxScore} rank={mIdx} totalCount={p.members.length} />
                                                     </div>
                                                     <div>
                                                         <div className="text-sm font-normal uppercase text-white truncate max-w-[150px]">{m.name}</div>
@@ -533,7 +627,8 @@ const SportProphet: React.FC<SportProphetProps> = ({ onBack }) => {
                                                      </div>
                                                 </div>
                                             </div>
-                                        ))}
+                                         );
+                                        })}
                                     </motion.div>
                                 )}
                             </AnimatePresence>
