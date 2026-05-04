@@ -384,21 +384,19 @@ const SolarActivityChart: React.FC<SolarActivityChartProps> = ({ title, lang = '
         <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-20 backdrop-blur-sm rounded-xl">
              <div className="text-center p-4">
                 <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-                <p className="text-[10px] text-slate-400 font-bold uppercase">Data Unavailable</p>
-                <p className="text-[8px] text-slate-600 mt-1 mb-3">Check Connection</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase">{lang === 'ru' ? 'Данные недоступны оффлайн' : 'Data Unavailable Offline'}</p>
+                <p className="text-[8px] text-slate-600 mt-1 mb-3">{lang === 'ru' ? 'Требуется доступ к сети для обновления индекса Kp' : 'Internet connection required to update Kp index'}</p>
                 <button 
                   onClick={() => {
                     solarDataService.clearCache();
                     setLoading(true);
                     setError(false);
                     setTimer(0);
-                    // The useEffect will trigger fetchData again because of the dependency on initChart/onCurrentIndexChange
-                    // but we need a way to force it. Let's just reload the page or use a state to trigger.
                     window.location.reload();
                   }}
                   className="px-3 py-1 bg-[#33b5e5]/20 hover:bg-[#33b5e5]/40 text-[#33b5e5] text-[9px] font-bold uppercase rounded transition-colors"
                 >
-                  Retry
+                  {lang === 'ru' ? 'Повторить' : 'Retry'}
                 </button>
              </div>
         </div>

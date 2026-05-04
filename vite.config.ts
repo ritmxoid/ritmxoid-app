@@ -2,6 +2,7 @@ import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
+import { viteSingleFile } from 'vite-plugin-singlefile';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
@@ -10,22 +11,16 @@ export default defineConfig(({ mode }) => {
         port: 3000,
         host: '0.0.0.0',
       },
-      plugins: [react(), tailwindcss()],
-      build: {
-        rollupOptions: {
-          input: {
-            main: path.resolve('index.html'),
-            sportprophet: path.resolve('sportprophet.html'),
-          },
-        },
-      },
+      plugins: [
+        react(), 
+        tailwindcss(), 
+      ],
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
         'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
       },
       resolve: {
         alias: {
-          // Fix: Use path.resolve() without __dirname as it is not available in ESM (ECMAScript Modules)
           '@': path.resolve('.'),
         }
       }

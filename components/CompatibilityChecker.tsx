@@ -106,7 +106,10 @@ const CompatibilityChecker: React.FC<Props> = ({ initialDate, initialDate2 = '',
 
     return (
       <div 
-        onClick={() => setSelectedCard({ id, title, icon, percentage: data.total, text: descriptionText, color, label: text })}
+        onClick={() => {
+          setSelectedCard({ id, title, icon, percentage: data.total, text: descriptionText, color, label: text });
+          logEvent('View Detailed Compatibility', 'Features', title);
+        }}
         className="bg-white/5 border border-white/10 rounded-2xl p-4 mb-4 cursor-pointer hover:bg-white/10 hover:scale-[1.02] transition-all active:scale-[0.98]"
       >
         <div className="flex items-center justify-between mb-2">
@@ -239,7 +242,8 @@ const CompatibilityChecker: React.FC<Props> = ({ initialDate, initialDate2 = '',
             <button 
               onClick={() => {
                   setShowSynthesis(true);
-                  logEvent('Compatibility Synthesis', 'Features', 'View Synthesis');
+                  const synthesisTitle = synthesis?.title || 'View Synthesis';
+                  logEvent('Compatibility Synthesis', 'Features', synthesisTitle);
               }}
               className="w-full mt-6 bg-gradient-to-r from-purple-500 to-[#33b5e5] py-5 rounded-2xl font-black text-white hover:opacity-90 transition-all shadow-[0_0_30px_rgba(51,181,229,0.4)] uppercase tracking-widest text-sm active:scale-[0.98] flex items-center justify-center gap-3"
             >

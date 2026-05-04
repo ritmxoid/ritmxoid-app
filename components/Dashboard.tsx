@@ -1,10 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { DateTime, Info } from 'luxon';
-import criticalIcon from '../public/icons/critical.svg';
-import lowIcon from '../public/icons/low.svg';
-import optimalIcon from '../public/icons/optimal.svg';
-import highIcon from '../public/icons/high.svg';
-import superIcon from '../public/icons/super.svg';
 import { 
   calculateDaysGone, calculateFullBalance, calculateBasicBalance, calculateReactiveBalance, calculateSpecificRhythms, getRiskLevel, 
   COLORS, ACTIVITY_CONFIG, getActivitiesPack, MAP_NAMES, calculateMapAngles, calculateSecondsGone,
@@ -13,7 +8,7 @@ import {
 import { TRANSLATIONS as GLOBAL_TRANSLATIONS, LANGUAGES as GLOBAL_LANGUAGES, getT, getInitialLanguage } from '../core/i18n';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { 
-  Check, Swords, Users, FolderPlus, X, Upload, Download, PenTool, Trash2, 
+  Check, Swords, Users, FolderPlus, X, Upload, Download, PenTool, Trash2, Plus, 
   ChevronUp, ChevronDown, CalendarCheck, Globe, HelpCircle, Power, 
   AlertTriangle, Wand2, Folder, FolderOpen, ChevronLeft, ChevronRight,
   FolderMinus, UserMinus, UserPlus, Crown
@@ -22,20 +17,30 @@ import { Profile } from '../types';
 import { logEvent, logPageView } from '../core/analytics';
 import SolarActivityChart from './SolarActivityChart';
 
+import criticalIcon from '../public/icons/critical.svg';
+import lowIcon from '../public/icons/low.svg';
+import optimalIcon from '../public/icons/optimal.svg';
+import highIcon from '../public/icons/high.svg';
+import superIcon from '../public/icons/super.svg';
+
 interface DashboardProps {
   profile: Profile;
   allProfiles: Profile[];
-  onAddProfile: (name: string, date: string) => void;
+  onAddProfile: (name: string, date: string, teamName?: string | null) => void;
   onAddTeam: (teamName: string, members: {name: string, date: string}[]) => void;
-  onUpdateProfile: (id: string, name: string, date: string) => void;
+  onUpdateProfile: (id: string, name: string, date: string, teamName?: string | null) => void;
   onDeleteProfile: (id: string) => void;
   onGroupProfiles: (ids: string[], groupName: string) => void;
   onRenameGroup: (oldName: string, newName: string) => void;
   onUngroup: (groupName: string) => void;
   onMoveToGroup: (id: string, groupName: string | null) => void;
   onSelectProfile: (id: string) => void;
+  onBulkDelete: (ids: string[], groupNames: string[]) => void;
   onReset: () => void;
   onImportProfiles: (profiles: Profile[]) => void;
+  groups: string[];
+  onAddGroup: (name: string) => void;
+  onDeleteGroup: (name: string) => void;
   onOpenCompatibility?: (date1?: string, date2?: string, lang?: string) => void;
   onOpenSport?: () => void;
   onLogout: () => void;
@@ -44,11 +49,11 @@ interface DashboardProps {
 }
 
 type Tab = 'PROFILES' | 'BALANCE' | 'ACTIVITIES' | 'CALENDAR' | 'MAPS';
-type ListMode = 'NONE' | 'EDIT' | 'DELETE' | 'SELECT';
+type ListMode = 'NONE' | 'SELECT';
 type ArenaMode = 'TOTAL' | 'BASIC' | 'REACTIVE';
 
 const Dashboard: React.FC<DashboardProps> = ({ 
-  profile, allProfiles, onAddProfile, onAddTeam, onUpdateProfile, onDeleteProfile, onGroupProfiles, onRenameGroup, onUngroup, onMoveToGroup, onSelectProfile, onReset, onImportProfiles, onOpenCompatibility, onOpenSport, onLogout,
+  profile, allProfiles, onAddProfile, onAddTeam, onUpdateProfile, onDeleteProfile, onGroupProfiles, onRenameGroup, onUngroup, onMoveToGroup, onSelectProfile, onBulkDelete, onReset, onImportProfiles, onAddGroup, onDeleteGroup, groups, onOpenCompatibility, onOpenSport, onLogout,
   lang, onLanguageChange
 }) => {
   const APP_ZONE = 'utc+5';
@@ -65,15 +70,17 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [newPName, setNewPName] = useState('');
   const [newPDate, setNewPDate] = useState('1990-01-01T12:00');
   const [showAddForm, setShowAddForm] = useState(false);
-  const [addMode, setAddMode] = useState<'SINGLE' | 'TEAM'>('SINGLE');
+  const [addMode, setAddMode] = useState<'SINGLE' | 'GROUP' | 'TEAM'>('SINGLE');
   const [teamNameImport, setTeamNameImport] = useState('');
+  const [showMoveToFolderDialog, setShowMoveToFolderDialog] = useState(false);
+  const [newGroupNameInput, setNewGroupNameInput] = useState('');
   const [teamText, setTeamText] = useState('');
   const [importPreview, setImportPreview] = useState<{name: string, date: string}[]>([]);
 
   const [listMode, setListMode] = useState<ListMode>('NONE');
   const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
-  const [profileToDelete, setProfileToDelete] = useState<Profile | null>(null);
-  const [groupToDelete, setGroupToDelete] = useState<string | null>(null);
+  const [editTeamName, setEditTeamName] = useState<string | null>(null);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showCompatDialog, setShowCompatDialog] = useState(false);
   const [showArenaDialog, setShowArenaDialog] = useState(false);
@@ -83,7 +90,6 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedGroupNames, setSelectedGroupNames] = useState<Set<string>>(new Set());
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
-  const [showGroupDialog, setShowGroupDialog] = useState(false);
   const [tempGroupName, setTempGroupName] = useState('');
   const [groupActionActive, setGroupActionActive] = useState<string | null>(null);
   const [showRenameDialog, setShowRenameDialog] = useState<string | null>(null);
@@ -163,24 +169,29 @@ const Dashboard: React.FC<DashboardProps> = ({
       };
     });
 
-    const groups: Record<string, any[]> = {};
+    const groupsMap: Record<string, any[]> = {};
     const ungrouped: any[] = [];
+
+    // Ensure all defined groups exist in the map
+    groups.forEach(g => {
+      groupsMap[g] = [];
+    });
 
     profiles.forEach(p => {
       if (p.teamName) {
-        if (!groups[p.teamName]) groups[p.teamName] = [];
-        groups[p.teamName].push(p);
+        if (!groupsMap[p.teamName]) groupsMap[p.teamName] = [];
+        groupsMap[p.teamName].push(p);
       } else {
         ungrouped.push(p);
       }
     });
 
-    Object.keys(groups).forEach(key => {
-      groups[key].sort((a, b) => b.currentBalance - a.currentBalance);
+    Object.keys(groupsMap).forEach(key => {
+      groupsMap[key].sort((a, b) => b.currentBalance - a.currentBalance);
     });
     ungrouped.sort((a, b) => b.currentBalance - a.currentBalance);
 
-    return { groups, ungrouped };
+    return { groups: groupsMap, ungrouped };
   }, [allProfiles, targetDate]);
 
   const resetToToday = () => {
@@ -591,12 +602,10 @@ const Dashboard: React.FC<DashboardProps> = ({
   const renderProfileItem = (p: any) => {
     const isSelected = profile.id === p.id;
     const isChecked = selectedIds.has(p.id) || (p.teamName && selectedGroupNames.has(p.teamName));
-    const isDeleteMode = listMode === 'DELETE';
-    const isEditMode = listMode === 'EDIT';
     const isSelectMode = listMode === 'SELECT';
 
     const handleTouchStart = () => {
-      if (isDeleteMode || isEditMode || isSelectMode) return;
+      if (isSelectMode) return;
       longPressTimer.current = setTimeout(() => {
         setListMode('SELECT');
         setSelectedIds(new Set([p.id]));
@@ -616,16 +625,6 @@ const Dashboard: React.FC<DashboardProps> = ({
         else newSelected.add(p.id);
         setSelectedIds(newSelected);
         if (newSelected.size === 0 && selectedGroupNames.size === 0) setListMode('NONE');
-        return;
-      }
-      if (isDeleteMode) {
-        if (!p.isMaster) setProfileToDelete(p);
-        return;
-      }
-      if (isEditMode) {
-        setEditingProfileId(p.id);
-        setNewPName(p.name);
-        setNewPDate(p.birthDate);
         return;
       }
       onSelectProfile(p.id);
@@ -648,7 +647,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           isSelected && listMode === 'NONE'
             ? 'bg-white/10 border-[#33b5e5] shadow-[0_0_15px_rgba(51,181,229,0.2)]' 
             : 'bg-[#0a0a0a] border-white/5 hover:border-white/20'
-        } ${isChecked ? 'ring-2 ring-[#33b5e5] border-[#33b5e5] bg-[#33b5e5]/10' : ''} ${isDeleteMode && !p.isMaster ? 'ring-2 ring-red-600 border-red-600 shadow-[0_0_10px_rgba(255,0,0,0.3)]' : ''} ${isEditMode ? 'ring-2 ring-cyan-400 border-cyan-400 shadow-[0_0_10px_rgba(51,181,229,0.3)]' : ''}`}
+        } ${isChecked ? 'ring-2 ring-[#33b5e5] border-[#33b5e5] bg-[#33b5e5]/10' : ''}`}
       >
         <div className="w-10 h-10 flex items-center justify-center text-2xl mr-2 pointer-events-none">
           {getBalanceEmoji(p.currentBalance)}
@@ -699,6 +698,55 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex items-center gap-1.5">
             {listMode === 'SELECT' ? (
               <>
+                {(selectedIds.size + selectedGroupNames.size) === 1 && (
+                  <button 
+                    onClick={() => {
+                      if (selectedIds.size === 1) {
+                        const id = Array.from(selectedIds)[0];
+                        const p = allProfiles.find(x => x.id === id);
+                        if (p) {
+                          setEditingProfileId(p.id);
+                          setNewPName(p.name);
+                          setNewPDate(p.birthDate);
+                          setEditTeamName(p.teamName || null);
+                          setListMode('NONE');
+                          setSelectedIds(new Set());
+                          logEvent('Bulk Edit Click', 'Data', 'Contact');
+                        }
+                      } else {
+                        const groupName = Array.from(selectedGroupNames)[0];
+                        setTempGroupName(groupName);
+                        setShowRenameDialog(groupName);
+                        setListMode('NONE');
+                        setSelectedGroupNames(new Set());
+                        logEvent('Bulk Edit Click', 'Data', 'Group');
+                      }
+                    }}
+                    title={t('edit')}
+                    className="w-8 h-8 flex items-center justify-center bg-cyan-500 text-black border border-cyan-400 rounded-lg transition-all active:scale-95 shadow-[0_0_10px_#33b5e5]"
+                  >
+                    <PenTool className="w-3 h-3" />
+                  </button>
+                )}
+                {(selectedIds.size + selectedGroupNames.size) > 0 && (
+                  <button 
+                    onClick={() => { setShowMoveToFolderDialog(true); logEvent('Open Move to Folder', 'Features'); }} 
+                    title={t('add_to_folder')} 
+                    className="w-8 h-8 flex items-center justify-center bg-[#33b5e5] text-black border border-[#33b5e5] rounded-lg transition-all active:scale-95 shadow-[0_0_8px_#33b5e5]"
+                  >
+                    <FolderPlus className="w-3 h-3" />
+                  </button>
+                )}
+                {(selectedIds.size + selectedGroupNames.size) > 0 && (
+                  <button 
+                    onClick={() => setShowBulkDeleteConfirm(true)} 
+                    title={t('delete')} 
+                    className="w-8 h-8 flex items-center justify-center bg-red-600 text-white border border-red-500 rounded-lg transition-all active:scale-95 shadow-[0_0_10px_red]"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                )}
+                <div className="w-[1px] h-4 bg-white/10 mx-0.5" />
                 {(selectedIds.size + selectedGroupNames.size) >= 2 && (
                   <>
                     <button 
@@ -719,16 +767,12 @@ const Dashboard: React.FC<DashboardProps> = ({
                     )}
                   </>
                 )}
-                <button onClick={() => setShowGroupDialog(true)} title={t('group')} className="w-8 h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-[#33b5e5] transition-all active:scale-95"><FolderPlus className="w-3 h-3" /></button>
                 <button onClick={() => { setListMode('NONE'); setSelectedIds(new Set()); setSelectedGroupNames(new Set()); setListMode('NONE'); }} title={t('close')} className="w-8 h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-slate-400 transition-all active:scale-95"><X className="w-3 h-3" /></button>
               </>
             ) : (
               <>
                 <button onClick={() => fileInputRef.current?.click()} title={t('import')} className="w-8 h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-slate-400 transition-all active:scale-95"><Upload className="w-2.5 h-2.5" /></button>
                 <button onClick={handleExport} title={t('export')} className="w-8 h-8 flex items-center justify-center bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-slate-400 transition-all active:scale-95"><Download className="w-2.5 h-2.5" /></button>
-                <div className="w-[1px] h-4 bg-white/10 mx-0.5" />
-                <button onClick={() => setListMode(listMode === 'EDIT' ? 'NONE' : 'EDIT')} title={t('edit')} className={`w-8 h-8 flex items-center justify-center border rounded-lg transition-all active:scale-95 ${listMode === 'EDIT' ? 'bg-cyan-400 border-cyan-400 text-black shadow-[0_0_8px_#33b5e5]' : 'bg-white/5 border-white/10 text-slate-400'}`}><PenTool className="w-2.5 h-2.5" /></button>
-                <button onClick={() => setListMode(listMode === 'DELETE' ? 'NONE' : 'DELETE')} title={t('delete')} className={`w-8 h-8 flex items-center justify-center border rounded-lg transition-all active:scale-95 ${listMode === 'DELETE' ? 'bg-red-600 border-red-600 text-white shadow-[0_0_10px_red]' : 'bg-white/5 border-white/10 text-slate-400'}`}><Trash2 className="w-2.5 h-2.5" /></button>
                 <div className="w-[1px] h-4 bg-white/10 mx-0.5" />
                 <button onClick={() => { setShowAddForm(!showAddForm); setListMode('NONE'); }} className="bg-white/5 hover:bg-white/10 border border-white/20 px-3 py-1 rounded-lg text-[10px] font-bold uppercase transition-all">{showAddForm ? t('close') : t('add')}</button>
               </>
@@ -746,6 +790,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   {!editingProfileId && (
                     <div className="flex bg-black/40 rounded-lg p-0.5 border border-white/5">
                       <button onClick={() => setAddMode('SINGLE')} className={`px-2 py-1 rounded text-[9px] font-bold uppercase transition-all ${addMode === 'SINGLE' ? 'bg-[#33b5e5] text-black shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>{t('single_contact')}</button>
+                      <button onClick={() => setAddMode('GROUP')} className={`px-2 py-1 rounded text-[9px] font-bold uppercase transition-all ${addMode === 'GROUP' ? 'bg-[#33b5e5] text-black shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>{t('group')}</button>
                       <button onClick={() => setAddMode('TEAM')} className={`px-2 py-1 rounded text-[9px] font-bold uppercase transition-all ${addMode === 'TEAM' ? 'bg-[#33b5e5] text-black shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>{t('team_folder')}</button>
                     </div>
                   )}
@@ -757,12 +802,13 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <div className="space-y-3">
                   <input type="text" placeholder={t('name_placeholder')} value={newPName} onChange={e => setNewPName(e.target.value)} className="w-full bg-black border border-white/10 p-2 rounded text-sm outline-none focus:border-[#33b5e5] text-white" />
                   <input type="datetime-local" value={newPDate} onChange={e => setNewPDate(e.target.value)} className="w-full bg-black border border-white/10 p-2 rounded text-sm outline-none focus:border-[#33b5e5] color-scheme-dark text-white" />
+                  
                   <button onClick={() => {
                     if (editingProfileId) { onUpdateProfile(editingProfileId, newPName, newPDate); setEditingProfileId(null); setListMode('NONE'); logEvent('Update Profile', 'Data'); }
                     else if(newPName) { onAddProfile(newPName, newPDate); setNewPName(''); setShowAddForm(false); logEvent('Add Profile', 'Data'); }
                   }} className="w-full bg-[#33b5e5] text-black font-black py-2 rounded text-xs uppercase shadow-lg active:scale-[0.98] transition-transform">{t('save')}</button>
                 </div>
-              ) : (
+              ) : addMode === 'TEAM' ? (
                 <div className="space-y-3">
                   <div className="flex gap-2">
                     <div className="flex-1 space-y-1">
@@ -830,24 +876,56 @@ const Dashboard: React.FC<DashboardProps> = ({
                     </button>
                   </div>
                 </div>
+              ) : (
+                <div className="space-y-3 p-4 bg-black/20 border border-white/5 rounded-2xl">
+                  <div className="text-center space-y-1 mb-2">
+                    <FolderPlus className="w-6 h-6 text-[#33b5e5] mx-auto" />
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{t('new_folder')}</p>
+                  </div>
+                  <input 
+                    autoFocus 
+                    type="text" 
+                    placeholder={t('group_placeholder')} 
+                    value={tempGroupName} 
+                    onChange={e => setTempGroupName(e.target.value)} 
+                    className="w-full bg-black border border-white/10 p-3 rounded-xl text-xs outline-none focus:border-[#33b5e5] text-white" 
+                  />
+                  <button 
+                    disabled={!tempGroupName}
+                    onClick={() => { 
+                      onAddGroup(tempGroupName);
+                      setShowAddForm(false); 
+                      setTempGroupName(''); 
+                      logEvent('Create Empty Group', 'Organization'); 
+                    }} 
+                    className={`w-full font-black py-3 rounded-xl text-xs uppercase shadow-lg transition-all ${tempGroupName ? 'bg-[#33b5e5] text-black active:scale-95' : 'bg-white/5 text-slate-600 cursor-not-allowed'}`}
+                  >
+                    {t('save')}
+                  </button>
+                </div>
               )}
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      <div 
-        className={`p-4 flex-1 overflow-y-auto custom-scrollbar transition-colors ${isDragOverGeneral ? 'bg-[#33b5e5]/10 shadow-[inset_0_0_40px_rgba(51,181,229,0.2)]' : ''}`}
-        onDragOver={(e) => { e.preventDefault(); if (!isDragOverGeneral) setIsDragOverGeneral(true); }}
-        onDragLeave={(e) => {
-          const rect = e.currentTarget.getBoundingClientRect();
-          if (e.clientX <= rect.left || e.clientX >= rect.right || e.clientY <= rect.top || e.clientY >= rect.bottom) {
-            setIsDragOverGeneral(false);
-          }
-        }}
-        onDrop={onDropOnGeneral}
-      >
-        <div className="space-y-2">
+      <AnimatePresence>
+        {!showAddForm && !editingProfileId && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className={`p-4 flex-1 overflow-y-auto custom-scrollbar transition-colors ${isDragOverGeneral ? 'bg-[#33b5e5]/10 shadow-[inset_0_0_40px_rgba(51,181,229,0.2)]' : ''}`}
+            onDragOver={(e) => { e.preventDefault(); if (!isDragOverGeneral) setIsDragOverGeneral(true); }}
+            onDragLeave={(e) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              if (e.clientX <= rect.left || e.clientX >= rect.right || e.clientY <= rect.top || e.clientY >= rect.bottom) {
+                setIsDragOverGeneral(false);
+              }
+            }}
+            onDrop={onDropOnGeneral}
+          >
+            <div className="space-y-2">
           {/* Fix: Explicitly type groupProfiles to avoid 'unknown' type error */}
           {Object.entries(groupedData.groups).map(([groupName, groupProfiles]: [string, any[]]) => {
             const isExpanded = expandedGroups.has(groupName);
@@ -873,8 +951,12 @@ const Dashboard: React.FC<DashboardProps> = ({
                 return;
               }
               const newExpanded = new Set(expandedGroups);
-              if (isExpanded) newExpanded.delete(groupName);
-              else newExpanded.add(groupName);
+              if (isExpanded) {
+                newExpanded.delete(groupName);
+              } else {
+                newExpanded.add(groupName);
+                logEvent('Expand Group', 'Navigation', groupName);
+              }
               setExpandedGroups(newExpanded);
             };
 
@@ -926,7 +1008,10 @@ const Dashboard: React.FC<DashboardProps> = ({
                               onMouseDown={(e) => e.stopPropagation()}
                               onClick={(e) => { 
                                 e.stopPropagation(); 
-                                setGroupToDelete(groupName);
+                                setListMode('SELECT');
+                                setSelectedGroupNames(new Set([groupName]));
+                                setSelectedIds(new Set());
+                                setShowBulkDeleteConfirm(true);
                                 setGroupActionActive(null); 
                               }}
                               className="w-10 h-10 flex items-center justify-center bg-red-600 text-white rounded-lg border border-red-500 hover:bg-white hover:text-red-600 transition-colors shadow-lg active:scale-90"
@@ -956,7 +1041,9 @@ const Dashboard: React.FC<DashboardProps> = ({
           })}
           {groupedData.ungrouped.map(p => renderProfileItem(p))}
         </div>
-      </div>
+      </motion.div>
+      )}
+      </AnimatePresence>
       {groupActionActive && <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px]" onClick={() => setGroupActionActive(null)} />}
     </div>
   );
@@ -1048,7 +1135,10 @@ const Dashboard: React.FC<DashboardProps> = ({
       <div className="p-4 pb-12">
         <div className="grid grid-cols-2 gap-2">
           <button 
-            onClick={() => onOpenCompatibility?.(profile.birthDate, undefined, lang)} 
+            onClick={() => {
+              onOpenCompatibility?.(profile.birthDate, undefined, lang);
+              logEvent('Check Compatibility', 'Features', 'Self');
+            }} 
             className="w-full bg-[#1b2531]/50 border border-white/10 rounded-xl py-3 flex items-center justify-center gap-2 hover:bg-white/5 transition-all active:scale-95 text-[10px] font-bold text-[#33b5e5] uppercase tracking-widest"
           >
             {t('check_compat')}
@@ -1205,7 +1295,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       <div className="p-4 flex flex-col items-center gap-6 h-full overflow-y-auto custom-scrollbar">
         <div className="grid grid-cols-3 gap-1 w-full max-w-sm z-50">
           {MAP_NAMES.map((m, idx) => (
-            <button key={idx} onClick={() => setSelectedMapIdx(idx)} className={`py-2 text-[9px] font-black uppercase tracking-tighter border transition-all ${selectedMapIdx === idx ? 'bg-[#33b5e5] text-black border-[#33b5e5]' : 'bg-[#050505] text-slate-600 border-white/5'}`}>{m.name}</button>
+            <button key={idx} onClick={() => { setSelectedMapIdx(idx); logEvent('Map Select', 'Features', m.name); }} className={`py-2 text-[9px] font-black uppercase tracking-tighter border transition-all ${selectedMapIdx === idx ? 'bg-[#33b5e5] text-black border-[#33b5e5]' : 'bg-[#050505] text-slate-600 border-white/5'}`}>{m.name}</button>
           ))}
         </div>
         <div className="relative w-80 h-80 rounded-full flex items-center justify-center overflow-hidden border-[6px] border-[#1b2531] shadow-2xl bg-black flex-shrink-0">
@@ -1287,9 +1377,9 @@ const Dashboard: React.FC<DashboardProps> = ({
           <AnimatePresence>
             {isLangMenuOpen && (
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute top-full mt-2 right-0 bg-[#1b2531] border border-white/20 rounded-xl shadow-2xl z-[10000] overflow-hidden w-40 md:w-56 backdrop-blur-md">
-                {GLOBAL_LANGUAGES.map(l => (
-                  <button key={l.code} onClick={() => { onLanguageChange(l.code); setIsLangMenuOpen(false); }} className={`w-full px-4 py-3 md:py-4 flex items-center gap-3 hover:bg-white/10 transition-colors text-xs md:text-sm font-bold uppercase ${lang === l.code ? 'text-[#33b5e5]' : 'text-slate-300'}`}><span className="text-lg md:text-xl">{l.flag}</span>{l.name}</button>
-                ))}
+                  {GLOBAL_LANGUAGES.map(l => (
+                    <button key={l.code} onClick={() => { onLanguageChange(l.code); setIsLangMenuOpen(false); logEvent('Change Language', 'Settings', l.name); }} className={`w-full px-4 py-3 md:py-4 flex items-center gap-3 hover:bg-white/10 transition-colors text-xs md:text-sm font-bold uppercase ${lang === l.code ? 'text-[#33b5e5]' : 'text-slate-300'}`}><span className="text-lg md:text-xl">{l.flag}</span>{l.name}</button>
+                  ))}
               </motion.div>
             )}
           </AnimatePresence>
@@ -1327,26 +1417,8 @@ const Dashboard: React.FC<DashboardProps> = ({
       </footer>
 
       <AnimatePresence>
-        {showGroupDialog && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[1200] bg-black/90 backdrop-blur-md flex items-center justify-center p-6">
-            <div className="bg-[#1b2531] border border-white/20 p-8 rounded-[2rem] w-full max-w-sm space-y-6 shadow-2xl">
-              <div className="text-center space-y-2">
-                <FolderPlus className="w-10 h-10 text-[#33b5e5]" />
-                <h2 className="text-2xl font-bold uppercase tracking-tighter">{t('group')}</h2>
-              </div>
-              <input autoFocus type="text" placeholder={t('group_placeholder')} value={tempGroupName} onChange={e => setTempGroupName(e.target.value)} className="w-full bg-black border border-white/10 p-4 rounded-2xl text-sm outline-none focus:border-[#33b5e5] text-white" />
-              <div className="flex gap-3">
-                <button onClick={() => { onGroupProfiles(Array.from(selectedIds), tempGroupName); setSelectedIds(new Set()); setSelectedGroupNames(new Set()); setListMode('NONE'); setShowGroupDialog(false); setTempGroupName(''); logEvent('Create Group', 'Organization'); }} className="flex-1 bg-[#33b5e5] text-black font-bold py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform">{t('save')}</button>
-                <button onClick={() => { setShowGroupDialog(false); setTempGroupName(''); }} className="flex-1 bg-white/5 text-slate-300 font-bold py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform border border-white/10">{t('no')}</button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
         {showRenameDialog && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[1200] bg-black/90 backdrop-blur-md flex items-center justify-center p-6">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[10000] bg-black/90 backdrop-blur-md flex items-center justify-center p-6">
             <div className="bg-[#1b2531] border border-white/20 p-8 rounded-[2rem] w-full max-w-sm space-y-6 shadow-2xl">
               <div className="text-center space-y-2">
                 <PenTool className="w-10 h-10 text-[#33b5e5]" />
@@ -1364,25 +1436,25 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       <AnimatePresence>
         {isHelpOpen && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[5000] bg-black/90 backdrop-blur-xl flex flex-col p-6 overflow-hidden">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[10001] bg-black/90 backdrop-blur-xl flex flex-col p-6 overflow-hidden">
             <div className="flex justify-between items-center mb-6 border-b border-[#33b5e5]/30 pb-4">
-              <h2 className="text-2xl font-black text-[#33b5e5] uppercase italic tracking-tighter">{t('help_title')}</h2>
+              <h2 className="text-2xl font-black text-[#33b5e5] italic tracking-tighter">{t('help_title')}</h2>
               <button onClick={() => setIsHelpOpen(false)} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white"><X className="w-6 h-6" /></button>
             </div>
             <div className="flex-1 overflow-y-auto custom-scrollbar space-y-10 pr-2 pb-12">
               <section className="space-y-4">
                 <h3 className="text-[#ffd600] font-black uppercase text-lg border-b border-white/10 pb-1">{t('help_core_title')}</h3>
-                <p className="text-slate-300 text-lg leading-relaxed font-medium">{t('help_core_desc')}</p>
+                <p className="text-slate-300 text-lg leading-relaxed font-bold italic">{t('help_core_desc')}</p>
                 <div className="grid gap-3">
-                  <HelpCard color={COLORS.MOTOR} title={t('toggle_dvig')} desc={t('help_motor_desc')} />
-                  <HelpCard color={COLORS.PHYSICAL} title={t('toggle_phys')} desc={t('help_phys_desc')} />
-                  <HelpCard color={COLORS.SENSORY} title={t('toggle_sens')} desc={t('help_sens_desc')} />
-                  <HelpCard color={COLORS.ANALYTICAL} title={t('toggle_anlt')} desc={t('help_anlt_desc')} />
+                  <HelpCard color={COLORS.MOTOR} title={t('toggle_dvig')} desc={t('help_motor_desc')} onClick={() => logEvent('Help View', 'Education', 'Motor')} />
+                  <HelpCard color={COLORS.PHYSICAL} title={t('toggle_phys')} desc={t('help_phys_desc')} onClick={() => logEvent('Help View', 'Education', 'Physical')} />
+                  <HelpCard color={COLORS.SENSORY} title={t('toggle_sens')} desc={t('help_sens_desc')} onClick={() => logEvent('Help View', 'Education', 'Sensory')} />
+                  <HelpCard color={COLORS.ANALYTICAL} title={t('toggle_anlt')} desc={t('help_anlt_desc')} onClick={() => logEvent('Help View', 'Education', 'Analytical')} />
                 </div>
               </section>
 
               <section className="space-y-4">
-                <h3 className="text-[#ffd600] font-black uppercase text-lg border-b border-white/10 pb-1">{t('help_levels_title')}</h3>
+                <h3 className="text-[#ffd600] font-black text-lg border-b border-white/10 pb-1">{t('help_levels_title')}</h3>
                 <div className="space-y-2">
                    {[
                      { icon: <CriticalLevelIcon />, color: '#44aa00', label: 'legend_crit', descKey: 'help_crit_full' },
@@ -1394,8 +1466,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                     <div key={lvl.label} className="bg-white/5 p-4 rounded-xl border-l-4 flex gap-4" style={{ borderColor: lvl.color }}>
                       <div className="w-12 h-12 shrink-0">{lvl.icon}</div>
                       <div>
-                        <div className="text-[14px] font-black mb-1 uppercase" style={{ color: lvl.color }}>{t(lvl.label)}</div>
-                        <p className="text-base text-slate-300 leading-snug">{t(lvl.descKey)}</p>
+                        <div className="text-[14px] font-black mb-1 italic" style={{ color: lvl.color }}>{t(lvl.label)}</div>
+                        <p className="text-base text-slate-300 leading-snug font-bold italic">{t(lvl.descKey)}</p>
                       </div>
                     </div>
                    ))}
@@ -1403,7 +1475,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               </section>
 
               <section className="space-y-4">
-                <h3 className="text-[#ffd600] font-black uppercase text-lg border-b border-white/10 pb-1">{t('help_risk_title')}</h3>
+                <h3 className="text-[#ffd600] font-black text-lg border-b border-white/10 pb-1">{t('help_risk_title')}</h3>
                 <div className="space-y-3">
                   {[
                     { icon: '⚡', label: 'risk_low', desc: 'risk_low_desc' },
@@ -1413,8 +1485,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                     <div key={rk.label} className="bg-[#cc0000]/10 border border-[#cc0000]/30 p-5 rounded-xl flex gap-5 items-center relative overflow-hidden">
                       <span className="text-3xl relative z-10 min-w-[3rem] text-center">{rk.icon}</span>
                       <div className="relative z-10">
-                        <p className="text-base text-slate-100 font-black uppercase tracking-wider">{t(rk.label)}</p>
-                        <p className="text-sm text-slate-400 mt-1 italic leading-tight">{t(rk.desc)}</p>
+                        <p className="text-base text-slate-100 font-black tracking-wider italic">{t(rk.label)}</p>
+                        <p className="text-sm text-slate-400 mt-1 font-bold italic leading-tight">{t(rk.desc)}</p>
                       </div>
                     </div>
                   ))}
@@ -1422,32 +1494,32 @@ const Dashboard: React.FC<DashboardProps> = ({
               </section>
 
               <section className="space-y-4">
-                <h3 className="text-[#ffd600] font-black uppercase text-lg border-b border-white/10 pb-1">{t('help_arena_title')}</h3>
+                <h3 className="text-[#ffd600] font-black text-lg border-b border-white/10 pb-1">{t('help_arena_title')}</h3>
                 <div className="space-y-3">
-                   <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 italic">{t('help_arena_total_desc')}</div>
-                   <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 italic">{t('help_arena_basic_desc')}</div>
-                   <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 italic">{t('help_arena_reactive_desc')}</div>
+                   <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 font-bold italic">{t('help_arena_total_desc')}</div>
+                   <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 font-bold italic">{t('help_arena_basic_desc')}</div>
+                   <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 font-bold italic">{t('help_arena_reactive_desc')}</div>
                 </div>
               </section>
 
               <section className="space-y-4">
-                <h3 className="text-[#ffd600] font-black uppercase text-lg border-b border-white/10 pb-1">{t('help_balance_title')}</h3>
-                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 leading-relaxed font-medium">
+                <h3 className="text-[#ffd600] font-black text-lg border-b border-white/10 pb-1">{t('help_balance_title')}</h3>
+                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 leading-relaxed font-bold italic">
                    {t('help_balance_desc')}
                 </div>
               </section>
 
               <section className="space-y-4">
-                <h3 className="text-[#ffd600] font-black uppercase text-lg border-b border-white/10 pb-1">{t('help_activities_title')}</h3>
-                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 leading-relaxed italic">
+                <h3 className="text-[#ffd600] font-black text-lg border-b border-white/10 pb-1">{t('help_activities_title')}</h3>
+                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 leading-relaxed font-bold italic">
                    {t('help_activities_desc')}
                 </div>
               </section>
 
               <section className="space-y-4">
-                <h3 className="text-[#ffd600] font-black uppercase text-lg border-b border-white/10 pb-1">{t('help_maps_title')}</h3>
+                <h3 className="text-[#ffd600] font-black text-lg border-b border-white/10 pb-1">{t('help_maps_title')}</h3>
                 <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 space-y-2">
-                   <p className="italic">{t('help_maps_desc')}</p>
+                   <p className="font-bold italic">{t('help_maps_desc')}</p>
                    <div className="grid grid-cols-2 gap-2 mt-2">
                       {['Micro 3.5 (0.32s)', 'Micro 3 (2.25s)', 'Micro 2 (31s)', 'Micro 1 (7m)', 'Zero (1.7h)', 'Macro 1 (24h)', 'Macro 2 (14d)', 'Macro 3 (196d)', 'Macro 3.5 (1372d)'].map(m => (
                         <div key={m} className="text-[12px] bg-black/50 p-1.5 text-center border border-white/5 rounded font-mono">{m}</div>
@@ -1457,39 +1529,53 @@ const Dashboard: React.FC<DashboardProps> = ({
               </section>
 
               <section className="space-y-4">
-                <h3 className="text-[#ffd600] font-black uppercase text-lg border-b border-white/10 pb-1">{t('help_compat_title')}</h3>
+                <h3 className="text-[#ffd600] font-black text-lg border-b border-white/10 pb-1">{t('help_compat_title')}</h3>
                 <div className="bg-white/5 p-4 rounded-xl border border-white/10 space-y-3">
-                   <p className="text-base text-slate-300"><span className="text-cyan-400 font-bold uppercase tracking-wider text-[13px]">{t('resonant')}:</span> {t('help_compat_resonant_desc')}</p>
-                   <p className="text-base text-slate-300"><span className="text-yellow-400 font-bold uppercase tracking-wider text-[13px]">{t('optimal_compat')}:</span> {t('help_compat_optimal_desc')}</p>
-                   <p className="text-base text-slate-300"><span className="text-red-500 font-bold uppercase tracking-wider text-[13px]">{t('polar')}:</span> {t('help_compat_polar_desc')}</p>
+                   <p className="text-base text-slate-300"><span className="text-cyan-400 font-bold tracking-wider text-[13px] italic">{t('resonant')}:</span> <span className="font-bold italic">{t('help_compat_resonant_desc')}</span></p>
+                   <p className="text-base text-slate-300"><span className="text-yellow-400 font-bold tracking-wider text-[13px] italic">{t('optimal_compat')}:</span> <span className="font-bold italic">{t('help_compat_optimal_desc')}</span></p>
+                   <p className="text-base text-slate-300"><span className="text-red-500 font-bold tracking-wider text-[13px] italic">{t('polar')}:</span> <span className="font-bold italic">{t('help_compat_polar_desc')}</span></p>
                 </div>
               </section>
 
               <section className="space-y-4">
-                <h3 className="text-[#ffd600] font-black uppercase text-lg border-b border-white/10 pb-1">{t('help_calendar_year_title')}</h3>
-                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 leading-relaxed italic">
+                <h3 className="text-[#ffd600] font-black text-lg border-b border-white/10 pb-1">{t('help_calendar_year_title')}</h3>
+                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 leading-relaxed font-bold italic">
                    {t('help_calendar_year_desc')}
                 </div>
               </section>
 
               <section className="space-y-4">
-                <h3 className="text-[#ffd600] font-black uppercase text-lg border-b border-white/10 pb-1">{t('help_solar_title')}</h3>
-                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 leading-relaxed italic">
+                <h3 className="text-[#ffd600] font-black text-lg border-b border-white/10 pb-1">{t('help_solar_title')}</h3>
+                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 leading-relaxed font-bold italic">
                    {t('help_solar_desc')}
                 </div>
               </section>
 
               <section className="space-y-4">
-                <h3 className="text-[#ffd600] font-black uppercase text-lg border-b border-white/10 pb-1">{t('help_cosmic_energy_title')}</h3>
-                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 leading-relaxed italic">
+                <h3 className="text-[#ffd600] font-black text-lg border-b border-white/10 pb-1">{t('help_cosmic_energy_title')}</h3>
+                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 leading-relaxed font-bold italic">
                    {t('help_cosmic_energy_desc')}
                 </div>
               </section>
 
               <section className="space-y-4">
-                <h3 className="text-[#ffd600] font-black uppercase text-lg border-b border-white/10 pb-1">{t('help_astro_events_title')}</h3>
-                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 leading-relaxed italic">
+                <h3 className="text-[#ffd600] font-black text-lg border-b border-white/10 pb-1">{t('help_astro_events_title')}</h3>
+                <div className="bg-white/5 p-4 rounded-xl border border-white/10 text-base text-slate-300 leading-relaxed font-bold italic">
                    {t('help_astro_events_desc')}
+                </div>
+              </section>
+
+              <section className="space-y-4">
+                <h3 className="text-[#ffd600] font-black text-lg border-b border-white/10 pb-1">{t('help_contacts_title')}</h3>
+                <div className="bg-gradient-to-br from-cyan-500/10 to-blue-500/10 p-5 rounded-xl border border-cyan-500/20 text-base text-slate-300 leading-relaxed font-bold italic tracking-tight">
+                   {t('help_contacts_desc')}
+                </div>
+              </section>
+
+              <section className="space-y-4">
+                <h3 className="text-[#ffd600] font-black text-lg border-b border-white/10 pb-1">{t('help_pwa_title')}</h3>
+                <div className="bg-gradient-to-br from-[#33b5e5]/10 to-purple-500/10 p-5 rounded-xl border border-[#33b5e5]/20 text-base text-slate-300 leading-relaxed font-bold italic">
+                   {t('help_pwa_desc')}
                 </div>
               </section>
             </div>
@@ -1499,15 +1585,78 @@ const Dashboard: React.FC<DashboardProps> = ({
       </AnimatePresence>
 
       <AnimatePresence>
-        {profileToDelete && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[1100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
-            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#1b2531] border border-white/20 p-8 rounded-[2rem] w-full max-sm text-center space-y-6 shadow-2xl">
-              <div className="text-4xl text-red-600 mb-2"><AlertTriangle className="w-10 h-10 mx-auto" /></div>
-              <h2 className="text-2xl font-black uppercase tracking-tighter">{t('confirm_delete')}</h2>
-              <p className="text-slate-400 text-sm font-bold uppercase">{profileToDelete.name}</p>
-              <div className="flex gap-3 pt-4">
-                <button onClick={() => { onDeleteProfile(profileToDelete.id); setProfileToDelete(null); setListMode('NONE'); logEvent('Delete Profile', 'Data'); }} className="flex-1 bg-red-600 text-white font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform shadow-lg shadow-red-900/20">{t('yes')}</button>
-                <button onClick={() => setProfileToDelete(null)} className="flex-1 bg-white/5 text-slate-300 font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform border border-white/10">{t('no')}</button>
+        {showMoveToFolderDialog && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#1b2531] border border-white/20 p-6 rounded-[2rem] w-full max-w-sm flex flex-col gap-4 shadow-2xl overflow-hidden max-h-[80vh]">
+              <div className="flex justify-between items-center px-2">
+                <h2 className="text-sm font-black uppercase tracking-widest text-[#33b5e5]">{t('add_to_folder')}</h2>
+                <button onClick={() => setShowMoveToFolderDialog(false)} className="text-slate-500 hover:text-white transition-colors"><X className="w-5 h-5" /></button>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-1">
+                <button 
+                    onClick={() => {
+                        onGroupProfiles(Array.from(selectedIds), ""); // Empty string means no group
+                        setShowMoveToFolderDialog(false);
+                        setSelectedIds(new Set());
+                        setSelectedGroupNames(new Set());
+                        setListMode('NONE');
+                        logEvent('Move to No Folder', 'Organization');
+                    }}
+                    className="w-full p-4 bg-black/40 border border-white/5 rounded-xl flex items-center gap-3 hover:bg-white/10 transition-all text-left group"
+                >
+                    <X className="w-4 h-4 text-slate-500" />
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{lang === 'ru' ? 'Без группы' : 'No Group'}</span>
+                </button>
+
+                {groups.map(g => (
+                  <button 
+                    key={g} 
+                    onClick={() => {
+                        onGroupProfiles(Array.from(selectedIds), g);
+                        // If groups were selected, we might want to move their content too? 
+                        // But usually people just select profiles. 
+                        // If groupNames were selected, currently onGroupProfiles doesn't handle merging groups.
+                        setShowMoveToFolderDialog(false);
+                        setSelectedIds(new Set());
+                        setSelectedGroupNames(new Set());
+                        setListMode('NONE');
+                        logEvent('Move to Existing Folder', 'Organization');
+                    }}
+                    className="w-full p-4 bg-white/5 border border-white/10 rounded-xl flex items-center gap-3 hover:bg-[#33b5e5]/20 hover:border-[#33b5e5]/40 transition-all text-left group"
+                  >
+                    <Folder className="w-4 h-4 text-[#33b5e5]" />
+                    <span className="text-xs font-bold text-white uppercase group-hover:text-[#33b5e5]">{g}</span>
+                  </button>
+                ))}
+                
+                <div className="pt-2 border-t border-white/5">
+                    <div className="flex gap-2">
+                        <input 
+                            type="text" 
+                            placeholder={t('group_placeholder')}
+                            value={newGroupNameInput}
+                            onChange={e => setNewGroupNameInput(e.target.value)}
+                            className="flex-1 bg-black border border-white/10 p-3 rounded-xl text-xs outline-none focus:border-[#33b5e5] text-white"
+                        />
+                        <button 
+                            disabled={!newGroupNameInput}
+                            onClick={() => {
+                                onAddGroup(newGroupNameInput);
+                                onGroupProfiles(Array.from(selectedIds), newGroupNameInput);
+                                setNewGroupNameInput('');
+                                setShowMoveToFolderDialog(false);
+                                setSelectedIds(new Set());
+                                setSelectedGroupNames(new Set());
+                                setListMode('NONE');
+                                logEvent('Move to New Folder', 'Organization');
+                            }}
+                            className={`px-4 bg-[#33b5e5] text-black rounded-xl font-black transition-all active:scale-95 ${!newGroupNameInput ? 'opacity-50 grayscale' : 'hover:bg-white'}`}
+                        >
+                            <Check className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
               </div>
             </motion.div>
           </motion.div>
@@ -1515,16 +1664,26 @@ const Dashboard: React.FC<DashboardProps> = ({
       </AnimatePresence>
 
       <AnimatePresence>
-        {groupToDelete && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[1100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
+        {showBulkDeleteConfirm && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#1b2531] border border-white/20 p-8 rounded-[2rem] w-full max-sm text-center space-y-6 shadow-2xl">
-              <div className="text-4xl text-red-600 mb-2"><FolderMinus className="w-10 h-10 mx-auto" /></div>
-              <h2 className="text-2xl font-black uppercase tracking-tighter">{t('ungroup')}</h2>
-              <p className="text-slate-300 text-xs font-bold uppercase">{groupToDelete}</p>
-              <p className="text-slate-500 text-[10px] italic">{t('confirm_ungroup')}</p>
-              <div className="flex gap-3 pt-4">
-                <button onClick={() => { onUngroup(groupToDelete); setGroupToDelete(null); setGroupActionActive(null); logEvent('Ungroup', 'Organization'); }} className="flex-1 bg-red-600 text-white font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform shadow-lg shadow-red-900/20">{t('yes')}</button>
-                <button onClick={() => setGroupToDelete(null)} className="flex-1 bg-white/5 text-slate-300 font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform border border-white/10">{t('no')}</button>
+              <div className="text-4xl text-red-600 mb-2"><AlertTriangle className="w-10 h-10 mx-auto" /></div>
+              <h2 className="text-2xl font-black uppercase tracking-tighter">{t('confirm_delete')}</h2>
+              <p className="text-slate-400 text-sm">
+                {t('bulk_delete_confirm_desc') 
+                  ? t('bulk_delete_confirm_desc').replace('{c}', selectedIds.size.toString()).replace('{g}', selectedGroupNames.size.toString())
+                  : `Вы уверены, что хотите удалить ${selectedIds.size} контактов и ${selectedGroupNames.size} групп со всеми участниками?`}
+              </p>
+              <div className="flex gap-3">
+                <button onClick={() => { 
+                  onBulkDelete(Array.from(selectedIds), Array.from(selectedGroupNames));
+                  setSelectedIds(new Set());
+                  setSelectedGroupNames(new Set());
+                  setListMode('NONE');
+                  setShowBulkDeleteConfirm(false);
+                  logEvent('Bulk Delete Confirm', 'Data');
+                }} className="flex-1 bg-red-600 text-white font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform">{t('yes')}</button>
+                <button onClick={() => setShowBulkDeleteConfirm(false)} className="flex-1 bg-white/5 text-slate-300 font-black py-4 rounded-xl uppercase tracking-widest active:scale-95 transition-transform border border-white/10">{t('no')}</button>
               </div>
             </motion.div>
           </motion.div>
@@ -1533,7 +1692,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       <AnimatePresence>
         {showLogoutConfirm && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[1100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[10000] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#1b2531] border border-white/20 p-8 rounded-[2rem] w-full max-sm text-center space-y-6 shadow-2xl">
               <div className="text-4xl text-red-600 mb-2"><Power className="w-10 h-10 mx-auto" /></div>
               <h2 className="text-2xl font-black uppercase tracking-tighter">{t('confirm_logout')}</h2>
@@ -1549,7 +1708,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       <AnimatePresence>
         {showCompatDialog && compatIndex !== null && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[1200] bg-black/90 backdrop-blur-md flex items-center justify-center p-6">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[10000] bg-black/90 backdrop-blur-md flex items-center justify-center p-6">
             <div className="bg-[#1b2531] border border-white/20 p-8 rounded-[2rem] w-full max-w-sm space-y-8 shadow-2xl">
                <div className="text-center space-y-2">
                  <h2 className="text-2xl font-black uppercase tracking-tighter text-[#33b5e5] italic">{t('compatibility')}</h2>
@@ -1607,7 +1766,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       <AnimatePresence>
         {showArenaDialog && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[1200] bg-black/95 backdrop-blur-xl flex flex-col p-4">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[10000] bg-black/95 backdrop-blur-xl flex flex-col p-4 md:p-6 lg:p-8">
              <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-3">
                   <Swords className="w-10 h-10 text-fuchsia-500 mx-auto" />
@@ -1659,7 +1818,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       <AnimatePresence>
         {arenaEntityToRemove && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[1300] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[10001] bg-black/80 backdrop-blur-sm flex items-center justify-center p-6">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-[#1b2531] border border-white/20 p-8 rounded-[2rem] w-full max-sm text-center space-y-6 shadow-2xl">
               <div className="text-4xl text-fuchsia-500 mb-2">{arenaEntityToRemove.isGroup ? <FolderMinus className="w-10 h-10 mx-auto" /> : <UserMinus className="w-10 h-10 mx-auto" />}</div>
               <h2 className="text-2xl font-bold uppercase tracking-tighter">{t('remove_arena')}</h2>
@@ -1918,8 +2077,8 @@ const ArenaItem: React.FC<ArenaItemProps> = ({ p, idx, t, onRemove, isExpanded, 
   );
 };
 
-const HelpCard = ({ color, title, desc }: { color: string, title: string, desc: string }) => (
-  <div className="bg-white/5 border border-white/10 p-4 rounded-xl flex flex-col gap-1" style={{ borderLeftColor: color, borderLeftWidth: '4px' }}>
+const HelpCard = ({ color, title, desc, onClick }: { color: string, title: string, desc: string, onClick?: () => void }) => (
+  <div onClick={onClick} className="bg-white/5 border border-white/10 p-4 rounded-xl flex flex-col gap-1 cursor-pointer hover:bg-white/10 transition-colors" style={{ borderLeftColor: color, borderLeftWidth: '4px' }}>
     <span className="text-[12px] font-black tracking-widest uppercase" style={{ color }}>{title}</span>
     <p className="text-sm text-slate-400 leading-snug">{desc}</p>
   </div>

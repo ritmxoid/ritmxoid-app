@@ -8,6 +8,15 @@ import { PenTool, Download, Calendar, Plus, Swords, Users, UserPlus } from 'luci
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { DateTime, Info } from 'luxon';
+
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: string[];
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed';
+    platform: string;
+  }>;
+  prompt(): Promise<void>;
+}
 import { calculateDaysGone, getRiskLevel, calculateFullBalance, getBalanceColor, COLORS, getAstroEvents } from './core/engine';
 import { getT, getInitialLanguage, LANGUAGES as GLOBAL_LANGUAGES } from './core/i18n';
 import { logEvent } from './core/analytics';
@@ -45,7 +54,25 @@ const App: React.FC = () => {
   const [lang, setLang] = useState(() => localStorage.getItem('ritmxoid_lang') || getInitialLanguage());
   const [compatLang, setCompatLang] = useState(() => localStorage.getItem('ritmxoid_lang') || getInitialLanguage());
   const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const t = getT(lang);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    logEvent('PWA Install', 'Engagement', outcome);
+    setDeferredPrompt(null);
+  };
 
   const changeLang = (newLang: string) => {
     setLang(newLang);
@@ -64,11 +91,32 @@ const App: React.FC = () => {
     solarDataService.getSolarData().catch(err => console.warn('Early solar fetch failed', err));
   }, []);
 
+  const [groups, setGroups] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('ritmxoid_db_groups');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
   useEffect(() => {
-    if (profiles.length > 0) {
+    // Sync groups state with actual profile team names to ensure none are missing
+    const profileGroups = Array.from(new Set(profiles.map(p => p.teamName).filter((n): n is string => !!n)));
+    setGroups(prev => {
+      const merged = Array.from(new Set([...prev, ...profileGroups]));
+      if (merged.length !== prev.length) return merged;
+      return prev;
+    });
+  }, [profiles]);
+
+  useEffect(() => {
+    if (profiles.length > 0 || groups.length > 0) {
       localStorage.setItem('ritmxoid_db_profiles', JSON.stringify(profiles));
+      localStorage.setItem('ritmxoid_db_groups', JSON.stringify(groups));
     } else {
       localStorage.removeItem('ritmxoid_db_profiles');
+      localStorage.removeItem('ritmxoid_db_groups');
     }
     
     if (activeProfileId) {
@@ -331,17 +379,22 @@ const App: React.FC = () => {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleAddProfile = (name: string, date: string) => {
+  const handleAddProfile = (name: string, date: string, teamName?: string | null) => {
     const newProfile: Profile = {
       id: Date.now().toString(),
       name,
       birthDate: date,
-      isMaster: false
+      isMaster: false,
+      teamName: teamName || null
     };
     setProfiles([...profiles, newProfile]);
+    setActiveProfileId(newProfile.id);
   };
 
   const handleAddTeam = (teamName: string, members: {name: string, date: string}[]) => {
+    if (teamName && !groups.includes(teamName)) {
+      setGroups(prev => [...prev, teamName]);
+    }
     const now = Date.now();
     const newProfiles: Profile[] = members.map((m, idx) => ({
       id: (now + idx).toString(),
@@ -353,8 +406,8 @@ const App: React.FC = () => {
     setProfiles([...profiles, ...newProfiles]);
   };
 
-  const handleUpdateProfile = (id: string, name: string, date: string) => {
-    setProfiles(profiles.map(p => p.id === id ? { ...p, name, birthDate: date } : p));
+  const handleUpdateProfile = (id: string, name: string, date: string, teamName?: string | null) => {
+    setProfiles(profiles.map(p => p.id === id ? { ...p, name, birthDate: date, teamName: teamName !== undefined ? teamName : p.teamName } : p));
   };
 
   const handleDeleteProfile = (id: string) => {
@@ -363,10 +416,16 @@ const App: React.FC = () => {
   };
   
   const handleGroupProfiles = (ids: string[], groupName: string) => {
-    setProfiles(profiles.map(p => ids.includes(p.id) ? { ...p, teamName: groupName } : p));
+    if (groupName && !groups.includes(groupName)) {
+      setGroups(prev => [...prev, groupName]);
+    }
+    setProfiles(profiles.map(p => ids.includes(p.id) ? { ...p, teamName: groupName || null } : p));
   };
 
   const handleRenameGroup = (oldName: string, newName: string) => {
+    if (newName && !groups.includes(newName)) {
+      setGroups(prev => prev.map(g => g === oldName ? newName : g));
+    }
     setProfiles(profiles.map(p => p.teamName === oldName ? { ...p, teamName: newName } : p));
   };
 
@@ -379,6 +438,9 @@ const App: React.FC = () => {
   };
 
   const handleImportProfiles = (imported: Profile[]) => {
+    // Extract unique group names from imported profiles
+    const importedGroups = Array.from(new Set(imported.map(p => p.teamName).filter((name): name is string => !!name)));
+    setGroups(importedGroups);
     setProfiles(imported);
     if (imported.length > 0) setActiveProfileId(imported[0].id);
   };
@@ -415,14 +477,39 @@ const App: React.FC = () => {
       </div>
         
       <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-full max-w-md bg-[#1b2531]/80 backdrop-blur-xl px-8 pt-4 pb-3 rounded-[2.5rem] border border-white/10 shadow-2xl relative z-10 overflow-hidden">
-        <div className="absolute top-4 right-6 z-[60]">
+        <div className="absolute top-4 left-4 z-[60]">
+          <AnimatePresence>
+            {deferredPrompt && (
+              <motion.button 
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ 
+                  opacity: 1, 
+                  scale: 1,
+                  boxShadow: ['0 0 10px rgba(51,181,229,0.2)', '0 0 20px rgba(51,181,229,0.5)', '0 0 10px rgba(51,181,229,0.2)']
+                }}
+                transition={{
+                  boxShadow: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+                }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                className="w-12 h-12 rounded-full bg-[#1b2531] border-2 border-[#33b5e5]/50 flex items-center justify-center hover:bg-white/10 transition-all active:scale-95 group relative overflow-hidden"
+                onClick={handleInstallClick}
+                title={t('install_app')}
+              >
+                <Download className="w-6 h-6 text-[#33b5e5] animate-bounce" />
+                <span className="absolute bottom-[-2px] text-[8px] font-black text-[#33b5e5] uppercase bg-[#1b2531] px-1">PWA</span>
+              </motion.button>
+            )}
+          </AnimatePresence>
+        </div>
+
+        <div className="absolute top-4 right-4 z-[60]">
           <div className="relative">
             <button 
-              className="w-10 h-10 rounded-full bg-white/5 border-2 border-white/20 flex items-center justify-center hover:bg-white/10 transition-all shadow-[0_0_15px_rgba(255,255,255,0.1)] hover:border-[#33b5e5]/50 active:scale-95"
+              className="w-12 h-12 rounded-full bg-[#1b2531] border-2 border-white/10 flex items-center justify-center hover:bg-white/10 transition-all shadow-[0_0_15px_rgba(255,255,255,0.05)] hover:border-[#33b5e5]/50 active:scale-95"
               onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
             >
-              <span className="text-[15px] font-normal text-white/40 tracking-widest">
-                {lang.charAt(0).toUpperCase() + lang.slice(1)}
+              <span className="text-[14px] font-bold text-white/60 tracking-wider">
+                {lang.toUpperCase()}
               </span>
             </button>
             <AnimatePresence>
@@ -625,6 +712,40 @@ const App: React.FC = () => {
       onSelectProfile={setActiveProfileId}
       onAddTeam={handleAddTeam}
       onImportProfiles={handleImportProfiles}
+      groups={groups}
+      onAddGroup={(name) => {
+        if (!groups.includes(name)) setGroups([...groups, name]);
+      }}
+      onDeleteGroup={(name) => {
+        setGroups(groups.filter(g => g !== name));
+      }}
+      onBulkDelete={(ids, groupNames) => {
+        logEvent('Bulk Delete', 'Data', `${ids.length} profiles, ${groupNames.length} groups`);
+        
+        if (groupNames.length > 0) {
+          setGroups(prev => prev.filter(g => !groupNames.includes(g)));
+        }
+
+        setProfiles(prev => {
+          // If a group name is specified, we delete all contacts in that group
+          const groupsToDelete = new Set(groupNames);
+          const idsToDelete = new Set(ids);
+          
+          const filtered = prev.filter(p => {
+            if (p.isMaster) return true; // Never delete master
+            if (idsToDelete.has(p.id)) return false;
+            if (p.teamName && groupsToDelete.has(p.teamName)) return false;
+            return true;
+          });
+
+          // Check if active profile was deleted
+          if (activeProfileId && !filtered.find(p => p.id === activeProfileId)) {
+            setActiveProfileId(filtered[0]?.id || null);
+          }
+          
+          return filtered;
+        });
+      }}
       onOpenCompatibility={(date1, date2, lang) => {
         logEvent('Compatibility Open', 'Navigation', 'From Dashboard');
         if (date1) setCompatDate1(date1);
